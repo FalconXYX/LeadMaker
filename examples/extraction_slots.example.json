@@ -1,0 +1,21 @@
+[
+  {
+    "key": "offers_solar_installs",
+    "label": "Installs solar panels or solar shingles",
+    "type": "boolean",
+    "description": "true only if the contractor says it installs solar panels or solar roofing (e.g. GAF Timberline Solar); false only if it says it does not; otherwise null."
+  },
+  {
+    "key": "crew_count_estimate",
+    "label": "Number of installation crews",
+    "type": "number",
+    "description": "The number of roofing or installation crews the text states (\"four crews\" is 4). null when no crew count is written."
+  },
+  {
+    "key": "primary_roof_material",
+    "label": "Main roofing material installed",
+    "type": "enum",
+    "enum": ["asphalt_shingles", "metal", "slate", "tile", "flat_membrane", "mixed"],
+    "description": "The roofing material the contractor presents as its main line of work; mixed when several are presented equally."
+  }
+]

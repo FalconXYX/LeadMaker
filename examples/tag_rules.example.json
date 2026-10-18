@@ -1,0 +1,18 @@
+[
+  {"key": "high_volume", "label": "200+ Google reviews", "category": "custom", "priority_boost": 5,
+   "reason": "review volume is a proxy for job volume", "when": {"field": "review_count", "gte": 200}},
+  {"key": "steep_slope_premium", "label": "Slate / tile / metal work", "category": "custom", "priority_boost": 3,
+   "reason": "premium materials = higher ticket orders",
+   "when": {"text_contains": ["slate", "tile roof", "standing seam", "metal roof"]}},
+  {"key": "storm_insurance", "label": "Storm / insurance work", "category": "custom",
+   "when": {"text_contains": ["insurance claim", "storm damage", "hail", "wind damage"]}},
+  {"key": "commercial_capable", "label": "Also does commercial", "category": "custom",
+   "when": {"text_contains": ["commercial roofing", "flat roof", "tpo", "epdm", "modified bitumen"]}},
+  {"key": "nj_master_elite", "label": "NJ Master Elite", "category": "custom",
+   "when": {"all": [{"field": "state", "eq": "NJ"}, {"field": "tier", "eq": "master_elite"}]}},
+  {"key": "close_to_branch", "label": "Within 10 mi of branch", "category": "custom", "priority_boost": 2,
+   "when": {"field": "distance_miles", "lte": 10}},
+  {"key": "no_website_found", "label": "No website found", "category": "custom",
+   "reason": "call-first outreach; digital channels unlikely",
+   "when": {"not": {"field": "website", "exists": true}}}
+]

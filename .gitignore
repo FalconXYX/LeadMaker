@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# Kept out of git until they settle down (they change constantly)
+data
+research
+tests
