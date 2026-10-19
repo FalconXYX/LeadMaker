@@ -1,0 +1,2961 @@
+{
+"version": 0.6,
+"generator": "Overpass API 0.7.62.11 87bfad18",
+"osm3s": {
+"timestamp_osm_base": "2026-10-18T06:09:50Z",
+"copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+},
+"elements": [
+{
+"type": "node",
+"id": 2844201946,
+"lat": 40.7263026,
+"lon": -73.9064002,
+"tags": {
+"addr:city": "Maspeth",
+"addr:housenumber": "59-60",
+"addr:postcode": "11378",
+"addr:state": "NY",
+"addr:street": "55th Road",
+"name": "Maspeth NY Garage Door",
+"opening_hours": "24/7",
+"phone": "+1-718-269-4714",
+"shop": "doors",
+"website": "http://maspethgaragedoor.com/"
+}
+},
+{
+"type": "node",
+"id": 3510618402,
+"lat": 40.6809438,
+"lon": -73.7628452,
+"tags": {
+"addr:city": "Jamaica",
+"addr:housenumber": "178-16",
+"addr:postcode": "11434",
+"addr:state": "NY",
+"addr:street": "Eveleth Road",
+"check_date": "2024-09-18",
+"craft": "roofer",
+"name": "A Real Advantage Construction",
+"phone": "+1-718-767-6950",
+"short_name": "A Real Advantage",
+"website": "https://www.arealadvantageconstruction.com/"
+}
+},
+{
+"type": "node",
+"id": 6252355497,
+"lat": 40.6644871,
+"lon": -73.6965454,
+"tags": {
+"addr:city": "Valley Stream",
+"addr:housenumber": "35",
+"addr:postcode": "11580",
+"addr:state": "NY",
+"addr:street": "East Merrick Road",
+"craft": "electrician",
+"name": "Island Auto Electric",
+"nysgissam:nysaddresspointid": "NASS190686",
+"phone": "+1-516-561-9000"
+}
+},
+{
+"type": "node",
+"id": 6252355498,
+"lat": 40.6645492,
+"lon": -73.6967833,
+"tags": {
+"addr:city": "Valley Stream",
+"addr:flats": "3;4;6;A",
+"addr:housenumber": "33",
+"addr:postcode": "11580",
+"addr:state": "NY",
+"addr:street": "East Merrick Road",
+"craft": "metal_construction",
+"name": "Brothers Aluminum",
+"nysgissam:nysaddresspointid": "NASS491307;NASS495269;NASS234600;NASS494358;NASS486869"
+}
+},
+{
+"type": "node",
+"id": 7166400032,
+"lat": 40.6948782,
+"lon": -73.6826024,
+"tags": {
+"addr:housenumber": "483",
+"addr:street": "Franklin Avenue",
+"name": "Gibraltar Home Improvement",
+"office": "yes"
+}
+},
+{
+"type": "node",
+"id": 8783350109,
+"lat": 40.7561342,
+"lon": -73.5891417,
+"tags": {
+"addr:city": "Westbury",
+"addr:flats": "102-103",
+"addr:housenumber": "210",
+"addr:postcode": "11590",
+"addr:state": "NY",
+"addr:street": "Fulton Street",
+"craft": "carpet_cleaner",
+"name": "Sunbird Carpet Cleaning Westbury NY",
+"nysgissam:nysaddresspointid": "NASS329965;NASS495298;NASS495331",
+"website": "https://www.carpetcleaningwestburyny.com/"
+}
+},
+{
+"type": "node",
+"id": 11858265878,
+"lat": 40.591521,
+"lon": -74.07987,
+"tags": {
+"addr:city": "Staten Island",
+"addr:housenumber": "61",
+"addr:postcode": "10305",
+"addr:state": "NY",
+"addr:street": "Appleby Avenue",
+"check_date": "2024-04-27",
+"craft": "roofer",
+"email": "support@alterphaseroofing.com",
+"name": "Alter Phase Roofing",
+"opening_hours": "Mo-Fr 08:00-20:00; Sa 08:00-17:00",
+"operator": "Alter Phase Roofing",
+"phone": "+1 929-370-1552",
+"website": "https://alterphaseroofing.com"
+}
+},
+{
+"type": "node",
+"id": 13039825071,
+"lat": 40.6164376,
+"lon": -74.0727865,
+"tags": {
+"craft": "plumber",
+"name": "R.B. Mechanical"
+}
+},
+{
+"type": "node",
+"id": 13050292776,
+"lat": 40.6367266,
+"lon": -74.1556052,
+"tags": {
+"craft": "plumber",
+"name": "Tri-Star Plumbing & Heating Corp."
+}
+},
+{
+"type": "node",
+"id": 13072565067,
+"lat": 40.6965972,
+"lon": -74.2521525,
+"tags": {
+"addr:city": "Union",
+"addr:housenumber": "1640",
+"addr:postcode": "07083",
+"addr:state": "NJ",
+"addr:street": "Vauxhall Road",
+"contact:angi": "https://www.angi.com/companylist/us/nj/union/magnolia-home-remodeling-group-reviews-8056112.htm",
+"contact:email": "magnoliahrg@gmail.com",
+"contact:facebook": "https://www.facebook.com/magnoliahomeremodeling",
+"contact:homeadvisor": "https://www.homeadvisor.com/rated.MagnoliaHomeRemodeling.43085843.html",
+"contact:houzz": "https://www.houzz.com/pro/magnoliahomeremodeling",
+"contact:instagram": "https://www.instagram.com/magnoliahomeremodeling",
+"contact:phone": "+1-855-624-6655;+1-973-202-7788",
+"contact:website": "https://magnoliahomeremodeling.com/",
+"contact:yelp": "https://www.yelp.com/biz/magnolia-home-remodeling-union",
+"contact:youtube": "https://www.youtube.com/channel/UCMKtfxZdnzge8b_J85VB1LA",
+"craft": "carpenter",
+"description": "Home Remodeling, Home Improvement, Roofing Contractor, Siding Contractor, Kitchen Remodeler, Bathroom Remodeler, General Contractor",
+"language:en": "yes",
+"name": "Magnolia Home Remodeling Group",
+"opening_hours": "24/7",
+"payment:american_express": "yes",
+"payment:cheque": "yes",
+"payment:discover_card": "yes",
+"payment:financing": "yes",
+"payment:mastercard": "yes",
+"payment:visa": "yes",
+"start_date": "1995-12"
+}
+},
+{
+"type": "node",
+"id": 13191522498,
+"lat": 40.6292066,
+"lon": -74.1124145,
+"tags": {
+"craft": "roofer",
+"name": "Madison Roofing"
+}
+},
+{
+"type": "node",
+"id": 13653240916,
+"lat": 40.8478705,
+"lon": -74.1541596,
+"tags": {
+"addr:city": "Clifton",
+"addr:housenumber": "790",
+"addr:postcode": "07012",
+"addr:state": "NJ",
+"addr:street": "Bloomfield Avenue",
+"addr:unit": "Building G",
+"contact:facebook": "SECI-Construction-Inc/61558889518661",
+"contact:instagram": "seciinc",
+"contact:linkedin": "seci-construction-inc",
+"contact:twitter": "seciexteriors",
+"craft": "roofer",
+"email": "info@seciinc.com",
+"name": "Seci Construction, Inc.",
+"opening_hours": "Mo-Su 09:00-19:00",
+"payment:cash": "yes",
+"payment:cheque": "yes",
+"payment:credit_cards": "yes",
+"payment:paypal": "yes",
+"payment:venmo": "yes",
+"payment:zelle": "yes",
+"phone": "+1 866-572-7324",
+"start_date": "1975",
+"website": "https://seciinc.com/"
+}
+},
+{
+"type": "node",
+"id": 14014820732,
+"lat": 40.8847954,
+"lon": -74.1046187,
+"tags": {
+"addr:postcode": "07026",
+"addr:state": "NJ",
+"addr:street": "47 Harding Ct, Garfield, NJ 07026, United States",
+"name": "Top NJ Construction",
+"office": "construction_company",
+"official_name": "Top NJ Construction",
+"phone": "+1 862-388-9084",
+"website": "https://topnjconstruction.com/"
+}
+},
+{
+"type": "node",
+"id": 14137475516,
+"lat": 40.8695778,
+"lon": -74.1047612,
+"tags": {
+"addr:city": "Garfield",
+"addr:housenumber": "163",
+"addr:postcode": "07026",
+"addr:state": "NJ",
+"addr:street": "Midland Avenue",
+"addr:unit": "B",
+"craft": "roofer",
+"name": "Precision Windows & Roofing",
+"opening_hours": "24/7",
+"phone": "+1 201-275-9185",
+"website": "https://precisionwindowsnj.com"
+}
+},
+{
+"type": "way",
+"id": 248171333,
+"center": {
+"lat": 40.6687003,
+"lon": -73.9937511
+},
+"tags": {
+"addr:housenumber": "119",
+"addr:postcode": "11215",
+"addr:street": "14th Street",
+"building": "yes",
+"fax": "+1-718-369-7059",
+"height": "7.9",
+"name": "Commercial Building & Restoration",
+"nycdoitt:bin": "3330572",
+"office": "construction",
+"phone": "+1-718-369-1001",
+"website": "http://commercialbuildrestoration.com"
+}
+},
+{
+"type": "way",
+"id": 248171432,
+"center": {
+"lat": 40.6687338,
+"lon": -73.9946249
+},
+"tags": {
+"addr:housenumber": "96",
+"addr:postcode": "11215",
+"addr:street": "14th Street",
+"building": "yes",
+"height": "10.3",
+"name": "Preserv Building Restoration Management",
+"nycdoitt:bin": "3319470",
+"office": "company",
+"phone": "+1-718-768-3600"
+}
+},
+{
+"type": "way",
+"id": 331886515,
+"center": {
+"lat": 40.7053306,
+"lon": -73.6290168
+},
+"tags": {
+"addr:city": "Hempstead",
+"addr:housenumber": "172",
+"addr:postcode": "11550",
+"addr:state": "NY",
+"addr:street": "Fulton Avenue",
+"alt_name": "Home Depot",
+"branch": "Hempstead",
+"brand": "The Home Depot",
+"brand:wikidata": "Q864407",
+"building": "yes",
+"name": "The Home Depot",
+"opening_hours": "Mo-Sa 06:00-22:00; Su 08:00-19:00",
+"phone": "+1 516-565-3700",
+"ref": "1274",
+"shop": "doityourself",
+"website": "https://www.homedepot.com/l/Hempstead/NY/Hempstead/11550/1274"
+}
+},
+{
+"type": "way",
+"id": 561102393,
+"center": {
+"lat": 40.9134505,
+"lon": -74.2628954
+},
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "20",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "Parish Drive",
+"building": "commercial",
+"name": "Allied Brothers Home Corporation",
+"office": "construction_company"
+}
+},
+{
+"type": "way",
+"id": 932521966,
+"center": {
+"lat": 40.7577699,
+"lon": -74.2022419
+},
+"tags": {
+"landuse": "commercial",
+"name": "FM Construction Corp"
+}
+},
+{
+"type": "node",
+"id": 7858907068,
+"lat": 40.9476973,
+"lon": -73.7469425,
+"tags": {
+"addr:city": "Mamaroneck",
+"addr:housenumber": "645",
+"addr:postcode": "10543",
+"addr:state": "NY",
+"addr:street": "Center Avenue",
+"craft": "joiner",
+"name": "John M Mazzola Furniture Restorations"
+}
+},
+{
+"type": "node",
+"id": 5517890908,
+"lat": 40.9222592,
+"lon": -74.2694473,
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "1133",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "NJ-23",
+"name": "M A G Entertainment",
+"office": "company"
+}
+},
+{
+"type": "node",
+"id": 9140832074,
+"lat": 40.7395704,
+"lon": -73.9913186,
+"tags": {
+"check_date": "2024-08-07",
+"name": "MasterCard",
+"office": "company"
+}
+},
+{
+"type": "node",
+"id": 14256466060,
+"lat": 40.6001533,
+"lon": -73.9605687,
+"tags": {
+"addr:city": "Brooklyn",
+"addr:country": "US",
+"addr:housenumber": "2018",
+"addr:postcode": "11229",
+"addr:state": "NY",
+"addr:street": "E 12th St",
+"craft": "locksmith",
+"name": "FIX & LOCKS LOCKSMITH SERVICE",
+"opening_hours": "Mo-Su 09:00-17:00",
+"phone": "+1 929-374-8226",
+"website": "https://fixandlocks.com/"
+}
+},
+{
+"type": "node",
+"id": 2566968411,
+"lat": 40.663007,
+"lon": -73.9426163,
+"tags": {
+"addr:housenumber": "559",
+"addr:postcode": "11203",
+"addr:street": "Lefferts Avenue",
+"craft": "tailor",
+"name": "Lefferts Cleaners",
+"phone": "+1-718-778-0197",
+"shop": "dry_cleaning"
+}
+},
+{
+"type": "node",
+"id": 2827518418,
+"lat": 40.6800762,
+"lon": -74.0073069,
+"tags": {
+"addr:housenumber": "55",
+"addr:postcode": "11231",
+"addr:street": "Commerce Street",
+"craft": "metal_construction",
+"disused:website": "http://www.generalironwork.com",
+"name": "J&D Iron Works",
+"phone": "+1-718-374-5070"
+}
+},
+{
+"type": "way",
+"id": 904294781,
+"center": {
+"lat": 40.5817483,
+"lon": -74.1654677
+},
+"tags": {
+"indoor": "room",
+"level": "0",
+"level:ref": "1F",
+"name": "My City Doors",
+"shop": "doors"
+}
+},
+{
+"type": "node",
+"id": 12122271738,
+"lat": 40.6276532,
+"lon": -74.1348485,
+"tags": {
+"name": "John J. Gall Crane Service",
+"office": "construction_company",
+"phone": "+1-718-442-3693"
+}
+},
+{
+"type": "node",
+"id": 3825544457,
+"lat": 40.7252194,
+"lon": -73.9967722,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "600",
+"addr:postcode": "10018",
+"addr:state": "NY",
+"addr:street": "Broadway",
+"name": "Code Academy",
+"office": "company",
+"website": "https://www.codecademy.com"
+}
+},
+{
+"type": "node",
+"id": 8810466326,
+"lat": 40.9578465,
+"lon": -74.2252073,
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "1410",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "Valley Road",
+"addr:unit": "103",
+"craft": "electrician",
+"name": "Edison Electricians of Wayne"
+}
+},
+{
+"type": "node",
+"id": 12993329024,
+"lat": 40.7935418,
+"lon": -73.8079343,
+"tags": {
+"name": "Jupiter Up LLC",
+"office": "yes"
+}
+},
+{
+"type": "node",
+"id": 2611479036,
+"lat": 40.730755,
+"lon": -73.9827894,
+"tags": {
+"name": "H & W Hardware",
+"opening_hours": "Mo-Th 09:00-18:00; Fr 10:00-18:00; Sa 10:00-17:00",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 11669827702,
+"lat": 40.541394,
+"lon": -74.1471137,
+"tags": {
+"name": "Great Kills Plumbing & Heating Supplies",
+"shop": "doityourself"
+}
+},
+{
+"type": "node",
+"id": 5952518686,
+"lat": 40.5836594,
+"lon": -73.661083,
+"tags": {
+"name": "Surf Club",
+"office": "company"
+}
+},
+{
+"type": "node",
+"id": 2555598729,
+"lat": 40.6928666,
+"lon": -73.7324467,
+"tags": {
+"addr:housenumber": "228-17",
+"addr:postcode": "11411",
+"addr:street": "Linden Boulevard",
+"name": "Cambria Hardware Center",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 3030613439,
+"lat": 40.6773469,
+"lon": -73.9825112,
+"tags": {
+"addr:city": "Brooklyn",
+"addr:housenumber": "671",
+"addr:postcode": "11215",
+"addr:street": "Union Street",
+"amenity": "fast_food",
+"craft": "caterer",
+"cuisine": "southern;asian;chicken",
+"delivery": "yes",
+"description": "Upscale fried chicken fast casual window lead by Executive Chef Sara Nguyen, Top Chef Season 3 contestant.",
+"name": "Wangs",
+"opening_hours": "Th-Sa 12:00-23:00; Mo-We, Su 12:00-22:00",
+"outdoor_seating": "only",
+"phone": "+1-718-636-6390",
+"takeaway": "yes",
+"website": "https://www.wangsbk.com"
+}
+},
+{
+"type": "node",
+"id": 9876527006,
+"lat": 40.3493444,
+"lon": -74.0748199,
+"tags": {
+"addr:city": "Red Bank",
+"addr:country": "US",
+"addr:housenumber": "25",
+"addr:postcode": "07701",
+"addr:state": "NJ",
+"addr:street": "25 Bridge Ave",
+"addr:unit": "Unit 200",
+"craft": "photographer",
+"name": "Headshot Hub",
+"phone": "+1-917-803-0017",
+"website": "https://headshothub.net/"
+}
+},
+{
+"type": "node",
+"id": 9762210759,
+"lat": 40.6468933,
+"lon": -74.0189789,
+"tags": {
+"addr:housenumber": "5321",
+"addr:postcode": "11220",
+"addr:street": "2nd Avenue",
+"name": "Synthesis",
+"office": "company",
+"phone": "+1-718-238-2700"
+}
+},
+{
+"type": "node",
+"id": 2827157727,
+"lat": 40.7471447,
+"lon": -73.9744008,
+"tags": {
+"addr:housenumber": "699",
+"addr:postcode": "10016",
+"addr:street": "2nd Avenue",
+"brand": "True Value",
+"brand:wikidata": "Q7847545",
+"delivery": "yes",
+"email": "lumberboys.nyc@gmail.com",
+"fax": "+1 212-683-0412",
+"name": "Lumber Boys",
+"opening_hours": "Mo-Fr 07:30-18:00; Sa 08:30-15:00",
+"phone": "+1-212-683-0410",
+"shop": "hardware",
+"website": "http://www.lumberboys.com/"
+}
+},
+{
+"type": "node",
+"id": 6252354642,
+"lat": 40.6647765,
+"lon": -73.6985812,
+"tags": {
+"name": "America Servi-Express Inc",
+"office": "yes",
+"phone": "+1-516-593-5042"
+}
+},
+{
+"type": "node",
+"id": 3637773100,
+"lat": 40.3974667,
+"lon": -74.1355946,
+"tags": {
+"addr:city": "Middletown Township",
+"addr:housenumber": "200",
+"addr:postcode": "07748",
+"addr:state": "NJ",
+"addr:street": "Laurel Avenue South",
+"name": "AT&T",
+"office": "company"
+}
+},
+{
+"type": "node",
+"id": 12437363683,
+"lat": 40.9518046,
+"lon": -73.8266578,
+"tags": {
+"check_date": "2024-12-20",
+"contact:phone": "+1 914-961-4880",
+"contact:website": "https://kawer.com/",
+"name": "Kawer's Tuckahoe Paint & Glass",
+"opening_hours": "Mo-Sa 07:00-18:00; Su off",
+"payment:credit_cards": "yes",
+"payment:discover_card": "yes",
+"payment:mastercard": "yes",
+"payment:visa": "yes",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 9780127221,
+"lat": 40.6406295,
+"lon": -73.6072603,
+"tags": {
+"addr:city": "Baldwin Harbor",
+"addr:housenumber": "923",
+"addr:postcode": "11510-4240",
+"addr:state": "NY",
+"addr:street": "Atlantic Avenue",
+"brand": "Ace Hardware",
+"brand:wikidata": "Q4672981",
+"name": "Ace Hardware",
+"opening_hours": "Mo-Sa 08:00-21:00; Su 08:00-18:00",
+"phone": "+1 516-600-9110",
+"ref": "15998",
+"shop": "doityourself"
+}
+},
+{
+"type": "node",
+"id": 2700237319,
+"lat": 40.658099,
+"lon": -73.9863385,
+"tags": {
+"addr:housenumber": "431",
+"addr:postcode": "11215",
+"addr:street": "20th Street",
+"addr:unit": "A",
+"name": "Ivan & Son",
+"office": "construction",
+"phone": "+1-929-499-5356",
+"phone:es": "+1-347-998-0594"
+}
+},
+{
+"type": "way",
+"id": 1006342446,
+"center": {
+"lat": 40.9113915,
+"lon": -73.8404834
+},
+"tags": {
+"addr:city": "Mount Vernon",
+"addr:housenumber": "121",
+"addr:postcode": "10550",
+"addr:state": "NY",
+"addr:street": "Stevens Avenue",
+"building": "yes",
+"craft": "plumber",
+"name": "Consolidated Plumbing Supply",
+"opening_hours": "Mo-Fr 07:30-17:00; Sa 07:30-12:30",
+"phone": "+1-914-668-3124"
+}
+},
+{
+"type": "node",
+"id": 12677264735,
+"lat": 40.5924022,
+"lon": -74.0875548,
+"tags": {
+"name": "Statwood Home Improvements",
+"shop": "furniture"
+}
+},
+{
+"type": "node",
+"id": 5006681582,
+"lat": 40.7631938,
+"lon": -73.9669656,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "150",
+"addr:postcode": "10065",
+"addr:state": "NY",
+"addr:street": "East 61st Street",
+"email": "plasticsdoc10@yahoo.com",
+"name": "Allure Plastic Surgery",
+"office": "company",
+"opening_hours": "Mo-Fr 06:00-20:00",
+"phone": "+1-212-661-2563",
+"website": "https://www.newyorkplasticsurgeryallure.com/"
+}
+},
+{
+"type": "node",
+"id": 6047266495,
+"lat": 40.6497466,
+"lon": -73.683751,
+"tags": {
+"addr:city": "Lynbrook",
+"addr:housenumber": "342",
+"addr:postcode": "11563",
+"addr:state": "NY",
+"addr:street": "Broadway",
+"addr:unit": "A",
+"craft": "caterer",
+"name": "Little Anthony Catering",
+"nysgissam:nysaddresspointid": "NASS029753;NASS492527"
+}
+},
+{
+"type": "node",
+"id": 13949660565,
+"lat": 40.7715831,
+"lon": -73.956577,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "1463",
+"addr:postcode": "10075",
+"addr:state": "NY",
+"addr:street": "2nd Avenue",
+"craft": "locksmith",
+"name": "USA Locksmith Service",
+"opening_hours": "24/7",
+"operator": "USA Locksmith Service",
+"phone": "+1-212-744-3915",
+"shop": "locksmith",
+"website": "https://usalocksmithinc.com/"
+}
+},
+{
+"type": "node",
+"id": 13832265135,
+"lat": 40.63587,
+"lon": -74.2457299,
+"tags": {
+"addr:city": "Linden",
+"addr:housenumber": "617",
+"addr:postcode": "07036",
+"addr:state": "NJ",
+"addr:street": "Pennsylvania Avenue",
+"email": "sales@certifiedvalve.com",
+"fax": "+1-908-486-7862",
+"name": "Certified Safety Valve Repair, Inc.",
+"phone": "+1-908-486-3590",
+"shop": "trade",
+"website": "https://www.certifiedvalve.com/"
+}
+},
+{
+"type": "node",
+"id": 2709335792,
+"lat": 40.7451962,
+"lon": -73.9811158,
+"tags": {
+"addr:housenumber": "128",
+"addr:postcode": "10016",
+"addr:street": "East 32nd Street",
+"name": "VFS Global",
+"office": "company",
+"website": "https://www.vfsglobal.com"
+}
+},
+{
+"type": "node",
+"id": 12964696489,
+"lat": 40.5893863,
+"lon": -74.101248,
+"tags": {
+"amenity": "cafe",
+"craft": "caterer",
+"cuisine": "breakfast;lunch",
+"name": "Hillside Farm to Bagel"
+}
+},
+{
+"type": "node",
+"id": 13023118465,
+"lat": 40.634064,
+"lon": -74.1172077,
+"tags": {
+"name": "SJL Management Group, Inc.",
+"office": "yes"
+}
+},
+{
+"type": "node",
+"id": 9165452579,
+"lat": 40.9543525,
+"lon": -74.1552513,
+"tags": {
+"craft": "upholsterer",
+"name": "Fantauzzi Upholstery"
+}
+},
+{
+"type": "node",
+"id": 2567078887,
+"lat": 40.6676772,
+"lon": -73.9536545,
+"tags": {
+"addr:housenumber": "244",
+"addr:postcode": "11225",
+"addr:street": "Rogers Avenue",
+"name": "Y&S Plumbing & Heating Supplies",
+"phone": "+1-718-363-1818",
+"shop": "trade",
+"trade": "plumbing"
+}
+},
+{
+"type": "node",
+"id": 6023478828,
+"lat": 40.7641853,
+"lon": -73.988146,
+"tags": {
+"addr:housenumber": "764",
+"addr:street": "9th Avenue",
+"amenity": "restaurant",
+"craft": "caterer",
+"cuisine": "indian",
+"delivery": "yes",
+"diet:vegetarian": "yes",
+"drink:beer": "yes",
+"drink:tea": "yes",
+"drink:wine": "yes",
+"internet_access": "no",
+"name": "Bombay Grill House",
+"opening_hours": "Mo-Th 11:30-22:30; Fr 11:30-23:30; Sa 12:00-23:30; Su 12:00-22:30",
+"phone": "+1-212-977-1010",
+"reservation": "yes",
+"takeaway": "yes",
+"toilets": "yes",
+"toilets:access": "customers",
+"toilets:unisex": "yes",
+"toilets:wheelchair": "yes",
+"website": "http://bombaygrillhouse.com/",
+"wheelchair": "limited"
+}
+},
+{
+"type": "node",
+"id": 2563048003,
+"lat": 40.9580764,
+"lon": -74.1585084,
+"tags": {
+"addr:city": "Hawthorne",
+"addr:housename": "A1 Everlast Construction",
+"addr:housenumber": "150",
+"addr:postcode": "07506",
+"addr:street": "Rea Avenue",
+"name": "A1 Everlast Construction",
+"note": "Over thirty years, Everlast Construction has been serving the roofing, chimney, masonry and gutter needs of customers throughout New Jersey.",
+"phone": "+1-888-399-0955",
+"website": "https://a1everlast.com/"
+}
+},
+{
+"type": "node",
+"id": 12507474680,
+"lat": 40.7136743,
+"lon": -73.7615783,
+"tags": {
+"craft": "plumber",
+"name": "Soudesh Plumbing & Heating Supplies"
+}
+},
+{
+"type": "node",
+"id": 5335146981,
+"lat": 40.7483636,
+"lon": -73.9751973,
+"tags": {
+"contact:email": "newyork@dreamlifeweddings.com",
+"craft": "photographer",
+"level": "2",
+"name": "Dreamlife Wedding Photos and Videos - USA",
+"phone": "+1-917-388-2835",
+"website": "https://dreamlifewedding.com/"
+}
+},
+{
+"type": "node",
+"id": 6997330316,
+"lat": 40.7080633,
+"lon": -73.6898066,
+"tags": {
+"name": "Barney\u2019s Hardware",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 9765598830,
+"lat": 40.6454522,
+"lon": -74.0217326,
+"tags": {
+"alt_name": "Alite Home",
+"name": "Ucore",
+"office": "company",
+"phone": "+1-718-439-9889"
+}
+},
+{
+"type": "node",
+"id": 5451471218,
+"lat": 40.5858499,
+"lon": -73.9829223,
+"tags": {
+"addr:city": "Brooklyn",
+"addr:housenumber": "2545",
+"addr:postcode": "11223",
+"addr:state": "NY",
+"addr:street": "Stillwell Avenue",
+"craft": "window_construction",
+"email": "info@skywindowsnj.com",
+"name": "Sky Windows and Doors",
+"office": "company",
+"opening_hours": "Mo-Fr 08:00-18:00",
+"operator": "Boria and Alex",
+"payment:cash": "yes",
+"payment:cheque": "yes",
+"payment:credit_cards": "yes",
+"phone": "+1-718-517-9178",
+"start_date": "1996-11",
+"website": "https://www.skywindowsnj.com"
+}
+},
+{
+"type": "node",
+"id": 12193782922,
+"lat": 40.8006125,
+"lon": -74.353127,
+"tags": {
+"addr:city": "Livingston",
+"addr:housenumber": "5",
+"addr:postcode": "07039",
+"addr:state": "NJ",
+"addr:street": "Regent Street",
+"addr:unit": "Ste 523",
+"name": "CooperSurgical",
+"office": "company",
+"opening_hours": "Mo-Fr 09:00-17:00",
+"website": "https://www.coopersurgical.com/"
+}
+},
+{
+"type": "node",
+"id": 4768083421,
+"lat": 40.7445105,
+"lon": -73.9526555,
+"tags": {
+"name": "J.A.D. Contracting"
+}
+},
+{
+"type": "node",
+"id": 12842964235,
+"lat": 40.6042724,
+"lon": -74.1807376,
+"tags": {
+"addr:housenumber": "1441",
+"addr:postcode": "10314",
+"addr:street": "South Avenue",
+"addr:unit": "603",
+"level": "5",
+"name": "Staten Island Advance",
+"office": "company"
+}
+},
+{
+"type": "node",
+"id": 7380145287,
+"lat": 40.7580252,
+"lon": -73.9803925,
+"tags": {
+"addr:postcode": "10036",
+"email": "nyctvmounted@gmail.com",
+"name": "NYC TV Mounts",
+"office": "company",
+"opening_hours": "Mo-Su 08:00-21:00",
+"phone": "+13478749843",
+"website": "https://nyctvmounted.com/"
+}
+},
+{
+"type": "node",
+"id": 12554052837,
+"lat": 40.6684789,
+"lon": -74.1623145,
+"tags": {
+"addr:city": "Elizabeth",
+"addr:housenumber": "1160",
+"addr:postcode": "07201",
+"addr:state": "NJ",
+"addr:street": "McLester Street",
+"addr:unit": "3",
+"name": "Port Authority Truck Service Center",
+"office": "yes",
+"opening_hours": "Mo-Fr 06:30-17:00",
+"phone": "+1 908-354-4044",
+"website": "https://www.panynj.gov/port/en/shipping/truck.html#truckResources"
+}
+},
+{
+"type": "way",
+"id": 853014074,
+"center": {
+"lat": 41.0013309,
+"lon": -74.3176282
+},
+"tags": {
+"building": "yes",
+"craft": "hvac",
+"name": "KEIL Heating & Air Conditioning"
+}
+},
+{
+"type": "way",
+"id": 247930720,
+"center": {
+"lat": 40.6604401,
+"lon": -73.9959887
+},
+"tags": {
+"addr:housenumber": "293",
+"addr:postcode": "11232",
+"addr:street": "24th Street",
+"building": "yes",
+"height": "7.2",
+"name": "Guide Connection",
+"nycdoitt:bin": "3009557",
+"office": "company",
+"phone": "+1-718-499-4770"
+}
+},
+{
+"type": "node",
+"id": 5699062157,
+"lat": 40.7433829,
+"lon": -73.9914604,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "49",
+"addr:postcode": "10010",
+"addr:state": "NY",
+"addr:street": "West 24th Street",
+"addr:unit": "8th Floor",
+"contact:facebook": "https://www.facebook.com/nycsportfishingcharters/",
+"name": "NYC Sportfishing Charters",
+"office": "company",
+"phone": "+1-201-388-1963",
+"website": "https://www.nycsportfishingcharters.com/"
+}
+},
+{
+"type": "node",
+"id": 4325146410,
+"lat": 40.6883418,
+"lon": -73.7292846,
+"tags": {
+"addr:city": "Cambria Heights",
+"addr:housenumber": "118-55",
+"addr:postcode": "11411",
+"addr:state": "NY",
+"addr:street": "234th Street",
+"name": "On Call Mechanical Corp",
+"office": "company",
+"phone": "+1 718 5254609",
+"website": "https://www.oncallmechanicalcorp.com/"
+}
+},
+{
+"type": "node",
+"id": 12990558314,
+"lat": 40.6375474,
+"lon": -74.1288784,
+"tags": {
+"craft": "window_construction",
+"name": "Diamond Glass Window Repair Specialists"
+}
+},
+{
+"type": "node",
+"id": 12845052812,
+"lat": 40.6825295,
+"lon": -73.9095272,
+"tags": {
+"name": "Benjamin Moore",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 14095386684,
+"lat": 40.7598309,
+"lon": -73.799822,
+"tags": {
+"addr:housenumber": "166-11",
+"addr:postcode": "11358",
+"addr:street": "Northern Boulevard",
+"name": "L&R Restaurant Equipment Supply Inc.",
+"name:zh": "\u5168\u71ca\u7089\u5934\u516c\u53f8",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 5754424775,
+"lat": 40.7461331,
+"lon": -73.975383,
+"tags": {
+"addr:housenumber": "238",
+"addr:postcode": "10016",
+"addr:street": "East 36th Street",
+"craft": "tailor",
+"name": "Debonair Cleaners",
+"opening_hours": "Mo-Fr 07:00-19:00; Sa 08:00-18:00",
+"phone": "+1-212-679-5236",
+"shop": "dry_cleaning"
+}
+},
+{
+"type": "node",
+"id": 8921355200,
+"lat": 40.9618013,
+"lon": -74.250043,
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "1341",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "Paterson-Hamburg Turnpike",
+"name": "Kris Lowe Construction",
+"office": "construction_company"
+}
+},
+{
+"type": "node",
+"id": 4146445089,
+"lat": 40.6974694,
+"lon": -73.9705131,
+"tags": {
+"name": "Parlor Coffee",
+"office": "company",
+"website": "https://parlorcoffee.com"
+}
+},
+{
+"type": "node",
+"id": 12363158591,
+"lat": 40.645336,
+"lon": -74.2291502,
+"tags": {
+"addr:city": "Linden",
+"addr:housenumber": "300",
+"addr:postcode": "07036",
+"addr:state": "NJ",
+"addr:street": "Park Avenue South",
+"brand": "Harbor Freight Tools",
+"brand:wikidata": "Q5654601",
+"name": "Harbor Freight Tools",
+"opening_hours": "Mo-Sa 08:00-20:00; Su 09:00-18:00",
+"phone": "+1 908-486-0513",
+"ref": "420",
+"shop": "hardware",
+"website": "https://www.harborfreight.com/storelocator/300-south-park-avenue-linden-07036?number=420"
+}
+},
+{
+"type": "way",
+"id": 249623325,
+"center": {
+"lat": 40.6439576,
+"lon": -73.9898988
+},
+"tags": {
+"addr:housenumber": "3722",
+"addr:postcode": "11219",
+"addr:street": "Fort Hamilton Parkway",
+"building": "yes",
+"height": "4.9",
+"name": "Y & B Lighting",
+"nycdoitt:bin": "3122944",
+"phone": "+1-718-436-1854",
+"shop": "trade"
+}
+},
+{
+"type": "node",
+"id": 2710839397,
+"lat": 40.7465417,
+"lon": -73.9772892,
+"tags": {
+"addr:housenumber": "531",
+"addr:postcode": "10016",
+"addr:street": "3rd Avenue",
+"atm": "yes",
+"craft": "tailor",
+"delivery": "yes",
+"laundry_service": "yes",
+"name": "Park Cleaners & Tailors",
+"opening_hours": "Mo-Fr 07:00-19:00; Sa 08:00-17:00",
+"phone": "+1-212-532-8578",
+"shop": "dry_cleaning"
+}
+},
+{
+"type": "node",
+"id": 12648153045,
+"lat": 40.8775959,
+"lon": -73.5970082,
+"tags": {
+"addr:city": "Locust Valley",
+"addr:housenumber": "134",
+"addr:postcode": "11560",
+"addr:state": "NY",
+"addr:street": "Birch Hill Road",
+"email": "contact@ferapharma.com",
+"fax": "+1 414-434-4603",
+"name": "Fera Pharmaceutial",
+"office": "yes",
+"phone": "+1 414-434-6604",
+"website": "https://www.ferapharma.com/"
+}
+},
+{
+"type": "node",
+"id": 2704048073,
+"lat": 40.7401799,
+"lon": -73.9845758,
+"tags": {
+"addr:housenumber": "136",
+"addr:postcode": "10010",
+"addr:street": "East 24th Street",
+"craft": "caterer",
+"name": "Hidden City",
+"phone": "+1-212-979-6161",
+"website": "https://www.hiddencitynyc.com"
+}
+},
+{
+"type": "node",
+"id": 13570080164,
+"lat": 40.9168188,
+"lon": -74.3577043,
+"tags": {
+"addr:city": "Towaco",
+"addr:housenumber": "435",
+"addr:postcode": "07082",
+"addr:state": "NJ",
+"addr:street": "Main Road",
+"contact:facebook": "https://www.facebook.com/profile.php?id=61574608486481",
+"craft": "window_construction",
+"name": "The Window Source of North Jersey",
+"opening_hours": "Mo-Fr 07:00-16:00",
+"phone": "+1-973-358-8881",
+"website": "https://windowsourcenorthjersey.com/",
+"year_of_construction": "2019"
+}
+},
+{
+"type": "node",
+"id": 5868540326,
+"lat": 40.6280564,
+"lon": -73.7214893,
+"tags": {
+"addr:city": "Woodmere",
+"addr:housenumber": "716",
+"addr:postcode": "11598",
+"addr:state": "NY",
+"addr:street": "West Broadway",
+"craft": "shoemaker",
+"name": "Shoe Repair",
+"nysgissam:nysaddresspointid": "NASS322474"
+}
+},
+{
+"type": "node",
+"id": 11408697939,
+"lat": 40.8138579,
+"lon": -73.6659342,
+"tags": {
+"addr:city": "Port Washington",
+"addr:housenumber": "99",
+"addr:postcode": "11050",
+"addr:state": "NY",
+"addr:street": "Seaview Boulevard",
+"name": "R Best Produce, Inc.",
+"office": "company"
+}
+},
+{
+"type": "way",
+"id": 247907200,
+"center": {
+"lat": 40.7083941,
+"lon": -73.8580413
+},
+"tags": {
+"addr:city": "Queens",
+"addr:housenumber": "75-09",
+"addr:postcode": "11385",
+"addr:street": "Woodhaven Boulevard",
+"alt_name": "Home Depot",
+"branch": "Woodhaven Blvd/Queens",
+"brand": "The Home Depot",
+"brand:wikidata": "Q864407",
+"building": "retail",
+"height": "8.0",
+"name": "The Home Depot",
+"nycdoitt:bin": "4095037",
+"opening_hours": "Mo-Sa 06:00-23:00; Su 08:00-20:00",
+"phone": "+1 718-830-3323",
+"ref": "1220",
+"shop": "doityourself",
+"website": "https://www.homedepot.com/l/Woodhaven-Blvd-Queens/NY/Glendale/11385/1220"
+}
+},
+{
+"type": "node",
+"id": 12056607334,
+"lat": 40.9516773,
+"lon": -74.2224328,
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "50",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "Hinchman Avenue",
+"craft": "plumber",
+"name": "new jersey state league of master plumbers"
+}
+},
+{
+"type": "node",
+"id": 9805118642,
+"lat": 40.6438292,
+"lon": -74.0200515,
+"tags": {
+"addr:housenumber": "259",
+"addr:postcode": "11220",
+"addr:street": "58th Street",
+"craft": "metal_construction",
+"name": "Double Seven Iron Work"
+}
+},
+{
+"type": "way",
+"id": 566436613,
+"center": {
+"lat": 40.8613484,
+"lon": -73.6372983
+},
+"tags": {
+"addr:city": "Glen Cove",
+"addr:housenumber": "45",
+"addr:postcode": "11542",
+"addr:state": "NY",
+"addr:street": "Herb Hill Road",
+"building": "yes",
+"craft": "brewery",
+"name": "Garvies Point Craft Brewery",
+"nysgissam:nysaddresspointid": "NASS219398",
+"website": "https://garviespointbreweryandrestaurant.com/"
+}
+},
+{
+"type": "node",
+"id": 7678152125,
+"lat": 40.740586,
+"lon": -73.9877533,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "28",
+"addr:postcode": "10010",
+"addr:street": "East 23rd Street",
+"craft": "shoemaker",
+"name": "Max Shoe Repair & Shine"
+}
+},
+{
+"type": "node",
+"id": 10797403548,
+"lat": 40.6300844,
+"lon": -74.0222068,
+"tags": {
+"craft": "key_cutter",
+"name": "NYC Hardware",
+"opening_hours": "Mo-Sa 08:00-18:00; Su 09:00-14:00",
+"phone": "+1-718-290-9025",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 10581023816,
+"lat": 40.6390476,
+"lon": -73.7056919,
+"tags": {
+"addr:city": "Hewlett",
+"addr:housenumber": "325",
+"addr:postcode": "11557",
+"addr:state": "NY",
+"addr:street": "Franklin Avenue",
+"craft": "pest_control",
+"name": "Davis Pest Control Inc",
+"note": "check position, could be SPAM",
+"opening_hours": "Mo-Fr 09:00-17:00",
+"payment:cash": "yes",
+"payment:cheque": "yes",
+"payment:mastercard": "yes",
+"payment:visa": "yes",
+"phone": "+1-917-374-6219",
+"website": "https://davispestcontrol.net"
+}
+},
+{
+"type": "node",
+"id": 8788941565,
+"lat": 41.0938595,
+"lon": -73.9472409,
+"tags": {
+"addr:city": "Nyack",
+"addr:housenumber": "316",
+"addr:postcode": "10960",
+"addr:state": "NY",
+"addr:street": "Route 59",
+"brand": "Harbor Freight Tools",
+"brand:wikidata": "Q5654601",
+"name": "Harbor Freight Tools",
+"phone": "+1-845-560-6667",
+"shop": "hardware",
+"website": "https://www.harborfreight.com/storelocator/316-route-59-nyack-10960?number=3292"
+}
+},
+{
+"type": "node",
+"id": 7173321592,
+"lat": 40.6946658,
+"lon": -73.9614067,
+"tags": {
+"name": "Tristate Low Voltage Supply",
+"shop": "trade"
+}
+},
+{
+"type": "node",
+"id": 6374724266,
+"lat": 40.6887416,
+"lon": -73.9926429,
+"tags": {
+"brand": "Indochino",
+"brand:wikidata": "Q64448127",
+"clothes": "suits",
+"craft": "tailor",
+"description": "custom men's suits and shirts",
+"name": "Indochino",
+"opening_hours": "Mo-Sa 11:00-19:00; Su 11:00-18:00",
+"phone": "+1-929-484-0332",
+"shop": "clothes",
+"website": "https://www.indochino.com/showroom/brooklyn"
+}
+},
+{
+"type": "way",
+"id": 681965429,
+"center": {
+"lat": 40.6675891,
+"lon": -73.9939614
+},
+"tags": {
+"addr:housenumber": "571",
+"addr:postcode": "11215",
+"addr:street": "3rd Avenue",
+"level": "0",
+"name": "3rd Avenue Plumbing & Heating Supplies",
+"opening_hours": "Mo-Fr 08:00-17:00",
+"phone": "+1-718-369-2138",
+"shop": "trade",
+"trade": "plumbing"
+}
+},
+{
+"type": "node",
+"id": 5691020742,
+"lat": 40.7060306,
+"lon": -73.9252937,
+"tags": {
+"addr:housenumber": "1154",
+"addr:street": "Flushing Avenue",
+"craft": "sawmill",
+"delivery": "yes",
+"email": "info@orientallumber.com",
+"name": "Oriental Lumber",
+"opening_hours": "Mo-Fr 07:30-17:00; Sa 08:00-16:00",
+"phone": "+1-718-386-8200",
+"shop": "hardware",
+"website": "http://orientallumber.com/",
+"wheelchair": "yes"
+}
+},
+{
+"type": "way",
+"id": 249104271,
+"center": {
+"lat": 40.6167047,
+"lon": -73.9750448
+},
+"tags": {
+"addr:housenumber": "1",
+"addr:postcode": "11204",
+"addr:street": "Avenue M",
+"building": "yes",
+"height": "6.9",
+"name": "McDonald Supply",
+"nycdoitt:bin": "3131015",
+"shop": "hardware"
+}
+},
+{
+"type": "way",
+"id": 573327117,
+"center": {
+"lat": 40.9268425,
+"lon": -74.2754981
+},
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "139",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "Ryerson Avenue",
+"building": "industrial",
+"craft": "sawmill",
+"name": "Boro Sawmill & Timber"
+}
+},
+{
+"type": "node",
+"id": 6317101296,
+"lat": 40.6791146,
+"lon": -73.9976275,
+"tags": {
+"check_date": "2026-05-26",
+"name": "Empire Pest Control",
+"office": "company",
+"phone": "+1-718-237-0989",
+"website": "https://www.empirepestcontrol.com"
+}
+},
+{
+"type": "node",
+"id": 2870708972,
+"lat": 40.7077651,
+"lon": -73.7966216,
+"tags": {
+"addr:city": "Jamaica",
+"addr:housenumber": "164-15",
+"addr:postcode": "11432",
+"addr:state": "NY",
+"addr:street": "89th Avenue",
+"craft": "textile_printing",
+"email": "bh22nyc@icloud.com",
+"name": "bh22 nyc",
+"phone": "+1-917-300-2735",
+"website": "https://www.bh22nyc.com"
+}
+},
+{
+"type": "node",
+"id": 12917458444,
+"lat": 40.7545943,
+"lon": -73.9772958,
+"tags": {
+"check_date": "2025-06-15",
+"craft": "shoemaker",
+"name": "Carmina"
+}
+},
+{
+"type": "node",
+"id": 7182888024,
+"lat": 40.8721196,
+"lon": -73.5304669,
+"tags": {
+"craft": "photographer",
+"name": "Creative Compositions"
+}
+},
+{
+"type": "node",
+"id": 11955992561,
+"lat": 40.6955339,
+"lon": -73.8006121,
+"tags": {
+"craft": "plumber",
+"name": "CG Plumbing Supply"
+}
+},
+{
+"type": "node",
+"id": 11408697931,
+"lat": 40.8106179,
+"lon": -73.6616998,
+"tags": {
+"addr:city": "Port Washington",
+"addr:housenumber": "15",
+"addr:postcode": "11050",
+"addr:state": "NY",
+"addr:street": "Harbor Park Drive",
+"name": "JESCO Lighting Group",
+"office": "company"
+}
+},
+{
+"type": "node",
+"id": 8529753725,
+"lat": 40.8057442,
+"lon": -73.6803979,
+"tags": {
+"addr:city": "Manhasset",
+"addr:housenumber": "57",
+"addr:postcode": "11030",
+"addr:state": "NY",
+"addr:street": "Boulder Road",
+"name": "Just the Write Touch",
+"office": "yes",
+"phone": "+1-516-510-9223",
+"website": "https://www.justthewritetouch.com/"
+}
+},
+{
+"type": "way",
+"id": 274398088,
+"center": {
+"lat": 40.8860674,
+"lon": -74.2420185
+},
+"tags": {
+"building": "yes",
+"name": "Benjamin Moore - Rossi Decorating Center",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 10273643373,
+"lat": 40.8619864,
+"lon": -73.9875468,
+"tags": {
+"name": "Benjamin Moore of Leonia",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 6983496822,
+"lat": 40.6620242,
+"lon": -74.0003847,
+"tags": {
+"name": "Gateway Builders Corp.",
+"office": "construction"
+}
+},
+{
+"type": "node",
+"id": 13269378684,
+"lat": 40.6542886,
+"lon": -74.3031507,
+"tags": {
+"addr:city": "Cranford",
+"addr:housenumber": "32",
+"addr:postcode": "07016",
+"addr:state": "NJ",
+"addr:street": "High Street",
+"craft": "carpenter",
+"name": "Action Home Improvement",
+"phone": "+1 347-387-2561",
+"was:building": "yes"
+}
+},
+{
+"type": "node",
+"id": 2827518435,
+"lat": 40.6822974,
+"lon": -74.0068671,
+"tags": {
+"craft": "gardener",
+"name": "Urban Aborists",
+"office": "company",
+"phone": "+1-718-522-0612",
+"website": "https://www.urbanarb.com"
+}
+},
+{
+"type": "node",
+"id": 4771881060,
+"lat": 40.7206396,
+"lon": -73.984399,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "23B",
+"addr:postcode": "10002",
+"addr:state": "NY",
+"addr:street": "Clinton Street",
+"name": "IMI Studios",
+"office": "yes"
+}
+},
+{
+"type": "node",
+"id": 11753614455,
+"lat": 40.6552088,
+"lon": -74.0061166,
+"tags": {
+"craft": "metal_construction",
+"name": "Y & L Stainless Steel",
+"phone": "+1-917-355-2211"
+}
+},
+{
+"type": "node",
+"id": 5564556152,
+"lat": 40.6982522,
+"lon": -73.9042753,
+"tags": {
+"addr:housenumber": "16-70",
+"addr:street": "Weirfield Street",
+"name": "LaserShip",
+"office": "company",
+"opening_hours": "Mo-Su 09:00-20:00",
+"phone": "+1-804-414-2590",
+"website": "https://lasership.com/"
+}
+},
+{
+"type": "way",
+"id": 484842650,
+"center": {
+"lat": 40.9046065,
+"lon": -74.0400401
+},
+"tags": {
+"addr:city": "Hackensack",
+"addr:housenumber": "58",
+"addr:postcode": "07621",
+"addr:state": "NJ",
+"addr:street": "Voorhis Lane",
+"building": "yes",
+"craft": "brewery",
+"name": "The Alementary brewing Company",
+"phone": "+1 973-204-0122",
+"website": "https://www.alementary.com/"
+}
+},
+{
+"type": "node",
+"id": 8501233687,
+"lat": 40.6761887,
+"lon": -74.0149522,
+"tags": {
+"addr:housenumber": "132",
+"addr:postcode": "11231",
+"addr:street": "Van Dyke Street",
+"name": "Cauv Design",
+"office": "company"
+}
+},
+{
+"type": "node",
+"id": 5521535839,
+"lat": 40.9063639,
+"lon": -74.26085,
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "28",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "Burgess Place",
+"name": "Crews-Farrell-Mead Co",
+"office": "company"
+}
+},
+{
+"type": "node",
+"id": 11294399140,
+"lat": 40.7266973,
+"lon": -73.9526258,
+"tags": {
+"name": "Lian Fa General Discount",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 9775991963,
+"lat": 40.6507305,
+"lon": -74.0185784,
+"tags": {
+"addr:housenumber": "4907",
+"addr:postcode": "11232",
+"addr:street": "1st Avenue",
+"fax": "+1-718-499-1804",
+"name": "BabyWuvInc",
+"office": "company",
+"phone": "+1-866-545-1960",
+"website": "http://www.babywuvinc.com"
+}
+},
+{
+"type": "node",
+"id": 2561683544,
+"lat": 40.6379501,
+"lon": -74.0179705,
+"tags": {
+"addr:housenumber": "6224",
+"addr:postcode": "11220",
+"addr:street": "5th Avenue",
+"craft": "plumber",
+"name": "William G. Iafe",
+"phone": "+1-718-492-0767"
+}
+},
+{
+"type": "way",
+"id": 239362950,
+"center": {
+"lat": 40.9619252,
+"lon": -74.2825789
+},
+"tags": {
+"building": "yes",
+"check_date": "2023-10-11",
+"craft": "carpenter",
+"name": "Freedom Fence",
+"phone": "+1 973-835-7777"
+}
+},
+{
+"type": "node",
+"id": 2844396392,
+"lat": 40.7242412,
+"lon": -73.914695,
+"tags": {
+"addr:housenumber": "56-35",
+"addr:postcode": "11378",
+"addr:street": "Rust Street",
+"amenity": "warehouse",
+"name": "Zam Zam Produce",
+"office": "company",
+"phone": "+1-347-251-3968"
+}
+},
+{
+"type": "way",
+"id": 548223059,
+"center": {
+"lat": 40.7135076,
+"lon": -74.3427566
+},
+"tags": {
+"addr:city": "Summit",
+"addr:housenumber": "49",
+"addr:state": "NJ",
+"addr:street": "Morris Avenue",
+"building": "yes",
+"craft": "hvac",
+"name": "Costa Central Air"
+}
+},
+{
+"type": "node",
+"id": 12520853135,
+"lat": 40.7418128,
+"lon": -73.8677114,
+"tags": {
+"addr:housenumber": "49-06",
+"addr:street": "Junction Boulevard",
+"check_date": "2025-01-21",
+"craft": "photographer",
+"name": "Lover Photo Studio",
+"opening_hours": "Mo-Sa 10:30-19:00; Su off",
+"phone": "+1 718-350-9357"
+}
+},
+{
+"type": "node",
+"id": 12885395313,
+"lat": 40.4247559,
+"lon": -74.2701155,
+"tags": {
+"name": "Kitchen Kraftsman - Remodeling, Cabinets, Flooring",
+"phone": "+1-732-583-3321",
+"shop": "kitchen",
+"website": "https://kitchenkraftsman.com/"
+}
+},
+{
+"type": "way",
+"id": 609067360,
+"center": {
+"lat": 40.7052972,
+"lon": -73.6504885
+},
+"tags": {
+"addr:city": "West Hempstead",
+"addr:housenumber": "314",
+"addr:postcode": "11552",
+"addr:state": "NY",
+"addr:street": "Hempstead Turnpike",
+"brand": "Ace Hardware",
+"brand:wikidata": "Q4672981",
+"building": "yes",
+"name": "Ace Hardware",
+"nysgissam:nysaddresspointid": "NASS363230",
+"shop": "doityourself"
+}
+},
+{
+"type": "way",
+"id": 884907356,
+"center": {
+"lat": 40.9061531,
+"lon": -73.8119065
+},
+"tags": {
+"addr:city": "Pelham",
+"addr:housenumber": "229",
+"addr:postcode": "10803",
+"addr:state": "NY",
+"addr:street": "Wolfs Lane",
+"amenity": "restaurant",
+"building": "retail",
+"contact:phone": "+1-914-738-4700",
+"contact:website": "https://villaggiotrattoria.com/",
+"craft": "caterer",
+"cuisine": "italian;pizza",
+"name": "Villaggio",
+"opening_hours": "Mo-Th 11:00-22:00; Fr, Sa 11:00-23:00; Su 12:30-22:00"
+}
+},
+{
+"type": "node",
+"id": 7658938667,
+"lat": 40.6779407,
+"lon": -73.9605072,
+"tags": {
+"addr:housenumber": "823",
+"addr:postcode": "11238",
+"addr:street": "Bergen Street",
+"name": "Stageone",
+"office": "company",
+"phone": "+1-212-245-1889"
+}
+},
+{
+"type": "node",
+"id": 8405734518,
+"lat": 40.7123257,
+"lon": -73.9591702,
+"tags": {
+"addr:city": "Brooklyn",
+"addr:housenumber": "210",
+"addr:postcode": "11211",
+"addr:state": "NY",
+"addr:street": "Roebling Street",
+"name": "B & G Hardware",
+"phone": "+1-718-388-4214",
+"shop": "hardware"
+}
+},
+{
+"type": "way",
+"id": 248240159,
+"center": {
+"lat": 40.6646742,
+"lon": -73.9994849
+},
+"tags": {
+"addr:housenumber": "80",
+"addr:postcode": "11232",
+"addr:street": "21st Street",
+"alt_name": "Kamco Supply",
+"building": "yes",
+"fax": "+1-718-788-8607",
+"height": "14.8",
+"name": "Kamco Building Materials",
+"nycdoitt:bin": "3009123",
+"opening_hours": "Mo-Fr 06:00-18:00; Sa 07:00-12:00",
+"phone": "+1-718-768-1234",
+"shop": "trade",
+"trade": "building_supplies",
+"website": "https://www.kamconewyork.com"
+}
+},
+{
+"type": "node",
+"id": 8650996094,
+"lat": 40.7508088,
+"lon": -73.9481028,
+"tags": {
+"addr:city": "Long Island City",
+"addr:housenumber": "11-11",
+"addr:postcode": "11101",
+"addr:state": "NY",
+"addr:street": "43rd Road",
+"craft": "cleaning",
+"name": "Citi Window Wash",
+"opening_hours": "Mo-Fr 08:00-18:00",
+"phone": "+1-212-763-3334",
+"website": "https://citiwindowwash.com/"
+}
+},
+{
+"type": "node",
+"id": 13061053901,
+"lat": 40.7746257,
+"lon": -73.9516802,
+"tags": {
+"addr:housenumber": "351",
+"addr:postcode": "10028",
+"addr:street": "East 82nd Street",
+"craft": "electronics_repair",
+"name": "DriveTech Computer Repair",
+"opening_hours": "Mo-Fr 09:00-18:00",
+"website": "https://www.drivetechpc.com/"
+}
+},
+{
+"type": "node",
+"id": 11414318780,
+"lat": 40.7981342,
+"lon": -73.9689189,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "2672",
+"addr:postcode": "10025",
+"addr:state": "NY",
+"addr:street": "Broadway",
+"name": "The Upper Westside Hardware",
+"phone": "+1-212-678-2441",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 12988631925,
+"lat": 40.6356031,
+"lon": -74.135175,
+"tags": {
+"craft": "electronics_repair",
+"name": "Smartphone Center"
+}
+},
+{
+"type": "way",
+"id": 723246200,
+"center": {
+"lat": 40.7414216,
+"lon": -73.9587734
+},
+"tags": {
+"construction": "railroad",
+"landuse": "construction",
+"name": "LIRR LIC Terminal Reconstruction"
+}
+},
+{
+"type": "node",
+"id": 10621412746,
+"lat": 40.711462,
+"lon": -73.9470311,
+"tags": {
+"name": "AHN Hardware and Houseware",
+"phone": "+1-718-388-6050",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 2825064884,
+"lat": 40.7089135,
+"lon": -74.0054433,
+"tags": {
+"addr:housenumber": "74",
+"addr:postcode": "10038",
+"addr:street": "Fulton Street",
+"check_date": "2024-02-10",
+"level": "0",
+"name": "Fulton Supply Hardware",
+"phone": "+1-212-587-4088",
+"shop": "hardware",
+"website": "https://fultonsupplynyc.com"
+}
+},
+{
+"type": "way",
+"id": 1313737602,
+"center": {
+"lat": 40.6561132,
+"lon": -73.5753032
+},
+"tags": {
+"addr:city": "Freeport",
+"addr:housenumber": "160",
+"addr:postcode": "11520",
+"addr:state": "NY",
+"addr:street": "East Sunrise Highway",
+"alt_name": "Home Depot",
+"brand": "The Home Depot",
+"brand:wikidata": "Q864407",
+"building:part": "yes",
+"name": "The Home Depot",
+"phone": "+1 516-546-6280",
+"ref": "1206",
+"shop": "doityourself",
+"website": "https://www.homedepot.com/l/Freeport/NY/Freeport/11520/1206"
+}
+},
+{
+"type": "node",
+"id": 3809000945,
+"lat": 40.7522079,
+"lon": -73.9939403,
+"tags": {
+"name": "License Express",
+"office": "yes"
+}
+},
+{
+"type": "node",
+"id": 6702152662,
+"lat": 40.5444526,
+"lon": -74.1656859,
+"tags": {
+"addr:city": "Staten Island",
+"addr:housenumber": "3836",
+"addr:postcode": "10312",
+"addr:state": "NY",
+"addr:street": "Richmond Avenue",
+"craft": "electrician",
+"name": "Sure Electrical Contracting"
+}
+},
+{
+"type": "node",
+"id": 11001137270,
+"lat": 40.7775152,
+"lon": -73.9532915,
+"tags": {
+"addr:housenumber": "226",
+"addr:street": "East 85th Street",
+"craft": "tailor",
+"level": "0",
+"name": "85 Custom Tailor",
+"opening_hours": "Mo-Fr 09:00-19:00; Sa 09:00-17:00",
+"phone": "+1 212-452-4282"
+}
+},
+{
+"type": "way",
+"id": 248474793,
+"center": {
+"lat": 40.5718061,
+"lon": -73.9917274
+},
+"tags": {
+"addr:housenumber": "2527",
+"addr:postcode": "11224",
+"addr:street": "Boardwalk West",
+"building": "industrial",
+"building:levels": "1",
+"building:material": "brick",
+"height": "6.5",
+"name": "Mark Contracting",
+"nycdoitt:bin": "3329346",
+"roof:shape": "flat"
+}
+},
+{
+"type": "way",
+"id": 204460822,
+"center": {
+"lat": 40.5412175,
+"lon": -74.4751605
+},
+"tags": {
+"building": "yes",
+"building:levels": "12",
+"name": "Ericsson",
+"office": "yes",
+"source": "Bing"
+}
+},
+{
+"type": "node",
+"id": 2761570408,
+"lat": 40.7983587,
+"lon": -73.9637565,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "910",
+"addr:postcode": "10025",
+"addr:state": "NY",
+"addr:street": "Columbus Avenue",
+"name": "Columbus Hardware",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 2704161405,
+"lat": 40.7401156,
+"lon": -73.9868732,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "304",
+"addr:postcode": "10010",
+"addr:state": "NY",
+"addr:street": "Park Avenue South",
+"email": "info@jaycataldo.com",
+"name": "Jay Cataldo Life Coaching",
+"office": "yes",
+"phone": "+1-800-617-6186",
+"website": "https://jaycataldo.com"
+}
+},
+{
+"type": "way",
+"id": 276386256,
+"center": {
+"lat": 40.8710518,
+"lon": -73.8774339
+},
+"tags": {
+"addr:housenumber": "3099",
+"addr:postcode": "10467",
+"addr:street": "Webster Avenue",
+"building": "yes",
+"craft": "locksmith",
+"height": "10",
+"level": "0",
+"name": "R&R Auto Locksmith Service",
+"nycdoitt:bin": "2017898"
+}
+},
+{
+"type": "way",
+"id": 249586782,
+"center": {
+"lat": 40.6465972,
+"lon": -74.0163694
+},
+"tags": {
+"addr:housenumber": "5202",
+"addr:postcode": "11220",
+"addr:street": "3rd Avenue",
+"branch": "Brooklyn",
+"brand": "Cooper Electric",
+"brand:wikidata": "Q109826296",
+"building": "commercial",
+"email": "alex.alvarez@cooper-electric.com",
+"fax": "+1 929-397-3739",
+"height": "13.2",
+"name": "Cooper Electric",
+"nycdoitt:bin": "3388017",
+"opening_hours": "Mo-Fr 07:00-16:00",
+"phone": "+1 929-397-3720",
+"shop": "trade",
+"trade": "building_supplies",
+"website": "https://www.cooper-electric.com/about/location/brooklyn"
+}
+},
+{
+"type": "node",
+"id": 7477079480,
+"lat": 40.9287965,
+"lon": -73.7527332,
+"tags": {
+"addr:city": "Larchmont",
+"addr:housenumber": "157",
+"addr:postcode": "10538",
+"addr:state": "NY",
+"addr:street": "Larchmont Avenue",
+"craft": "caterer",
+"name": "Apiary"
+}
+},
+{
+"type": "node",
+"id": 14192086986,
+"lat": 40.8540217,
+"lon": -74.1727802,
+"tags": {
+"addr:city": "Clifton",
+"addr:housenumber": "1342",
+"addr:postcode": "07012",
+"addr:state": "NJ",
+"addr:street": "Clifton Avenue",
+"amenity": "cafe",
+"check_date": "2026-09-18",
+"craft": "confectionery",
+"name": "Chocolate House",
+"opening_hours": "Su-Th 12:00-00:00; Fr-Sa 12:00-01:00",
+"phone": "+1 973-246-3650",
+"shop": "chocolate",
+"website": "https://direct.chownow.com/order/29911/locations/60855"
+}
+},
+{
+"type": "node",
+"id": 12971671622,
+"lat": 40.6127669,
+"lon": -74.1234672,
+"tags": {
+"name": "Construction Accessories Group",
+"office": "construction_company"
+}
+},
+{
+"type": "way",
+"id": 247930531,
+"center": {
+"lat": 40.6583492,
+"lon": -73.9985629
+},
+"tags": {
+"addr:housenumber": "195",
+"addr:postcode": "11232",
+"addr:street": "28th Street",
+"building": "warehouse",
+"height": "5.6",
+"name": "Limitness Electrical Resources",
+"nycdoitt:bin": "3009771",
+"shop": "trade",
+"short_name": "L.E.R.",
+"trade": "electrical"
+}
+},
+{
+"type": "way",
+"id": 915692495,
+"center": {
+"lat": 40.8970621,
+"lon": -74.2663599
+},
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "17",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "First Street",
+"building": "static_caravan",
+"name": "Tony's Paving & Construction"
+}
+},
+{
+"type": "node",
+"id": 10238973159,
+"lat": 40.6529474,
+"lon": -74.0099276,
+"tags": {
+"addr:housenumber": "274",
+"addr:postcode": "11232",
+"addr:street": "41st Street",
+"craft": "hvac",
+"name": "Ice Age Mechanical",
+"phone": "+1-718-344-5095"
+}
+},
+{
+"type": "node",
+"id": 6883693022,
+"lat": 40.6912803,
+"lon": -73.9908442,
+"tags": {
+"craft": "tailor",
+"name": "Downtown Cleaners",
+"opening_hours": "Mo-Fr 08:00-18:55; Sa 09:00-17:45",
+"phone": "+1-718-403-9300",
+"shop": "dry_cleaning"
+}
+},
+{
+"type": "way",
+"id": 250362829,
+"center": {
+"lat": 40.6974653,
+"lon": -73.9651004
+},
+"tags": {
+"addr:housenumber": "276",
+"addr:postcode": "11205",
+"addr:street": "Flushing Avenue",
+"building": "yes",
+"height": "8.3",
+"name": "Ring & Bring",
+"nycdoitt:bin": "3000000",
+"office": "company"
+}
+},
+{
+"type": "node",
+"id": 9021528074,
+"lat": 40.9223802,
+"lon": -74.269181,
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "1133",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "NJ-23",
+"name": "A1 Prestige, Llc",
+"office": "yes"
+}
+},
+{
+"type": "way",
+"id": 239364143,
+"center": {
+"lat": 40.952867,
+"lon": -74.2802442
+},
+"tags": {
+"building": "yes",
+"craft": "carpenter",
+"name": "MyFence2Go"
+}
+},
+{
+"type": "node",
+"id": 8633931427,
+"lat": 40.9213601,
+"lon": -74.2672361,
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "1044",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "NJ-23",
+"addr:unit": "310",
+"name": "Best Buys Direct Inc",
+"office": "company"
+}
+},
+{
+"type": "node",
+"id": 2550018678,
+"lat": 40.6792269,
+"lon": -73.985336,
+"tags": {
+"amenity": "arts_centre",
+"craft": "pottery",
+"cuisine": "coffee_shop",
+"name": "Still Life",
+"opening_hours": "Mo-Su 08:00-16:30",
+"phone": "+1-347-384-2862",
+"website": "https://www.stilllifecafe.com/"
+}
+},
+{
+"type": "node",
+"id": 10767181158,
+"lat": 40.5494751,
+"lon": -74.2211716,
+"tags": {
+"craft": "glaziery",
+"name": "King David Gallery"
+}
+},
+{
+"type": "node",
+"id": 8730129363,
+"lat": 40.9306622,
+"lon": -74.2267731,
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "1208",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "Preakness Avenue",
+"craft": "painter",
+"name": "Joshua Painting NJ & Renovation"
+}
+},
+{
+"type": "node",
+"id": 5592608792,
+"lat": 40.9700721,
+"lon": -74.2768672,
+"tags": {
+"addr:city": "Wayne",
+"addr:housenumber": "150",
+"addr:postcode": "07470",
+"addr:state": "NJ",
+"addr:street": "Pompton Plains Crossroad",
+"name": "Absolute Material Handling, Inc.",
+"office": "yes"
+}
+},
+{
+"type": "node",
+"id": 13308433524,
+"lat": 40.7339645,
+"lon": -73.9988179,
+"tags": {
+"addr:housenumber": "66",
+"addr:postcode": "10011",
+"addr:street": "West 9th Street",
+"craft": "tailor",
+"name": "World Class Cleaners",
+"opening_hours": "Mo-Fr 08:00-18:00, Sa 09:00-17:00",
+"phone": "+1-212-460-0002",
+"shop": "dry_cleaning"
+}
+},
+{
+"type": "node",
+"id": 4721376918,
+"lat": 40.7600121,
+"lon": -74.4167149,
+"tags": {
+"addr:city": "Madison",
+"addr:housenumber": "6",
+"addr:postcode": "07940-1883",
+"addr:state": "NJ",
+"addr:street": "Main Street",
+"check_date": "2025-12-16",
+"contact:facebook": "https://www.facebook.com/mudclaystudio",
+"contact:instagram": "https://www.instagram.com/mudclaystudionj",
+"craft": "pottery",
+"currency:XBT": "yes",
+"description": "Ceramic studio, workshops, classes, parties",
+"name": "Mud Clay Studio",
+"opening_hours": "Tu-Th 12:30-18:00; Fr-Sa 10:00-18:00; Su 10:00-17:00",
+"payment:lightning": "yes",
+"payment:lightning:operator": "square",
+"payment:lightning_contactless": "no",
+"payment:onchain": "no",
+"phone": "+1-973-520-8480",
+"website": "https://mudclaystudio.com/"
+}
+},
+{
+"type": "node",
+"id": 11408697911,
+"lat": 40.8124658,
+"lon": -73.6626702,
+"tags": {
+"addr:city": "Port Washington",
+"addr:housenumber": "34",
+"addr:postcode": "11050",
+"addr:state": "NY",
+"addr:street": "Harbor Park Drive",
+"brand": "Iron Mountain",
+"brand:wikidata": "Q1673079",
+"name": "Iron Mountain",
+"office": "company"
+}
+},
+{
+"type": "node",
+"id": 2688438317,
+"lat": 40.7442104,
+"lon": -73.9903727,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "30",
+"addr:postcode": "10010",
+"addr:state": "NY",
+"addr:street": "West 26th Street",
+"level": "7",
+"name": "Samsung Accelerator",
+"office": "company",
+"smoking": "no",
+"website": "https://samsungaccelerator.com/"
+}
+},
+{
+"type": "node",
+"id": 5986291047,
+"lat": 40.7338564,
+"lon": -73.8693368,
+"tags": {
+"addr:housenumber": "91-20",
+"addr:street": "59th Avenue",
+"craft": "jeweller",
+"name": "True Expression",
+"phone": "+1-718-899-7999",
+"website": "https://trueexpressionstudio.com/"
+}
+},
+{
+"type": "way",
+"id": 555011029,
+"center": {
+"lat": 40.7728719,
+"lon": -73.4834784
+},
+"tags": {
+"addr:city": "Plainview",
+"addr:housenumber": "5",
+"addr:postcode": "11803",
+"addr:state": "NY",
+"addr:street": "Grohmans Lane",
+"building": "yes",
+"craft": "photographer",
+"name": "Merrick Printing",
+"nysgissam:nysaddresspointid": "NASS046715"
+}
+},
+{
+"type": "node",
+"id": 6977837302,
+"lat": 40.7140856,
+"lon": -73.7538162,
+"tags": {
+"craft": "plumber",
+"name": "Genet Plumbing & Heating"
+}
+},
+{
+"type": "node",
+"id": 5191768761,
+"lat": 40.6748889,
+"lon": -73.976195,
+"tags": {
+"atm": "yes",
+"craft": "tailor",
+"dry_cleaning": "yes",
+"laundry_service": "yes",
+"name": "Lucky L&W Laundromat",
+"opening_hours": "Mo-Su 08:00-20:00",
+"phone": "+1-718-789-9420",
+"shop": "laundry"
+}
+},
+{
+"type": "node",
+"id": 2860335772,
+"lat": 40.8032488,
+"lon": -73.9088529,
+"tags": {
+"addr:housenumber": "845",
+"addr:postcode": "10454",
+"addr:street": "East 138th Street",
+"name": "Johnstone Supply",
+"phone": "+1 718 402 3707",
+"shop": "hardware",
+"website": "www.johnstonesupply.com/60"
+}
+},
+{
+"type": "node",
+"id": 5344124530,
+"lat": 40.6914406,
+"lon": -73.7383041,
+"tags": {
+"addr:housenumber": "118-44",
+"addr:street": "224th Street",
+"name": "Classical Iron & Home Improvements",
+"phone": "+1-718-528-2401",
+"shop": "doityourself",
+"website": "www.classicaliron.com"
+}
+},
+{
+"type": "node",
+"id": 5346066698,
+"lat": 40.7891243,
+"lon": -73.8129575,
+"tags": {
+"addr:housenumber": "150-25",
+"addr:street": "14th Avenue",
+"craft": "roofer",
+"email": "sales@baschnagel.com",
+"name": "Baschnagel Bros inc.",
+"phone": "+1-718-767-1919",
+"website": "www.baschnagel.com"
+}
+},
+{
+"type": "node",
+"id": 5451778257,
+"lat": 40.7735776,
+"lon": -73.9068406,
+"tags": {
+"addr:city": "Astoria",
+"addr:housenumber": "37-21",
+"addr:postcode": "11105",
+"addr:state": "NY",
+"addr:street": "Ditmars Boulevard",
+"craft": "electronics_repair",
+"electronics_repair": "phone;computer",
+"email": "rdunit88@gmail.com",
+"name": "Repair Wiz"
+}
+},
+{
+"type": "node",
+"id": 5801918141,
+"lat": 40.702684,
+"lon": -73.9316047,
+"tags": {
+"addr:housenumber": "129",
+"addr:street": "Noll Street",
+"craft": "sculptor",
+"email": "brooklynrockwerks@gmail.com",
+"name": "Brooklyn Rockwerks",
+"opening_hours": "Mo-Fr 09:00-17:00",
+"phone": "+1-718-628-5993"
+}
+},
+{
+"type": "node",
+"id": 5910578407,
+"lat": 40.8241046,
+"lon": -74.4799164,
+"tags": {
+"email": "firstlimos@gmail.com",
+"name": "First Limo Car Service",
+"office": "yes",
+"phone": "+1 973-255-7847"
+}
+},
+{
+"type": "node",
+"id": 6574923326,
+"lat": 40.7508089,
+"lon": -73.9755931,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "150",
+"addr:postcode": "10017",
+"addr:state": "NY",
+"addr:street": "East 42nd Street",
+"email": "newyork@videobeat.net",
+"level": "13",
+"name": "Videobeat",
+"office": "company",
+"opening_hours": "Mo-Fr 09:00-18:00"
+}
+},
+{
+"type": "node",
+"id": 10595059060,
+"lat": 40.7033618,
+"lon": -73.8206641,
+"tags": {
+"craft": "builder",
+"description": "brick work, repointing, steam cleaning, street fabrication, concrete work, roofing metal, decorative stones",
+"email": "daverestauration@aol.com",
+"name": "Dave Restauration Inc.",
+"phone": "+1 718-805-5630"
+}
+},
+{
+"type": "node",
+"id": 11869866437,
+"lat": 40.7095652,
+"lon": -73.8301161,
+"tags": {
+"addr:housenumber": "82-64",
+"addr:street": "Austin Street",
+"check_date": "2024-04-30",
+"craft": "upholsterer",
+"email": "fairchilddesign@aol.com",
+"name": "Fairchild Fine Furniture",
+"phone": "+1 718-441-1818"
+}
+},
+{
+"type": "node",
+"id": 12829362045,
+"lat": 40.6377328,
+"lon": -73.9564616,
+"tags": {
+"addr:city": "Brooklyn",
+"addr:housenumber": "597",
+"addr:postcode": "11226",
+"addr:state": "NY",
+"addr:street": "East 22nd Street",
+"craft": "roofer;interior_work",
+"email": "bigrose597@gmail.com",
+"name": "Best Big Rose Construction Company",
+"phone": "+1-718-491-3622;+1-718-434-4396"
+}
+},
+{
+"type": "node",
+"id": 13040296873,
+"lat": 40.6251981,
+"lon": -74.0746668,
+"tags": {
+"addr:city": "Staten Island",
+"addr:housenumber": "691",
+"addr:postcode": "10304",
+"addr:state": "NY",
+"addr:street": "Bay Street",
+"craft": "caterer",
+"email": "cvparties@gmail.com",
+"name": "Chez Vous Catering",
+"note": "Catering and Party Rental Service",
+"phone": "+1-718-720-0900"
+}
+},
+{
+"type": "node",
+"id": 13577410518,
+"lat": 40.747383,
+"lon": -73.9967156,
+"tags": {
+"addr:city": "New York",
+"addr:housenumber": "328",
+"addr:postcode": "10001",
+"addr:state": "NY",
+"addr:street": "8th Avenue",
+"alt_name": "Chelsea Hardware NYC;Chelsea Hardware Store",
+"contact:instagram": "https://www.instagram.com/chelseahardwarenyc/",
+"email": "chelseahardwarenyc@gmail.com",
+"name": "Chelsea Hardware",
+"opening_hours": "Mo-Fr 09:00-18:00; Sa 10:00-16:00; Su off",
+"phone": "+1-646-649-4749",
+"shop": "hardware"
+}
+},
+{
+"type": "node",
+"id": 14053123021,
+"lat": 40.7087009,
+"lon": -73.9062327,
+"tags": {
+"addr:city": "Ridgewood",
+"addr:housenumber": "578",
+"addr:postcode": "11385",
+"addr:state": "NY",
+"addr:street": "Grandview Avenue",
+"craft": "car_painter",
+"email": "scvgaragenyc@gmail.com",
+"name": "SCV Garage",
+"service:vehicle:painting": "yes",
+"shop": "car_repair"
+}
+},
+{
+"type": "way",
+"id": 276386224,
+"center": {
+"lat": 40.8714321,
+"lon": -73.8786812
+},
+"tags": {
+"addr:city": "Bronx",
+"addr:housenumber": "3083",
+"addr:postcode": "10467",
+"addr:state": "NY",
+"addr:street": "Decatur Avenue",
+"building": "yes",
+"craft": "locksmith",
+"email": "cp@bronxlocksmith.com",
+"height": "7.5",
+"name": "R&R Auto Locksmith Service",
+"nycdoitt:bin": "2017928",
+"phone": "+1-914-840-0056"
+}
+},
+{
+"type": "way",
+"id": 622339867,
+"center": {
+"lat": 40.7901873,
+"lon": -73.942145
+},
+"tags": {
+"addr:housenumber": "306",
+"addr:postcode": "10029",
+"addr:street": "East 106th Street",
+"email": "info@menschmill.com",
+"fax": "+1 646-380-1326",
+"name": "Mensch Supply",
+"opening_hours": "Mo-Fr 07:00-17:00",
+"phone": "+1 212-876-1100",
+"shop": "trade",
+"trade": "building_supplies"
+}
+}
+]
+}

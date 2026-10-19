@@ -1,0 +1,38 @@
+{
+ "candidates": [
+  {
+   "content": {
+    "role": "model",
+    "parts": [
+     {
+      "text": "Filtering to Master Elite storm-restoration roofers within 10 miles."
+     },
+     {
+      "functionCall": {
+       "name": "applyListFilters",
+       "args": {
+        "tiers": [
+         "master_elite"
+        ],
+        "services": [
+         "storm_damage"
+        ],
+        "max_distance_miles": 10
+       }
+      },
+      "thoughtSignature": "CiQBVKhc7cFixtureSignatureOnlyForTests0000AAAA=="
+     }
+    ]
+   },
+   "finishReason": "STOP",
+   "index": 0
+  }
+ ],
+ "usageMetadata": {
+  "promptTokenCount": 612,
+  "candidatesTokenCount": 41,
+  "totalTokenCount": 790,
+  "thoughtsTokenCount": 137
+ },
+ "modelVersion": "gemini-3.8-flash"
+}

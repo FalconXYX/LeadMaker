@@ -1,0 +1,34 @@
+{
+  "id": "ChIJTestAcmeRoofingHoboken01",
+  "types": [
+    "roofing_contractor",
+    "general_contractor",
+    "service",
+    "point_of_interest",
+    "establishment"
+  ],
+  "nationalPhoneNumber": "(201) 555-0142",
+  "internationalPhoneNumber": "+1 201-555-0142",
+  "formattedAddress": "100 Main St, Hoboken, NJ 07030, USA",
+  "rating": 4.8,
+  "googleMapsUri": "https://maps.google.com/?cid=11223344556677889900",
+  "websiteUri": "https://www.acmeroofing.example/?utm_source=gmb&utm_medium=organic&utm_campaign=gbp",
+  "regularOpeningHours": {
+    "weekdayDescriptions": [
+      "Monday: 8:00 AM – 5:00 PM",
+      "Tuesday: 8:00 AM – 5:00 PM",
+      "Wednesday: 8:00 AM – 5:00 PM",
+      "Thursday: 8:00 AM – 5:00 PM",
+      "Friday: 8:00 AM – 5:00 PM",
+      "Saturday: 9:00 AM – 1:00 PM",
+      "Sunday: Closed"
+    ]
+  },
+  "businessStatus": "OPERATIONAL",
+  "userRatingCount": 57,
+  "displayName": {
+    "text": "Acme Roofing & Siding",
+    "languageCode": "en"
+  },
+  "primaryType": "roofing_contractor"
+}

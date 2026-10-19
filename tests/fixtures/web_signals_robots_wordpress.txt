@@ -1,0 +1,6 @@
+# WordPress default virtual robots.txt as served by americansidingconstruction.com
+User-agent: *
+Disallow: /wp-admin/
+Allow: /wp-admin/admin-ajax.php
+
+Sitemap: https://americansidingconstruction.com/wp-sitemap.xml

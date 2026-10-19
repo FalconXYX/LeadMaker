@@ -1,0 +1,151 @@
+{
+ "_about": "Trimmed real Repository.lead_records() rows (Oct 2026 DB, website_crawl pages cut to the sentences under test). Stored `services` predate the tpo_roofing/new_construction detectors.",
+ "medium_with_pm_and_office": {
+  "gaf_id": "1003499",
+  "name": "CKG Contractors Inc",
+  "tier": "master_elite",
+  "review_count": 161,
+  "rating": 4.9,
+  "employees_range": "More than 5",
+  "phone": "(973) 599-0811",
+  "website": "https://ckgcontractors.com",
+  "in_business_since": 1999,
+  "state": "NJ",
+  "city": "Parsippany",
+  "postal_code": "07054",
+  "distance_miles": 24.2582568015718,
+  "presidents_club_stars": 0,
+  "specialties": [],
+  "contacts": [
+   {
+    "name": "Chris Ewing",
+    "title": "Owner",
+    "email": null,
+    "phone": null,
+    "source": "website",
+    "confidence": 0.6
+   },
+   {
+    "name": "Lucas Pena",
+    "title": "Project Manager",
+    "email": null,
+    "phone": null,
+    "source": "website",
+    "confidence": 0.6
+   },
+   {
+    "name": "Mark Ford",
+    "title": "Project Manager",
+    "email": null,
+    "phone": null,
+    "source": "website",
+    "confidence": 0.6
+   },
+   {
+    "name": "Danielle Campaneli",
+    "title": "Office Manager",
+    "email": null,
+    "phone": null,
+    "source": "website",
+    "confidence": 0.45
+   }
+  ],
+  "enrichment": {
+   "website_crawl": {
+    "status": "ok",
+    "data": {
+     "services": [
+      "skylights",
+      "siding",
+      "ventilation",
+      "windows",
+      "roof_repair",
+      "roof_replacement",
+      "general_contracting",
+      "doors",
+      "commercial_roofing",
+      "gutters",
+      "solar",
+      "storm_damage",
+      "financing",
+      "shingle_roofing",
+      "residential_roofing",
+      "painting",
+      "flat_roofing",
+      "inspections",
+      "metal_roofing",
+      "maintenance",
+      "slate_roofing",
+      "tile_roofing",
+      "cedar_roofing",
+      "emergency_service",
+      "insurance_claims",
+      "chimney"
+     ],
+     "team_size_hint": null
+    }
+   }
+  }
+ },
+ "stored_text_tpo_new_construction": {
+  "gaf_id": "1000595",
+  "name": "Advanced Roofing & Sheet Metal Co Inc",
+  "tier": "master_elite",
+  "review_count": 7,
+  "rating": 3.3,
+  "employees_range": null,
+  "phone": "(973) 751-3800",
+  "website": "https://www.advancedroofingnj.com",
+  "in_business_since": null,
+  "state": "NJ",
+  "city": "Belleville",
+  "postal_code": "07109",
+  "distance_miles": 9.352964908682027,
+  "presidents_club_stars": 0,
+  "specialties": [],
+  "contacts": [
+   {
+    "name": "David Gibello",
+    "title": "Company officer (FMCSA MCS-150)",
+    "email": "info@advancedroofingnj.com",
+    "phone": null,
+    "source": "fmcsa",
+    "confidence": 0.891
+   },
+   {
+    "name": "Craig Gibello",
+    "title": "Company officer (FMCSA MCS-150)",
+    "email": null,
+    "phone": null,
+    "source": "fmcsa",
+    "confidence": 0.891
+   }
+  ],
+  "enrichment": {
+   "website_crawl": {
+    "status": "ok",
+    "data": {
+     "services": [
+      "sheet_metal",
+      "flat_roofing",
+      "slate_roofing",
+      "metal_roofing",
+      "fascia_soffit",
+      "roof_replacement",
+      "shingle_roofing",
+      "gutters",
+      "skylights"
+     ],
+     "team_size_hint": null,
+     "pages": [
+      {
+       "url": "https://www.advancedroofingnj.com/services/",
+       "title": "Services – Advanced Roofing & Sheet Metal Co., Inc.",
+       "text": "ize in all types of low slope, steep slope and alternative roofing systems. Our construction expertise balances between new construction and re-roofing projects as well as repairs and upgrades. Low Slope Systems Single-ply: EPDM, TPO, PVC, Hypalon, new com ...  expertise balances between new construction and re-roofing projects as well as repairs and upgrades. Low Slope Systems Single-ply: EPDM, TPO, PVC, Hypalon, new composite systems, and more. Built-up: SBS, Modified Bitumen, Coal-Tar Pitch, APP and mor"
+      }
+     ]
+    }
+   }
+  }
+ }
+}

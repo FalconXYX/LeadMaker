@@ -1,0 +1,555 @@
+{
+ "type": "FeatureCollection",
+ "title": "Watches, warnings, and advisories for New Jersey, New York",
+ "features": [
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3d2fc0cfb5f393a98e3d50c7428341b21eb8d606.004.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3d2fc0cfb5f393a98e3d50c7428341b21eb8d606.004.1",
+    "id": "urn:oid:2.49.0.1.840.0.3d2fc0cfb5f393a98e3d50c7428341b21eb8d606.004.1",
+    "areaDesc": "Kent, DE; New Castle, DE; Sussex, DE; Caroline, MD; Kent, MD; Queen Anne's, MD; Talbot, MD; Atlantic, NJ; Cape May, NJ; Cumberland, NJ; Salem, NJ",
+    "geocode": {
+     "SAME": [
+      "010001",
+      "010003",
+      "010005",
+      "024011",
+      "024029",
+      "024035",
+      "024041",
+      "034001",
+      "034009",
+      "034011",
+      "034033"
+     ],
+     "UGC": [
+      "DEC001",
+      "DEC003",
+      "DEC005",
+      "MDC011",
+      "MDC029",
+      "MDC035",
+      "MDC041",
+      "NJC001",
+      "NJC009",
+      "NJC011",
+      "NJC033"
+     ]
+    },
+    "references": [
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.24d8f1bf359c11b269c0d96f2d1201c561dda55a.001.1",
+      "sent": "2026-10-16T15:52:00-04:00"
+     }
+    ],
+    "sent": "2026-10-16T18:57:00-04:00",
+    "effective": "2026-10-16T18:57:00-04:00",
+    "onset": "2026-10-16T18:57:00-04:00",
+    "expires": "2026-10-16T22:00:00-04:00",
+    "ends": "2026-10-16T22:00:00-04:00",
+    "status": "Actual",
+    "messageType": "Update",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Possible",
+    "urgency": "Future",
+    "event": "Severe Thunderstorm Watch",
+    "senderName": "NWS Mount Holly NJ",
+    "headline": "Severe Thunderstorm Watch issued October 16 at 6:57PM EDT until October 16 at 10:00PM EDT by NWS Mount Holly NJ",
+    "instruction": null
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3d2fc0cfb5f393a98e3d50c7428341b21eb8d606.001.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3d2fc0cfb5f393a98e3d50c7428341b21eb8d606.001.1",
+    "id": "urn:oid:2.49.0.1.840.0.3d2fc0cfb5f393a98e3d50c7428341b21eb8d606.001.1",
+    "areaDesc": "Burlington, NJ; Camden, NJ; Gloucester, NJ; Hunterdon, NJ; Mercer, NJ; Middlesex, NJ; Monmouth, NJ; Morris, NJ; Ocean, NJ; Somerset, NJ; Sussex, NJ; Warren, NJ",
+    "geocode": {
+     "SAME": [
+      "034005",
+      "034007",
+      "034015",
+      "034019",
+      "034021",
+      "034023",
+      "034025",
+      "034027",
+      "034029",
+      "034035",
+      "034037",
+      "034041"
+     ],
+     "UGC": [
+      "NJC005",
+      "NJC007",
+      "NJC015",
+      "NJC019",
+      "NJC021",
+      "NJC023",
+      "NJC025",
+      "NJC027",
+      "NJC029",
+      "NJC035",
+      "NJC037",
+      "NJC041"
+     ]
+    },
+    "references": [
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.24d8f1bf359c11b269c0d96f2d1201c561dda55a.001.1",
+      "sent": "2026-10-16T15:52:00-04:00"
+     }
+    ],
+    "sent": "2026-10-16T18:57:00-04:00",
+    "effective": "2026-10-16T18:57:00-04:00",
+    "onset": "2026-10-16T18:57:00-04:00",
+    "expires": "2026-10-16T19:12:20-04:00",
+    "ends": "2026-10-16T22:00:00-04:00",
+    "status": "Actual",
+    "messageType": "Cancel",
+    "category": "Met",
+    "severity": "Minor",
+    "certainty": "Observed",
+    "urgency": "Past",
+    "event": "Severe Thunderstorm Watch",
+    "senderName": "NWS Mount Holly NJ",
+    "headline": "The Severe Thunderstorm Watch has been cancelled.",
+    "instruction": null
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.38571ce1b9225410b91c6e4b56181c0dbed6fe6f.001.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.38571ce1b9225410b91c6e4b56181c0dbed6fe6f.001.1",
+    "id": "urn:oid:2.49.0.1.840.0.38571ce1b9225410b91c6e4b56181c0dbed6fe6f.001.1",
+    "areaDesc": "Hunterdon, NJ; Morris, NJ; Somerset, NJ",
+    "geocode": {
+     "SAME": [
+      "034019",
+      "034027",
+      "034035"
+     ],
+     "UGC": [
+      "NJC019",
+      "NJC027",
+      "NJC035"
+     ]
+    },
+    "references": [
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.1cd32d4d7e6813eded8a789dbdaff1f5ecb41ae0.001.1",
+      "sent": "2026-10-16T17:35:00-04:00"
+     },
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.a567d4fd369b9d48d3d0c1d70edb9ef4daaf0dd7.002.1",
+      "sent": "2026-10-16T17:44:00-04:00"
+     },
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.0f28d583feb51a6d304216580839cfab217be37a.001.1",
+      "sent": "2026-10-16T17:56:00-04:00"
+     },
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.836b5168003c9d09fed14914131db503a991bcbd.002.1",
+      "sent": "2026-10-16T18:01:00-04:00"
+     }
+    ],
+    "sent": "2026-10-16T18:06:00-04:00",
+    "effective": "2026-10-16T18:06:00-04:00",
+    "onset": "2026-10-16T18:06:00-04:00",
+    "expires": "2026-10-16T18:16:00-04:00",
+    "ends": "2026-10-16T18:15:00-04:00",
+    "status": "Actual",
+    "messageType": "Update",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Observed",
+    "urgency": "Immediate",
+    "event": "Severe Thunderstorm Warning",
+    "senderName": "NWS Mount Holly NJ",
+    "headline": "Severe Thunderstorm Warning issued October 16 at 6:06PM EDT until October 16 at 6:15PM EDT by NWS Mount Holly NJ",
+    "instruction": null
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.836b5168003c9d09fed14914131db503a991bcbd.001.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.836b5168003c9d09fed14914131db503a991bcbd.001.1",
+    "id": "urn:oid:2.49.0.1.840.0.836b5168003c9d09fed14914131db503a991bcbd.001.1",
+    "areaDesc": "Warren, NJ",
+    "geocode": {
+     "SAME": [
+      "034041"
+     ],
+     "UGC": [
+      "NJC041"
+     ]
+    },
+    "references": [
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.1cd32d4d7e6813eded8a789dbdaff1f5ecb41ae0.001.1",
+      "sent": "2026-10-16T17:35:00-04:00"
+     },
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.a567d4fd369b9d48d3d0c1d70edb9ef4daaf0dd7.002.1",
+      "sent": "2026-10-16T17:44:00-04:00"
+     },
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.0f28d583feb51a6d304216580839cfab217be37a.001.1",
+      "sent": "2026-10-16T17:56:00-04:00"
+     }
+    ],
+    "sent": "2026-10-16T18:01:00-04:00",
+    "effective": "2026-10-16T18:01:00-04:00",
+    "onset": "2026-10-16T18:01:00-04:00",
+    "expires": "2026-10-16T18:16:31-04:00",
+    "ends": "2026-10-16T18:15:00-04:00",
+    "status": "Actual",
+    "messageType": "Cancel",
+    "category": "Met",
+    "severity": "Minor",
+    "certainty": "Observed",
+    "urgency": "Past",
+    "event": "Severe Thunderstorm Warning",
+    "senderName": "NWS Mount Holly NJ",
+    "headline": "The Severe Thunderstorm Warning has been cancelled.",
+    "instruction": null
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.836b5168003c9d09fed14914131db503a991bcbd.002.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.836b5168003c9d09fed14914131db503a991bcbd.002.1",
+    "id": "urn:oid:2.49.0.1.840.0.836b5168003c9d09fed14914131db503a991bcbd.002.1",
+    "areaDesc": "Hunterdon, NJ; Morris, NJ; Somerset, NJ",
+    "geocode": {
+     "SAME": [
+      "034019",
+      "034027",
+      "034035"
+     ],
+     "UGC": [
+      "NJC019",
+      "NJC027",
+      "NJC035"
+     ]
+    },
+    "references": [
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.1cd32d4d7e6813eded8a789dbdaff1f5ecb41ae0.001.1",
+      "sent": "2026-10-16T17:35:00-04:00"
+     },
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.a567d4fd369b9d48d3d0c1d70edb9ef4daaf0dd7.002.1",
+      "sent": "2026-10-16T17:44:00-04:00"
+     },
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.0f28d583feb51a6d304216580839cfab217be37a.001.1",
+      "sent": "2026-10-16T17:56:00-04:00"
+     }
+    ],
+    "sent": "2026-10-16T18:01:00-04:00",
+    "effective": "2026-10-16T18:01:00-04:00",
+    "onset": "2026-10-16T18:01:00-04:00",
+    "expires": "2026-10-16T18:15:00-04:00",
+    "ends": "2026-10-16T18:15:00-04:00",
+    "status": "Actual",
+    "messageType": "Update",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Observed",
+    "urgency": "Immediate",
+    "event": "Severe Thunderstorm Warning",
+    "senderName": "NWS Mount Holly NJ",
+    "headline": "Severe Thunderstorm Warning issued October 16 at 6:01PM EDT until October 16 at 6:15PM EDT by NWS Mount Holly NJ",
+    "instruction": "For your protection move to an interior room on the lowest floor of a\nbuilding.\n\nThis severe thunderstorm may contain little or no lightning. Do not\nwait until you hear thunder before taking cover."
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a567d4fd369b9d48d3d0c1d70edb9ef4daaf0dd7.002.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a567d4fd369b9d48d3d0c1d70edb9ef4daaf0dd7.002.1",
+    "id": "urn:oid:2.49.0.1.840.0.a567d4fd369b9d48d3d0c1d70edb9ef4daaf0dd7.002.1",
+    "areaDesc": "Hunterdon, NJ; Morris, NJ; Somerset, NJ; Warren, NJ",
+    "geocode": {
+     "SAME": [
+      "034019",
+      "034027",
+      "034035",
+      "034041"
+     ],
+     "UGC": [
+      "NJC019",
+      "NJC027",
+      "NJC035",
+      "NJC041"
+     ]
+    },
+    "references": [
+     {
+      "identifier": "urn:oid:2.49.0.1.840.0.1cd32d4d7e6813eded8a789dbdaff1f5ecb41ae0.001.1",
+      "sent": "2026-10-16T17:35:00-04:00"
+     }
+    ],
+    "sent": "2026-10-16T17:44:00-04:00",
+    "effective": "2026-10-16T17:44:00-04:00",
+    "onset": "2026-10-16T17:44:00-04:00",
+    "expires": "2026-10-16T18:15:00-04:00",
+    "ends": "2026-10-16T18:15:00-04:00",
+    "status": "Actual",
+    "messageType": "Update",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Observed",
+    "urgency": "Immediate",
+    "event": "Severe Thunderstorm Warning",
+    "senderName": "NWS Mount Holly NJ",
+    "headline": "Severe Thunderstorm Warning issued October 16 at 5:44PM EDT until October 16 at 6:15PM EDT by NWS Mount Holly NJ",
+    "instruction": "For your protection move to an interior room on the lowest floor of a\nbuilding."
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1cd32d4d7e6813eded8a789dbdaff1f5ecb41ae0.001.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1cd32d4d7e6813eded8a789dbdaff1f5ecb41ae0.001.1",
+    "id": "urn:oid:2.49.0.1.840.0.1cd32d4d7e6813eded8a789dbdaff1f5ecb41ae0.001.1",
+    "areaDesc": "Hunterdon, NJ; Morris, NJ; Somerset, NJ; Warren, NJ; Northampton, PA",
+    "geocode": {
+     "SAME": [
+      "034019",
+      "034027",
+      "034035",
+      "034041",
+      "042095"
+     ],
+     "UGC": [
+      "NJC019",
+      "NJC027",
+      "NJC035",
+      "NJC041",
+      "PAC095"
+     ]
+    },
+    "references": [],
+    "sent": "2026-10-16T17:35:00-04:00",
+    "effective": "2026-10-16T17:35:00-04:00",
+    "onset": "2026-10-16T17:35:00-04:00",
+    "expires": "2026-10-16T18:15:00-04:00",
+    "ends": "2026-10-16T18:15:00-04:00",
+    "status": "Actual",
+    "messageType": "Alert",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Observed",
+    "urgency": "Immediate",
+    "event": "Severe Thunderstorm Warning",
+    "senderName": "NWS Mount Holly NJ",
+    "headline": "Severe Thunderstorm Warning issued October 16 at 5:35PM EDT until October 16 at 6:15PM EDT by NWS Mount Holly NJ",
+    "instruction": "For your protection move to an interior room on the lowest floor of a\nbuilding."
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b88883143f1e380c8795e8021e3910c76e3b3577.001.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b88883143f1e380c8795e8021e3910c76e3b3577.001.1",
+    "id": "urn:oid:2.49.0.1.840.0.b88883143f1e380c8795e8021e3910c76e3b3577.001.1",
+    "areaDesc": "Orange, NY; Putnam, NY; Westchester, NY",
+    "geocode": {
+     "SAME": [
+      "036071",
+      "036079",
+      "036119"
+     ],
+     "UGC": [
+      "NYC071",
+      "NYC079",
+      "NYC119"
+     ]
+    },
+    "references": [],
+    "sent": "2026-10-16T17:24:00-04:00",
+    "effective": "2026-10-16T17:24:00-04:00",
+    "onset": "2026-10-16T17:24:00-04:00",
+    "expires": "2026-10-16T18:30:00-04:00",
+    "ends": "2026-10-16T18:30:00-04:00",
+    "status": "Actual",
+    "messageType": "Alert",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Observed",
+    "urgency": "Immediate",
+    "event": "Severe Thunderstorm Warning",
+    "senderName": "NWS Upton NY",
+    "headline": "Severe Thunderstorm Warning issued October 16 at 5:24PM EDT until October 16 at 6:30PM EDT by NWS Upton NY",
+    "instruction": "For your protection move to an interior room on the lowest floor of a\nbuilding."
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.24d8f1bf359c11b269c0d96f2d1201c561dda55a.001.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.24d8f1bf359c11b269c0d96f2d1201c561dda55a.001.1",
+    "id": "urn:oid:2.49.0.1.840.0.24d8f1bf359c11b269c0d96f2d1201c561dda55a.001.1",
+    "areaDesc": "Kent, DE; New Castle, DE; Sussex, DE; Caroline, MD; Kent, MD; Queen Anne's, MD; Talbot, MD; Atlantic, NJ; Burlington, NJ; Camden, NJ; Cape May, NJ; Cumberland, NJ; Gloucester, NJ; Hunterdon, NJ; Mercer, NJ; Middlesex, NJ; Monmouth, NJ; Morris, NJ; Ocean, NJ; Salem, NJ; Somerset, NJ; Sussex, NJ; Warren, NJ",
+    "geocode": {
+     "SAME": [
+      "010001",
+      "010003",
+      "010005",
+      "024011",
+      "024029",
+      "024035",
+      "024041",
+      "034001",
+      "034005",
+      "034007",
+      "034009",
+      "034011",
+      "034015",
+      "034019",
+      "034021",
+      "034023",
+      "034025",
+      "034027",
+      "034029",
+      "034033",
+      "034035",
+      "034037",
+      "034041"
+     ],
+     "UGC": [
+      "DEC001",
+      "DEC003",
+      "DEC005",
+      "MDC011",
+      "MDC029",
+      "MDC035",
+      "MDC041",
+      "NJC001",
+      "NJC005",
+      "NJC007",
+      "NJC009",
+      "NJC011",
+      "NJC015",
+      "NJC019",
+      "NJC021",
+      "NJC023",
+      "NJC025",
+      "NJC027",
+      "NJC029",
+      "NJC033",
+      "NJC035",
+      "NJC037",
+      "NJC041"
+     ]
+    },
+    "references": [],
+    "sent": "2026-10-16T15:52:00-04:00",
+    "effective": "2026-10-16T15:52:00-04:00",
+    "onset": "2026-10-16T15:52:00-04:00",
+    "expires": "2026-10-16T22:00:00-04:00",
+    "ends": "2026-10-16T22:00:00-04:00",
+    "status": "Actual",
+    "messageType": "Alert",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Possible",
+    "urgency": "Future",
+    "event": "Severe Thunderstorm Watch",
+    "senderName": "NWS Mount Holly NJ",
+    "headline": "Severe Thunderstorm Watch issued October 16 at 3:52PM EDT until October 16 at 10:00PM EDT by NWS Mount Holly NJ",
+    "instruction": null
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a1a69ff4e997e4a64a3e84695698d56241f4775a.001.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a1a69ff4e997e4a64a3e84695698d56241f4775a.001.1",
+    "id": "urn:oid:2.49.0.1.840.0.a1a69ff4e997e4a64a3e84695698d56241f4775a.001.1",
+    "areaDesc": "Southern Nassau",
+    "geocode": {
+     "SAME": [
+      "036059"
+     ],
+     "UGC": [
+      "NYZ179"
+     ]
+    },
+    "references": [],
+    "sent": "2026-10-12T14:53:00-04:00",
+    "effective": "2026-10-12T14:53:00-04:00",
+    "onset": "2026-10-13T09:00:00-04:00",
+    "expires": "2026-10-13T12:00:00-04:00",
+    "ends": "2026-10-13T12:00:00-04:00",
+    "status": "Actual",
+    "messageType": "Alert",
+    "category": "Met",
+    "severity": "Minor",
+    "certainty": "Likely",
+    "urgency": "Expected",
+    "event": "Coastal Flood Statement",
+    "senderName": "NWS Upton NY",
+    "headline": "Coastal Flood Statement issued October 12 at 2:53PM EDT until October 13 at 12:00PM EDT by NWS Upton NY",
+    "instruction": "Do not drive through flooded roadways."
+   }
+  },
+  {
+   "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bee94817a6162a9b292281f9a901b71c445d9170.001.1",
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bee94817a6162a9b292281f9a901b71c445d9170.001.1",
+    "id": "urn:oid:2.49.0.1.840.0.bee94817a6162a9b292281f9a901b71c445d9170.001.1",
+    "areaDesc": "Hunterdon, NJ; Somerset, NJ",
+    "geocode": {
+     "SAME": [
+      "034019",
+      "034035"
+     ],
+     "UGC": [
+      "NJC019",
+      "NJC035"
+     ]
+    },
+    "references": [],
+    "sent": "2026-10-11T18:40:00-04:00",
+    "effective": "2026-10-11T18:40:00-04:00",
+    "onset": "2026-10-11T18:40:00-04:00",
+    "expires": "2026-10-11T22:45:00-04:00",
+    "ends": "2026-10-11T22:45:00-04:00",
+    "status": "Actual",
+    "messageType": "Alert",
+    "category": "Met",
+    "severity": "Severe",
+    "certainty": "Likely",
+    "urgency": "Expected",
+    "event": "Flood Warning",
+    "senderName": "NWS Mount Holly NJ",
+    "headline": "Flood Warning issued October 11 at 6:40PM EDT until October 11 at 10:45PM EDT by NWS Mount Holly NJ",
+    "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding."
+   }
+  }
+ ],
+ "pagination": {
+  "next": "https://api.weather.gov/alerts?cursor=x"
+ }
+}

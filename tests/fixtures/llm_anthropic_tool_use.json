@@ -1,0 +1,37 @@
+{
+ "id": "msg_01FixtureTool",
+ "type": "message",
+ "role": "assistant",
+ "model": "claude-haiku-5-5",
+ "content": [
+  {
+   "type": "thinking",
+   "thinking": "",
+   "signature": "EqQBCkYIBxgCKkDfixture"
+  },
+  {
+   "type": "text",
+   "text": "Filtering to Master Elite storm-restoration roofers within 10 miles."
+  },
+  {
+   "type": "tool_use",
+   "id": "toolu_01Fixture",
+   "name": "applyListFilters",
+   "input": {
+    "tiers": [
+     "master_elite"
+    ],
+    "services": [
+     "storm_damage"
+    ],
+    "max_distance_miles": 10
+   }
+  }
+ ],
+ "stop_reason": "tool_use",
+ "stop_sequence": null,
+ "usage": {
+  "input_tokens": 830,
+  "output_tokens": 96
+ }
+}

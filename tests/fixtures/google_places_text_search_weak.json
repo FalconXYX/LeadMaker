@@ -1,0 +1,46 @@
+{
+  "places": [
+    {
+      "id": "ChIJTestWeakCandidate0000001",
+      "types": [
+        "plumber",
+        "point_of_interest",
+        "establishment"
+      ],
+      "formattedAddress": "77 Broad St, Newark, NJ 07102, USA",
+      "location": {
+        "latitude": 40.7357,
+        "longitude": -74.1724
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=3698078744163496544",
+      "businessStatus": "OPERATIONAL",
+      "displayName": {
+        "text": "Acme Plumbing & Heating",
+        "languageCode": "en"
+      },
+      "primaryType": "plumber",
+      "nationalPhoneNumber": "(973) 555-0101",
+      "internationalPhoneNumber": "+1 973-555-0101"
+    },
+    {
+      "id": "ChIJTestWeakCandidate0000002",
+      "types": [
+        "roofing_contractor",
+        "point_of_interest",
+        "establishment"
+      ],
+      "formattedAddress": "9 Elm St, Summit, NJ 07901, USA",
+      "location": {
+        "latitude": 40.7157,
+        "longitude": -74.3646
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=4242304311693615656",
+      "businessStatus": "OPERATIONAL",
+      "displayName": {
+        "text": "Summit Roof Co",
+        "languageCode": "en"
+      },
+      "primaryType": "roofing_contractor"
+    }
+  ]
+}

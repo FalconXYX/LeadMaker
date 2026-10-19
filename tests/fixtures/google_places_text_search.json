@@ -1,0 +1,89 @@
+{
+  "places": [
+    {
+      "id": "ChIJTestOtherRoofer000000001",
+      "types": [
+        "roofing_contractor",
+        "point_of_interest",
+        "establishment"
+      ],
+      "formattedAddress": "120 Main St, Hoboken, NJ 07030, USA",
+      "location": {
+        "latitude": 40.7445,
+        "longitude": -74.033
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=6446346881042707328",
+      "businessStatus": "OPERATIONAL",
+      "displayName": {
+        "text": "Hudson Gutter Pros",
+        "languageCode": "en"
+      },
+      "primaryType": "roofing_contractor",
+      "nationalPhoneNumber": "(201) 555-0199",
+      "internationalPhoneNumber": "+1 201-555-0199",
+      "websiteUri": "https://hudsongutters.example/",
+      "rating": 4.1,
+      "userRatingCount": 12
+    },
+    {
+      "id": "ChIJTestAcmeExteriorsHob0001",
+      "types": [
+        "roofing_contractor",
+        "point_of_interest",
+        "establishment"
+      ],
+      "formattedAddress": "100 Main St Suite 2, Hoboken, NJ 07030, USA",
+      "location": {
+        "latitude": 40.7441,
+        "longitude": -74.0322
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=114685336066631721",
+      "businessStatus": "OPERATIONAL",
+      "displayName": {
+        "text": "Acme Exteriors LLC",
+        "languageCode": "en"
+      },
+      "primaryType": "roofing_contractor",
+      "nationalPhoneNumber": "(201) 555-0142",
+      "internationalPhoneNumber": "+1 201-555-0142",
+      "websiteUri": "http://acmeexteriors.example/?utm_source=google&ref=gbp",
+      "rating": 4.7,
+      "userRatingCount": 88,
+      "regularOpeningHours": {
+        "weekdayDescriptions": [
+          "Monday: 8:00 AM – 5:00 PM",
+          "Tuesday: 8:00 AM – 5:00 PM",
+          "Wednesday: 8:00 AM – 5:00 PM",
+          "Thursday: 8:00 AM – 5:00 PM",
+          "Friday: 8:00 AM – 5:00 PM",
+          "Saturday: 9:00 AM – 1:00 PM",
+          "Sunday: Closed"
+        ]
+      }
+    },
+    {
+      "id": "ChIJTestAcmeRoofingTrenton01",
+      "types": [
+        "roofing_contractor",
+        "point_of_interest",
+        "establishment"
+      ],
+      "formattedAddress": "5 State St, Trenton, NJ 08608, USA",
+      "location": {
+        "latitude": 40.2206,
+        "longitude": -74.7597
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=4070209894716064025",
+      "businessStatus": "OPERATIONAL",
+      "displayName": {
+        "text": "Acme Roofing",
+        "languageCode": "en"
+      },
+      "primaryType": "roofing_contractor",
+      "nationalPhoneNumber": "(609) 555-0110",
+      "internationalPhoneNumber": "+1 609-555-0110",
+      "rating": 3.9,
+      "userRatingCount": 7
+    }
+  ]
+}

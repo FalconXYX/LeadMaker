@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": 400,
+    "message": "Not a valid Place ID: not-a-place-id",
+    "status": "INVALID_ARGUMENT"
+  }
+}

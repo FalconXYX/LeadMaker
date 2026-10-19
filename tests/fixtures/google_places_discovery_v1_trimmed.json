@@ -1,0 +1,1660 @@
+{
+ "note": "trimmed: schemas reachable from Place/SearchTextRequest/SearchTextResponse, descriptions removed",
+ "revision": "20261015",
+ "schemas": {
+  "GoogleGeoTypeViewport": {
+   "id": "GoogleGeoTypeViewport",
+   "properties": {
+    "high": {
+     "$ref": "GoogleTypeLatLng"
+    },
+    "low": {
+     "$ref": "GoogleTypeLatLng"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1AddressDescriptor": {
+   "id": "GoogleMapsPlacesV1AddressDescriptor",
+   "properties": {
+    "areas": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1AddressDescriptorArea"
+     },
+     "type": "array"
+    },
+    "landmarks": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1AddressDescriptorLandmark"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1AddressDescriptorArea": {
+   "id": "GoogleMapsPlacesV1AddressDescriptorArea",
+   "properties": {
+    "containment": {
+     "enum": [
+      "CONTAINMENT_UNSPECIFIED",
+      "WITHIN",
+      "OUTSKIRTS",
+      "NEAR"
+     ],
+     "type": "string"
+    },
+    "displayName": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "name": {
+     "type": "string"
+    },
+    "placeId": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1AddressDescriptorLandmark": {
+   "id": "GoogleMapsPlacesV1AddressDescriptorLandmark",
+   "properties": {
+    "displayName": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "name": {
+     "type": "string"
+    },
+    "placeId": {
+     "type": "string"
+    },
+    "spatialRelationship": {
+     "enum": [
+      "NEAR",
+      "WITHIN",
+      "BESIDE",
+      "ACROSS_THE_ROAD",
+      "DOWN_THE_ROAD",
+      "AROUND_THE_CORNER",
+      "BEHIND"
+     ],
+     "type": "string"
+    },
+    "straightLineDistanceMeters": {
+     "format": "float",
+     "type": "number"
+    },
+    "travelDistanceMeters": {
+     "format": "float",
+     "type": "number"
+    },
+    "types": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1AuthorAttribution": {
+   "id": "GoogleMapsPlacesV1AuthorAttribution",
+   "properties": {
+    "displayName": {
+     "type": "string"
+    },
+    "photoUri": {
+     "type": "string"
+    },
+    "uri": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1Circle": {
+   "id": "GoogleMapsPlacesV1Circle",
+   "properties": {
+    "center": {
+     "$ref": "GoogleTypeLatLng"
+    },
+    "radius": {
+     "format": "double",
+     "type": "number"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1ContentBlock": {
+   "id": "GoogleMapsPlacesV1ContentBlock",
+   "properties": {
+    "content": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "referencedPlaces": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1ContextualContent": {
+   "id": "GoogleMapsPlacesV1ContextualContent",
+   "properties": {
+    "justifications": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1ContextualContentJustification"
+     },
+     "type": "array"
+    },
+    "photos": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1Photo"
+     },
+     "type": "array"
+    },
+    "reviews": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1Review"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1ContextualContentJustification": {
+   "id": "GoogleMapsPlacesV1ContextualContentJustification",
+   "properties": {
+    "businessAvailabilityAttributesJustification": {
+     "$ref": "GoogleMapsPlacesV1ContextualContentJustificationBusinessAvailabilityAttributesJustification"
+    },
+    "reviewJustification": {
+     "$ref": "GoogleMapsPlacesV1ContextualContentJustificationReviewJustification"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1ContextualContentJustificationBusinessAvailabilityAttributesJustification": {
+   "id": "GoogleMapsPlacesV1ContextualContentJustificationBusinessAvailabilityAttributesJustification",
+   "properties": {
+    "delivery": {
+     "type": "boolean"
+    },
+    "dineIn": {
+     "type": "boolean"
+    },
+    "takeout": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1ContextualContentJustificationReviewJustification": {
+   "id": "GoogleMapsPlacesV1ContextualContentJustificationReviewJustification",
+   "properties": {
+    "highlightedText": {
+     "$ref": "GoogleMapsPlacesV1ContextualContentJustificationReviewJustificationHighlightedText"
+    },
+    "review": {
+     "$ref": "GoogleMapsPlacesV1Review"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1ContextualContentJustificationReviewJustificationHighlightedText": {
+   "id": "GoogleMapsPlacesV1ContextualContentJustificationReviewJustificationHighlightedText",
+   "properties": {
+    "highlightedTextRanges": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1ContextualContentJustificationReviewJustificationHighlightedTextHighlightedTextRange"
+     },
+     "type": "array"
+    },
+    "text": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1ContextualContentJustificationReviewJustificationHighlightedTextHighlightedTextRange": {
+   "id": "GoogleMapsPlacesV1ContextualContentJustificationReviewJustificationHighlightedTextHighlightedTextRange",
+   "properties": {
+    "endIndex": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "startIndex": {
+     "format": "int32",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1EVChargeOptions": {
+   "id": "GoogleMapsPlacesV1EVChargeOptions",
+   "properties": {
+    "connectorAggregation": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1EVChargeOptionsConnectorAggregation"
+     },
+     "type": "array"
+    },
+    "connectorCount": {
+     "format": "int32",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1EVChargeOptionsConnectorAggregation": {
+   "id": "GoogleMapsPlacesV1EVChargeOptionsConnectorAggregation",
+   "properties": {
+    "availabilityLastUpdateTime": {
+     "format": "google-datetime",
+     "type": "string"
+    },
+    "availableCount": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "count": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "maxChargeRateKw": {
+     "format": "double",
+     "type": "number"
+    },
+    "outOfServiceCount": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "type": {
+     "enum": [
+      "EV_CONNECTOR_TYPE_UNSPECIFIED",
+      "EV_CONNECTOR_TYPE_OTHER",
+      "EV_CONNECTOR_TYPE_J1772",
+      "EV_CONNECTOR_TYPE_TYPE_2",
+      "EV_CONNECTOR_TYPE_CHADEMO",
+      "EV_CONNECTOR_TYPE_CCS_COMBO_1",
+      "EV_CONNECTOR_TYPE_CCS_COMBO_2",
+      "EV_CONNECTOR_TYPE_TESLA",
+      "EV_CONNECTOR_TYPE_UNSPECIFIED_GB_T",
+      "EV_CONNECTOR_TYPE_UNSPECIFIED_WALL_OUTLET",
+      "EV_CONNECTOR_TYPE_NACS"
+     ],
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1FuelOptions": {
+   "id": "GoogleMapsPlacesV1FuelOptions",
+   "properties": {
+    "fuelPrices": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1FuelOptionsFuelPrice"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1FuelOptionsFuelPrice": {
+   "id": "GoogleMapsPlacesV1FuelOptionsFuelPrice",
+   "properties": {
+    "price": {
+     "$ref": "GoogleTypeMoney"
+    },
+    "type": {
+     "enum": [
+      "FUEL_TYPE_UNSPECIFIED",
+      "DIESEL",
+      "DIESEL_PLUS",
+      "REGULAR_UNLEADED",
+      "MIDGRADE",
+      "PREMIUM",
+      "SP91",
+      "SP91_E10",
+      "SP92",
+      "SP95",
+      "SP95_E10",
+      "SP98",
+      "SP99",
+      "SP100",
+      "LPG",
+      "E80",
+      "E85",
+      "E100",
+      "METHANE",
+      "BIO_DIESEL",
+      "TRUCK_DIESEL"
+     ],
+     "type": "string"
+    },
+    "updateTime": {
+     "format": "google-datetime",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1Photo": {
+   "id": "GoogleMapsPlacesV1Photo",
+   "properties": {
+    "authorAttributions": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1AuthorAttribution"
+     },
+     "type": "array"
+    },
+    "flagContentUri": {
+     "type": "string"
+    },
+    "googleMapsUri": {
+     "type": "string"
+    },
+    "heightPx": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "name": {
+     "type": "string"
+    },
+    "widthPx": {
+     "format": "int32",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1Place": {
+   "id": "GoogleMapsPlacesV1Place",
+   "properties": {
+    "accessibilityOptions": {
+     "$ref": "GoogleMapsPlacesV1PlaceAccessibilityOptions"
+    },
+    "addressComponents": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1PlaceAddressComponent"
+     },
+     "type": "array"
+    },
+    "addressDescriptor": {
+     "$ref": "GoogleMapsPlacesV1AddressDescriptor"
+    },
+    "adrFormatAddress": {
+     "type": "string"
+    },
+    "allowsDogs": {
+     "type": "boolean"
+    },
+    "attributions": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1PlaceAttribution"
+     },
+     "type": "array"
+    },
+    "businessStatus": {
+     "enum": [
+      "BUSINESS_STATUS_UNSPECIFIED",
+      "OPERATIONAL",
+      "CLOSED_TEMPORARILY",
+      "CLOSED_PERMANENTLY",
+      "FUTURE_OPENING"
+     ],
+     "type": "string"
+    },
+    "consumerAlert": {
+     "$ref": "GoogleMapsPlacesV1PlaceConsumerAlert"
+    },
+    "containingPlaces": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1PlaceContainingPlace"
+     },
+     "type": "array"
+    },
+    "curbsidePickup": {
+     "type": "boolean"
+    },
+    "currentOpeningHours": {
+     "$ref": "GoogleMapsPlacesV1PlaceOpeningHours"
+    },
+    "currentSecondaryOpeningHours": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1PlaceOpeningHours"
+     },
+     "type": "array"
+    },
+    "delivery": {
+     "type": "boolean"
+    },
+    "dineIn": {
+     "type": "boolean"
+    },
+    "displayName": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "editorialSummary": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "entrances": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1PlaceEntrance"
+     },
+     "type": "array"
+    },
+    "evChargeAmenitySummary": {
+     "$ref": "GoogleMapsPlacesV1PlaceEvChargeAmenitySummary"
+    },
+    "evChargeOptions": {
+     "$ref": "GoogleMapsPlacesV1EVChargeOptions"
+    },
+    "formattedAddress": {
+     "type": "string"
+    },
+    "fuelOptions": {
+     "$ref": "GoogleMapsPlacesV1FuelOptions"
+    },
+    "generativeSummary": {
+     "$ref": "GoogleMapsPlacesV1PlaceGenerativeSummary"
+    },
+    "goodForChildren": {
+     "type": "boolean"
+    },
+    "goodForGroups": {
+     "type": "boolean"
+    },
+    "goodForWatchingSports": {
+     "type": "boolean"
+    },
+    "googleMapsLinks": {
+     "$ref": "GoogleMapsPlacesV1PlaceGoogleMapsLinks"
+    },
+    "googleMapsTypeLabel": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "googleMapsUri": {
+     "type": "string"
+    },
+    "iconBackgroundColor": {
+     "type": "string"
+    },
+    "iconMaskBaseUri": {
+     "type": "string"
+    },
+    "id": {
+     "type": "string"
+    },
+    "internationalPhoneNumber": {
+     "type": "string"
+    },
+    "liveMusic": {
+     "type": "boolean"
+    },
+    "location": {
+     "$ref": "GoogleTypeLatLng"
+    },
+    "menuForChildren": {
+     "type": "boolean"
+    },
+    "movedPlace": {
+     "type": "string"
+    },
+    "movedPlaceId": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "nationalPhoneNumber": {
+     "type": "string"
+    },
+    "navigationPoints": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1PlaceNavigationPoint"
+     },
+     "type": "array"
+    },
+    "neighborhoodSummary": {
+     "$ref": "GoogleMapsPlacesV1PlaceNeighborhoodSummary"
+    },
+    "openingDate": {
+     "$ref": "GoogleTypeDate"
+    },
+    "outdoorSeating": {
+     "type": "boolean"
+    },
+    "parkingOptions": {
+     "$ref": "GoogleMapsPlacesV1PlaceParkingOptions"
+    },
+    "paymentOptions": {
+     "$ref": "GoogleMapsPlacesV1PlacePaymentOptions"
+    },
+    "photos": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1Photo"
+     },
+     "type": "array"
+    },
+    "plusCode": {
+     "$ref": "GoogleMapsPlacesV1PlacePlusCode"
+    },
+    "postalAddress": {
+     "$ref": "GoogleTypePostalAddress"
+    },
+    "priceLevel": {
+     "enum": [
+      "PRICE_LEVEL_UNSPECIFIED",
+      "PRICE_LEVEL_FREE",
+      "PRICE_LEVEL_INEXPENSIVE",
+      "PRICE_LEVEL_MODERATE",
+      "PRICE_LEVEL_EXPENSIVE",
+      "PRICE_LEVEL_VERY_EXPENSIVE"
+     ],
+     "type": "string"
+    },
+    "priceRange": {
+     "$ref": "GoogleMapsPlacesV1PriceRange"
+    },
+    "primaryType": {
+     "type": "string"
+    },
+    "primaryTypeDisplayName": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "pureServiceAreaBusiness": {
+     "type": "boolean"
+    },
+    "rating": {
+     "format": "double",
+     "type": "number"
+    },
+    "regularOpeningHours": {
+     "$ref": "GoogleMapsPlacesV1PlaceOpeningHours"
+    },
+    "regularSecondaryOpeningHours": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1PlaceOpeningHours"
+     },
+     "type": "array"
+    },
+    "reservable": {
+     "type": "boolean"
+    },
+    "restroom": {
+     "type": "boolean"
+    },
+    "reviewSummary": {
+     "$ref": "GoogleMapsPlacesV1PlaceReviewSummary"
+    },
+    "reviews": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1Review"
+     },
+     "type": "array"
+    },
+    "servesBeer": {
+     "type": "boolean"
+    },
+    "servesBreakfast": {
+     "type": "boolean"
+    },
+    "servesBrunch": {
+     "type": "boolean"
+    },
+    "servesCocktails": {
+     "type": "boolean"
+    },
+    "servesCoffee": {
+     "type": "boolean"
+    },
+    "servesDessert": {
+     "type": "boolean"
+    },
+    "servesDinner": {
+     "type": "boolean"
+    },
+    "servesLunch": {
+     "type": "boolean"
+    },
+    "servesVegetarianFood": {
+     "type": "boolean"
+    },
+    "servesWine": {
+     "type": "boolean"
+    },
+    "shortFormattedAddress": {
+     "type": "string"
+    },
+    "subDestinations": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1PlaceSubDestination"
+     },
+     "type": "array"
+    },
+    "takeout": {
+     "type": "boolean"
+    },
+    "timeZone": {
+     "$ref": "GoogleTypeTimeZone"
+    },
+    "transitStation": {
+     "$ref": "GoogleMapsPlacesV1TransitStation"
+    },
+    "types": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "userRatingCount": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "utcOffsetMinutes": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "viewport": {
+     "$ref": "GoogleGeoTypeViewport"
+    },
+    "websiteUri": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceAccessibilityOptions": {
+   "id": "GoogleMapsPlacesV1PlaceAccessibilityOptions",
+   "properties": {
+    "wheelchairAccessibleEntrance": {
+     "type": "boolean"
+    },
+    "wheelchairAccessibleParking": {
+     "type": "boolean"
+    },
+    "wheelchairAccessibleRestroom": {
+     "type": "boolean"
+    },
+    "wheelchairAccessibleSeating": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceAddressComponent": {
+   "id": "GoogleMapsPlacesV1PlaceAddressComponent",
+   "properties": {
+    "languageCode": {
+     "type": "string"
+    },
+    "longText": {
+     "type": "string"
+    },
+    "shortText": {
+     "type": "string"
+    },
+    "types": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceAttribution": {
+   "id": "GoogleMapsPlacesV1PlaceAttribution",
+   "properties": {
+    "provider": {
+     "type": "string"
+    },
+    "providerUri": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceConsumerAlert": {
+   "id": "GoogleMapsPlacesV1PlaceConsumerAlert",
+   "properties": {
+    "details": {
+     "$ref": "GoogleMapsPlacesV1PlaceConsumerAlertDetails"
+    },
+    "languageCode": {
+     "type": "string"
+    },
+    "overview": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceConsumerAlertDetails": {
+   "id": "GoogleMapsPlacesV1PlaceConsumerAlertDetails",
+   "properties": {
+    "aboutLink": {
+     "$ref": "GoogleMapsPlacesV1PlaceConsumerAlertDetailsLink"
+    },
+    "title": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceConsumerAlertDetailsLink": {
+   "id": "GoogleMapsPlacesV1PlaceConsumerAlertDetailsLink",
+   "properties": {
+    "title": {
+     "type": "string"
+    },
+    "uri": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceContainingPlace": {
+   "id": "GoogleMapsPlacesV1PlaceContainingPlace",
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceEntrance": {
+   "id": "GoogleMapsPlacesV1PlaceEntrance",
+   "properties": {
+    "location": {
+     "$ref": "GoogleTypeLatLng"
+    },
+    "tags": {
+     "items": {
+      "enum": [
+       "TAG_UNSPECIFIED",
+       "PREFERRED"
+      ],
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceEvChargeAmenitySummary": {
+   "id": "GoogleMapsPlacesV1PlaceEvChargeAmenitySummary",
+   "properties": {
+    "coffee": {
+     "$ref": "GoogleMapsPlacesV1ContentBlock"
+    },
+    "disclosureText": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "flagContentUri": {
+     "type": "string"
+    },
+    "overview": {
+     "$ref": "GoogleMapsPlacesV1ContentBlock"
+    },
+    "restaurant": {
+     "$ref": "GoogleMapsPlacesV1ContentBlock"
+    },
+    "store": {
+     "$ref": "GoogleMapsPlacesV1ContentBlock"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceGenerativeSummary": {
+   "id": "GoogleMapsPlacesV1PlaceGenerativeSummary",
+   "properties": {
+    "disclosureText": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "overview": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "overviewFlagContentUri": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceGoogleMapsLinks": {
+   "id": "GoogleMapsPlacesV1PlaceGoogleMapsLinks",
+   "properties": {
+    "directionsUri": {
+     "type": "string"
+    },
+    "photosUri": {
+     "type": "string"
+    },
+    "placeUri": {
+     "type": "string"
+    },
+    "reviewsUri": {
+     "type": "string"
+    },
+    "writeAReviewUri": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceNavigationPoint": {
+   "id": "GoogleMapsPlacesV1PlaceNavigationPoint",
+   "properties": {
+    "displayName": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "location": {
+     "$ref": "GoogleTypeLatLng"
+    },
+    "navigationPointToken": {
+     "type": "string"
+    },
+    "travelModes": {
+     "items": {
+      "enum": [
+       "TRAVEL_MODE_UNSPECIFIED",
+       "DRIVE",
+       "WALK"
+      ],
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "usages": {
+     "items": {
+      "enum": [
+       "USAGE_UNSPECIFIED",
+       "DROPOFF",
+       "PICKUP",
+       "PARKING"
+      ],
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceNeighborhoodSummary": {
+   "id": "GoogleMapsPlacesV1PlaceNeighborhoodSummary",
+   "properties": {
+    "disclosureText": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "flagContentUri": {
+     "type": "string"
+    },
+    "overview": {
+     "$ref": "GoogleMapsPlacesV1ContentBlock"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceOpeningHours": {
+   "id": "GoogleMapsPlacesV1PlaceOpeningHours",
+   "properties": {
+    "nextCloseTime": {
+     "format": "google-datetime",
+     "type": "string"
+    },
+    "nextOpenTime": {
+     "format": "google-datetime",
+     "type": "string"
+    },
+    "openNow": {
+     "type": "boolean"
+    },
+    "periods": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1PlaceOpeningHoursPeriod"
+     },
+     "type": "array"
+    },
+    "secondaryHoursType": {
+     "enum": [
+      "SECONDARY_HOURS_TYPE_UNSPECIFIED",
+      "DRIVE_THROUGH",
+      "HAPPY_HOUR",
+      "DELIVERY",
+      "TAKEOUT",
+      "KITCHEN",
+      "BREAKFAST",
+      "LUNCH",
+      "DINNER",
+      "BRUNCH",
+      "PICKUP",
+      "ACCESS",
+      "SENIOR_HOURS",
+      "ONLINE_SERVICE_HOURS"
+     ],
+     "type": "string"
+    },
+    "specialDays": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1PlaceOpeningHoursSpecialDay"
+     },
+     "type": "array"
+    },
+    "weekdayDescriptions": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceOpeningHoursPeriod": {
+   "id": "GoogleMapsPlacesV1PlaceOpeningHoursPeriod",
+   "properties": {
+    "close": {
+     "$ref": "GoogleMapsPlacesV1PlaceOpeningHoursPeriodPoint"
+    },
+    "open": {
+     "$ref": "GoogleMapsPlacesV1PlaceOpeningHoursPeriodPoint"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceOpeningHoursPeriodPoint": {
+   "id": "GoogleMapsPlacesV1PlaceOpeningHoursPeriodPoint",
+   "properties": {
+    "date": {
+     "$ref": "GoogleTypeDate"
+    },
+    "day": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "hour": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "minute": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "truncated": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceOpeningHoursSpecialDay": {
+   "id": "GoogleMapsPlacesV1PlaceOpeningHoursSpecialDay",
+   "properties": {
+    "date": {
+     "$ref": "GoogleTypeDate"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceParkingOptions": {
+   "id": "GoogleMapsPlacesV1PlaceParkingOptions",
+   "properties": {
+    "freeGarageParking": {
+     "type": "boolean"
+    },
+    "freeParkingLot": {
+     "type": "boolean"
+    },
+    "freeStreetParking": {
+     "type": "boolean"
+    },
+    "paidGarageParking": {
+     "type": "boolean"
+    },
+    "paidParkingLot": {
+     "type": "boolean"
+    },
+    "paidStreetParking": {
+     "type": "boolean"
+    },
+    "valetParking": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlacePaymentOptions": {
+   "id": "GoogleMapsPlacesV1PlacePaymentOptions",
+   "properties": {
+    "acceptsCashOnly": {
+     "type": "boolean"
+    },
+    "acceptsCreditCards": {
+     "type": "boolean"
+    },
+    "acceptsDebitCards": {
+     "type": "boolean"
+    },
+    "acceptsNfc": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlacePlusCode": {
+   "id": "GoogleMapsPlacesV1PlacePlusCode",
+   "properties": {
+    "compoundCode": {
+     "type": "string"
+    },
+    "globalCode": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceReviewSummary": {
+   "id": "GoogleMapsPlacesV1PlaceReviewSummary",
+   "properties": {
+    "disclosureText": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "flagContentUri": {
+     "type": "string"
+    },
+    "reviewsUri": {
+     "type": "string"
+    },
+    "text": {
+     "$ref": "GoogleTypeLocalizedText"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PlaceSubDestination": {
+   "id": "GoogleMapsPlacesV1PlaceSubDestination",
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1Polyline": {
+   "id": "GoogleMapsPlacesV1Polyline",
+   "properties": {
+    "encodedPolyline": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1PriceRange": {
+   "id": "GoogleMapsPlacesV1PriceRange",
+   "properties": {
+    "endPrice": {
+     "$ref": "GoogleTypeMoney"
+    },
+    "startPrice": {
+     "$ref": "GoogleTypeMoney"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1Review": {
+   "id": "GoogleMapsPlacesV1Review",
+   "properties": {
+    "authorAttribution": {
+     "$ref": "GoogleMapsPlacesV1AuthorAttribution"
+    },
+    "flagContentUri": {
+     "type": "string"
+    },
+    "googleMapsUri": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "originalText": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "publishTime": {
+     "format": "google-datetime",
+     "type": "string"
+    },
+    "rating": {
+     "format": "double",
+     "type": "number"
+    },
+    "relativePublishTimeDescription": {
+     "type": "string"
+    },
+    "text": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "visitDate": {
+     "$ref": "GoogleTypeDate"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1RouteModifiers": {
+   "id": "GoogleMapsPlacesV1RouteModifiers",
+   "properties": {
+    "avoidFerries": {
+     "type": "boolean"
+    },
+    "avoidHighways": {
+     "type": "boolean"
+    },
+    "avoidIndoor": {
+     "type": "boolean"
+    },
+    "avoidTolls": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1RoutingParameters": {
+   "id": "GoogleMapsPlacesV1RoutingParameters",
+   "properties": {
+    "origin": {
+     "$ref": "GoogleTypeLatLng"
+    },
+    "routeModifiers": {
+     "$ref": "GoogleMapsPlacesV1RouteModifiers"
+    },
+    "routingPreference": {
+     "enum": [
+      "ROUTING_PREFERENCE_UNSPECIFIED",
+      "TRAFFIC_UNAWARE",
+      "TRAFFIC_AWARE",
+      "TRAFFIC_AWARE_OPTIMAL"
+     ],
+     "type": "string"
+    },
+    "travelMode": {
+     "enum": [
+      "TRAVEL_MODE_UNSPECIFIED",
+      "DRIVE",
+      "BICYCLE",
+      "WALK",
+      "TWO_WHEELER"
+     ],
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1RoutingSummary": {
+   "id": "GoogleMapsPlacesV1RoutingSummary",
+   "properties": {
+    "directionsUri": {
+     "type": "string"
+    },
+    "legs": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1RoutingSummaryLeg"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1RoutingSummaryLeg": {
+   "id": "GoogleMapsPlacesV1RoutingSummaryLeg",
+   "properties": {
+    "distanceMeters": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "duration": {
+     "format": "google-duration",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1SearchTextRequest": {
+   "id": "GoogleMapsPlacesV1SearchTextRequest",
+   "properties": {
+    "evOptions": {
+     "$ref": "GoogleMapsPlacesV1SearchTextRequestEVOptions"
+    },
+    "includeFutureOpeningBusinesses": {
+     "type": "boolean"
+    },
+    "includePureServiceAreaBusinesses": {
+     "type": "boolean"
+    },
+    "includedType": {
+     "type": "string"
+    },
+    "languageCode": {
+     "type": "string"
+    },
+    "locationBias": {
+     "$ref": "GoogleMapsPlacesV1SearchTextRequestLocationBias"
+    },
+    "locationRestriction": {
+     "$ref": "GoogleMapsPlacesV1SearchTextRequestLocationRestriction"
+    },
+    "maxResultCount": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "minRating": {
+     "format": "double",
+     "type": "number"
+    },
+    "openNow": {
+     "type": "boolean"
+    },
+    "pageSize": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "pageToken": {
+     "type": "string"
+    },
+    "priceLevels": {
+     "items": {
+      "enum": [
+       "PRICE_LEVEL_UNSPECIFIED",
+       "PRICE_LEVEL_FREE",
+       "PRICE_LEVEL_INEXPENSIVE",
+       "PRICE_LEVEL_MODERATE",
+       "PRICE_LEVEL_EXPENSIVE",
+       "PRICE_LEVEL_VERY_EXPENSIVE"
+      ],
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "rankPreference": {
+     "enum": [
+      "RANK_PREFERENCE_UNSPECIFIED",
+      "DISTANCE",
+      "RELEVANCE"
+     ],
+     "type": "string"
+    },
+    "regionCode": {
+     "type": "string"
+    },
+    "routingParameters": {
+     "$ref": "GoogleMapsPlacesV1RoutingParameters"
+    },
+    "searchAlongRouteParameters": {
+     "$ref": "GoogleMapsPlacesV1SearchTextRequestSearchAlongRouteParameters"
+    },
+    "strictTypeFiltering": {
+     "type": "boolean"
+    },
+    "textQuery": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1SearchTextRequestEVOptions": {
+   "id": "GoogleMapsPlacesV1SearchTextRequestEVOptions",
+   "properties": {
+    "connectorTypes": {
+     "items": {
+      "enum": [
+       "EV_CONNECTOR_TYPE_UNSPECIFIED",
+       "EV_CONNECTOR_TYPE_OTHER",
+       "EV_CONNECTOR_TYPE_J1772",
+       "EV_CONNECTOR_TYPE_TYPE_2",
+       "EV_CONNECTOR_TYPE_CHADEMO",
+       "EV_CONNECTOR_TYPE_CCS_COMBO_1",
+       "EV_CONNECTOR_TYPE_CCS_COMBO_2",
+       "EV_CONNECTOR_TYPE_TESLA",
+       "EV_CONNECTOR_TYPE_UNSPECIFIED_GB_T",
+       "EV_CONNECTOR_TYPE_UNSPECIFIED_WALL_OUTLET",
+       "EV_CONNECTOR_TYPE_NACS"
+      ],
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "minimumChargingRateKw": {
+     "format": "double",
+     "type": "number"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1SearchTextRequestLocationBias": {
+   "id": "GoogleMapsPlacesV1SearchTextRequestLocationBias",
+   "properties": {
+    "circle": {
+     "$ref": "GoogleMapsPlacesV1Circle"
+    },
+    "rectangle": {
+     "$ref": "GoogleGeoTypeViewport"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1SearchTextRequestLocationRestriction": {
+   "id": "GoogleMapsPlacesV1SearchTextRequestLocationRestriction",
+   "properties": {
+    "rectangle": {
+     "$ref": "GoogleGeoTypeViewport"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1SearchTextRequestSearchAlongRouteParameters": {
+   "id": "GoogleMapsPlacesV1SearchTextRequestSearchAlongRouteParameters",
+   "properties": {
+    "polyline": {
+     "$ref": "GoogleMapsPlacesV1Polyline"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1SearchTextResponse": {
+   "id": "GoogleMapsPlacesV1SearchTextResponse",
+   "properties": {
+    "contextualContents": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1ContextualContent"
+     },
+     "type": "array"
+    },
+    "nextPageToken": {
+     "type": "string"
+    },
+    "places": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1Place"
+     },
+     "type": "array"
+    },
+    "routingSummaries": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1RoutingSummary"
+     },
+     "type": "array"
+    },
+    "searchUri": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1TransitAgency": {
+   "id": "GoogleMapsPlacesV1TransitAgency",
+   "properties": {
+    "displayName": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "fareUrl": {
+     "type": "string"
+    },
+    "icon": {
+     "$ref": "GoogleMapsPlacesV1TransitIcon"
+    },
+    "lines": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1TransitLine"
+     },
+     "type": "array"
+    },
+    "url": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1TransitIcon": {
+   "id": "GoogleMapsPlacesV1TransitIcon",
+   "properties": {
+    "nameIncluded": {
+     "type": "boolean"
+    },
+    "url": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1TransitLine": {
+   "id": "GoogleMapsPlacesV1TransitLine",
+   "properties": {
+    "backgroundColor": {
+     "type": "string"
+    },
+    "displayName": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "icon": {
+     "$ref": "GoogleMapsPlacesV1TransitIcon"
+    },
+    "id": {
+     "type": "string"
+    },
+    "shortDisplayName": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "textColor": {
+     "type": "string"
+    },
+    "url": {
+     "type": "string"
+    },
+    "vehicleIcon": {
+     "$ref": "GoogleMapsPlacesV1TransitIcon"
+    },
+    "vehicleType": {
+     "enum": [
+      "VEHICLE_TYPE_UNSPECIFIED",
+      "RAIL",
+      "METRO_RAIL",
+      "SUBWAY",
+      "TRAM",
+      "MONORAIL",
+      "HEAVY_RAIL",
+      "COMMUTER_TRAIN",
+      "HIGH_SPEED_TRAIN",
+      "LONG_DISTANCE_TRAIN",
+      "BUS",
+      "INTERCITY_BUS",
+      "TROLLEYBUS",
+      "SHARE_TAXI",
+      "COACH",
+      "FERRY",
+      "CABLE_CAR",
+      "GONDOLA_LIFT",
+      "FUNICULAR",
+      "SPECIAL",
+      "HORSE_CARRIAGE",
+      "AIRPLANE"
+     ],
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1TransitStation": {
+   "id": "GoogleMapsPlacesV1TransitStation",
+   "properties": {
+    "agencies": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1TransitAgency"
+     },
+     "type": "array"
+    },
+    "displayName": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "stops": {
+     "items": {
+      "$ref": "GoogleMapsPlacesV1TransitStop"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleMapsPlacesV1TransitStop": {
+   "id": "GoogleMapsPlacesV1TransitStop",
+   "properties": {
+    "displayName": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "id": {
+     "type": "string"
+    },
+    "location": {
+     "$ref": "GoogleTypeLatLng"
+    },
+    "platformCode": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "signageText": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "stopCode": {
+     "$ref": "GoogleTypeLocalizedText"
+    },
+    "wheelchairAccessibleEntrance": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleTypeDate": {
+   "id": "GoogleTypeDate",
+   "properties": {
+    "day": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "month": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "year": {
+     "format": "int32",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleTypeLatLng": {
+   "id": "GoogleTypeLatLng",
+   "properties": {
+    "latitude": {
+     "format": "double",
+     "type": "number"
+    },
+    "longitude": {
+     "format": "double",
+     "type": "number"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleTypeLocalizedText": {
+   "id": "GoogleTypeLocalizedText",
+   "properties": {
+    "languageCode": {
+     "type": "string"
+    },
+    "text": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleTypeMoney": {
+   "id": "GoogleTypeMoney",
+   "properties": {
+    "currencyCode": {
+     "type": "string"
+    },
+    "nanos": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "units": {
+     "format": "int64",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleTypePostalAddress": {
+   "id": "GoogleTypePostalAddress",
+   "properties": {
+    "addressLines": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "administrativeArea": {
+     "type": "string"
+    },
+    "languageCode": {
+     "type": "string"
+    },
+    "locality": {
+     "type": "string"
+    },
+    "organization": {
+     "type": "string"
+    },
+    "postalCode": {
+     "type": "string"
+    },
+    "recipients": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "regionCode": {
+     "type": "string"
+    },
+    "revision": {
+     "format": "int32",
+     "type": "integer"
+    },
+    "sortingCode": {
+     "type": "string"
+    },
+    "sublocality": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "GoogleTypeTimeZone": {
+   "id": "GoogleTypeTimeZone",
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "version": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  }
+ },
+ "source": "https://places.googleapis.com/$discovery/rest?version=v1"
+}

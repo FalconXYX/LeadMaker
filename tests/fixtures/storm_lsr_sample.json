@@ -1,0 +1,293 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "OKX",
+    "typetext": "TSTM WND DMG",
+    "county": "Bergen",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "1 NNW Mahwah",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-07-05T00:09:00Z",
+    "remark": "*** 1 INJ *** Tree on car in Wyckoff. Occupant injured.",
+    "product_id": "202607051825-KOKX-NWUS51-LSROKX"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "OKX",
+    "typetext": "TSTM WND DMG",
+    "county": "Bergen",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "Teaneck",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-07-27T22:55:00Z",
+    "remark": "551NJ - Downed Tree on NJ 4 Westbound At Belle Ave (Teaneck Twp), 1 right lane of 3 lanes closed. Time estimated by TEWR.",
+    "product_id": "202607280113-KOKX-NWUS51-LSROKX"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "OKX",
+    "typetext": "FLASH FLOOD",
+    "county": "Bergen",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "Ridgewood",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-07-21T14:45:00Z",
+    "remark": "3 vehicles submerged in train station underpass.",
+    "product_id": "202607220329-KOKX-NWUS51-LSROKX"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "OKX",
+    "typetext": "FLASH FLOOD",
+    "county": "Bergen",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "Fair Lawn",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-07-27T23:23:00Z",
+    "remark": "511NJ - Flooding on NJ 208 Both Directions North of Morlot Av (Fair Lawn), All lanes closed northbound; All lanes closed southbound.",
+    "product_id": "202607272327-KOKX-NWUS51-LSROKX"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "OKX",
+    "typetext": "HAIL",
+    "county": "Bergen",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "1 N Saddle Brook",
+    "magnitude": "0.88",
+    "unit": "Inch",
+    "valid": "2026-07-21T14:43:00Z",
+    "remark": "Nickel size hail.",
+    "product_id": "202607220329-KOKX-NWUS51-LSROKX"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "OKX",
+    "typetext": "HAIL",
+    "county": "Bergen",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "Franklin Lakes",
+    "magnitude": "1",
+    "unit": "Inch",
+    "valid": "2026-07-27T22:20:00Z",
+    "remark": "Social media report with image.",
+    "product_id": "202607272233-KOKX-NWUS51-LSROKX"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "OKX",
+    "typetext": "COASTAL FLOOD",
+    "county": "Bergen",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "1 SSE Rutherford",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-09-26T14:30:00Z",
+    "remark": "Flooding along Rutherford Avenue near Poltio Avenue.",
+    "product_id": "202609280053-KOKX-NWUS51-LSROKX"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "OKX",
+    "typetext": "COASTAL FLOOD",
+    "county": "Bergen",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "1 SE River Edge",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-09-26T15:45:00Z",
+    "remark": "Tidal Flooding Along the Hackensack River with at least 1-3 feet of flowing water on the roadway with roadways are closed. Hackensack Ave and Main Street closed at River Edge and Hackensack Ave from New Milford to Hackensack also closed.",
+    "product_id": "202609280053-KOKX-NWUS51-LSROKX"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "PHI",
+    "typetext": "TSTM WND DMG",
+    "county": "Berks",
+    "state": "PA",
+    "st": "PA",
+    "city": "3 ESE Laureldale",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-07-28T16:38:00Z",
+    "remark": "Delayed report. A tree fell through a home on Wanner Road in Alsace Township. Several other trees down and power outages reported in the area. No injuries reported. Time estimated from radar.",
+    "product_id": "202607302006-KPHI-NWUS51-LSRPHI"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "PHI",
+    "typetext": "TSTM WND DMG",
+    "county": "Berks",
+    "state": "PA",
+    "st": "PA",
+    "city": "2 N Marion Twp",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-07-11T20:10:00Z",
+    "remark": "Dispatch reports trees down on wires near Host north of Womelsdorf.",
+    "product_id": "202607120106-KPHI-NWUS51-LSRPHI"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "PHI",
+    "typetext": "TSTM WND DMG",
+    "county": "Somerset",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "Green Brook Twp",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-08-07T21:19:00Z",
+    "remark": "Multiple reports of trees down. Time estimated from radar.",
+    "product_id": "202608080201-KPHI-NWUS51-LSRPHI"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "PHI",
+    "typetext": "TSTM WND DMG",
+    "county": "Somerset",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "Far Hills",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-07-03T23:34:00Z",
+    "remark": "Several large 4 inch diameter tree branches down. Time estimated from radar.",
+    "product_id": "202607040144-KPHI-NWUS51-LSRPHI"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "PHI",
+    "typetext": "FLASH FLOOD",
+    "county": "Berks",
+    "state": "PA",
+    "st": "PA",
+    "city": "Wyomissing",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-08-17T22:21:00Z",
+    "remark": "An occupied vehicle became stranded in flood waters, requiring a water rescue.",
+    "product_id": "202608180126-KPHI-NWUS51-LSRPHI"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "PHI",
+    "typetext": "FLASH FLOOD",
+    "county": "Berks",
+    "state": "PA",
+    "st": "PA",
+    "city": "1 NNW Reading",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-09-01T23:29:00Z",
+    "remark": "Multiple vehicles stranded in high water.",
+    "product_id": "202609031538-KPHI-NWUS51-LSRPHI"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "PHI",
+    "typetext": "FLASH FLOOD",
+    "county": "Somerset",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "1 SSE South Bound Brook",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-07-18T16:55:00Z",
+    "remark": "Corrects previous flash flood report from 1 SSE South Bound Brook. NJDOT reported flooding on I-287 southbound Exit 10 - CR 527/Easton Ave in Franklin Twp. 1 left lane of 3 lanes closed.",
+    "product_id": "202607192348-KPHI-NWUS51-LSRPHI"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "PHI",
+    "typetext": "FLASH FLOOD",
+    "county": "Somerset",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "2 W Kendall Park",
+    "magnitude": "",
+    "unit": null,
+    "valid": "2026-07-18T17:00:00Z",
+    "remark": "Corrects previous flash flood report location. Flooding on Linden Ave with water reaching the homes along the street.",
+    "product_id": "202607192348-KPHI-NWUS51-LSRPHI"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "PHI",
+    "typetext": "TSTM WND GST",
+    "county": "Somerset",
+    "state": "NJ",
+    "st": "NJ",
+    "city": "3 NW Bridgewater",
+    "magnitude": "47",
+    "unit": "MPH",
+    "valid": "2026-08-07T21:16:00Z",
+    "remark": "ASOS station KSMQ Somerville.",
+    "product_id": "202608080201-KPHI-NWUS51-LSRPHI"
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "wfo": "PHI",
+    "typetext": "TSTM WND GST",
+    "county": "Berks",
+    "state": "PA",
+    "st": "PA",
+    "city": "Reading Regional Airpor",
+    "magnitude": "53",
+    "unit": "MPH",
+    "valid": "2026-08-17T21:49:00Z",
+    "remark": null,
+    "product_id": "202608180125-KPHI-NWUS51-LSRPHI"
+   }
+  }
+ ]
+}

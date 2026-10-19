@@ -1,0 +1,20 @@
+{
+ "id": "msg_01FixtureExtract",
+ "type": "message",
+ "role": "assistant",
+ "model": "claude-haiku-5-5",
+ "content": [
+  {
+   "type": "text",
+   "text": "{\"decision_makers\": [{\"name\": \"Joe Smith\", \"title\": \"Owner\", \"evidence\": \"Joe Smith founded American Roofing in 2002.\"}, {\"name\": \"American Roofing\", \"title\": \"Company\", \"evidence\": \"American Roofing is a full-service exterior home remodeling company\"}], \"services\": [\"roof_replacement\", \"roof_inspection\", \"siding\", \"windows\", \"gutters\", \"new_construction\"], \"materials\": [\"asphalt_shingles\", \"fiber_cement_siding\"], \"brands_mentioned\": [\"GAF\", \"Certainteed\", \"James Hardie\", \"Owens Corning\"], \"company_size\": {\"employees_estimate_range\": \"unknown\", \"basis\": \"The site names no staff, crews or employee count and GAF lists no employees range.\"}, \"residential_commercial_mix\": \"residential_only\", \"summary\": \"American Roofing and Siding (American Roofing LLC) is a Belleville, NJ exterior remodeler in business since 2002, installing roofs, siding, windows and gutters for homes in Northern New Jersey. GAF Master Elite with President's Club recognition; also roofs newly built homes.\"}"
+  }
+ ],
+ "stop_reason": "end_turn",
+ "stop_sequence": null,
+ "usage": {
+  "input_tokens": 5120,
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 4410,
+  "output_tokens": 402
+ }
+}

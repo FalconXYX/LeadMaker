@@ -1,0 +1,159 @@
+{
+ "_about": "Real contractor-website text captured by website_crawl (stored pages[].text, Oct 2026), trimmed to ~300 chars around the phrase under test. `expect` = new service keys that must be detected; `reject` = new keys that must not be (false-positive guards).",
+ "snippets": [
+  {
+   "gaf_id": "1113654",
+   "url": "https://matuteroofing.com/services/commercial-roofing",
+   "text": "emobilization, and you receive a photo log with warranty registration. Roof Systems We Work On We service and replace most flat/low-slope assemblies. TPO (thermoplastic polyolefin): bright, reflective, welded seams; great for energy and ponding resistance. PVC: chemical-resistant, welded seams; ideal near kitchens/industrial ven",
+   "expect": [
+    "single_ply_roofing",
+    "tpo_roofing"
+   ],
+   "reject": [
+    "new_construction"
+   ]
+  },
+  {
+   "gaf_id": "1157554",
+   "url": "https://www.solartecsystems.com/roofing",
+   "text": "ce, and reliable support to ensure a seamless and stress-free experience.​ ​ Residential Roofing:​ Asphalt Shingles Corrugated or Standing Seam Metal Thermoplastic Olefin (TPO) Membrane Commercial Roofing: EPDM Rubber Membrane PVC Membrane Click here to learn about our certifications",
+   "expect": [
+    "single_ply_roofing",
+    "tpo_roofing"
+   ],
+   "reject": [
+    "new_construction"
+   ]
+  },
+  {
+   "gaf_id": "1000595",
+   "url": "https://www.advancedroofingnj.com/services/",
+   "text": "fing systems. Our construction expertise balances between new construction and re-roofing projects as well as repairs and upgrades. Low Slope Systems Single-ply: EPDM, TPO, PVC, Hypalon, new composite systems, and more. Built-up: SBS, Modified Bitumen, Coal-Tar Pitch, APP and more. We can install systems in Cold Ad",
+   "expect": [
+    "new_construction",
+    "single_ply_roofing",
+    "tpo_roofing"
+   ],
+   "reject": []
+  },
+  {
+   "gaf_id": "1159799",
+   "url": "https://www.goldshieldroofingllc.com/",
+   "text": "ial Roofing Industrial-grade protection for your business. We specialize in high-performance systems designed for durability and minimal maintenance. TPO & PVC Membranes EPDM Rubber Roofing Built-Up Roofing (BUR) View Service Request Commercial Bid Siding Complete exterior protection. We offer premium vinyl, fiber cem",
+   "expect": [
+    "single_ply_roofing",
+    "tpo_roofing"
+   ],
+   "reject": [
+    "new_construction"
+   ]
+  },
+  {
+   "gaf_id": "1137680",
+   "url": "https://www.jsaldoconstruction.com/",
+   "text": "ffer very competitive rates. Complete with manufacturer warranties and our own 15 Year Platinum Warranty. Read More SIDING All styles of vinyl siding Cement Board sidings PVC No rot designer trim WINDOWS The best vinyl replacement windows Fully installed, energy efficient Pella, Andersen, Simonton GUTTERS Residential / Com",
+   "expect": [],
+   "reject": [
+    "new_construction",
+    "single_ply_roofing",
+    "tpo_roofing"
+   ],
+   "note": "bare PVC = trim, not a roof membrane"
+  },
+  {
+   "gaf_id": "1143381",
+   "url": "https://www.glenroofingcorp.com/gutters/",
+   "text": "l and seamless gutters, as well as multiple materials. Seamless gutters are often a good option, as they prevent leaks. Your material options include copper, aluminum and PVC. We have extensive experience installing all types of gutters, and hand-selected professionals deliver outstanding workmanship on every project. Star",
+   "expect": [],
+   "reject": [
+    "new_construction",
+    "single_ply_roofing",
+    "tpo_roofing"
+   ],
+   "note": "PVC gutters"
+  },
+  {
+   "gaf_id": "1153506",
+   "url": "https://powerroofingnyc.com/about-us/",
+   "text": "e Roof Replacement Complete tear-off and rebuild with GAF or CertainTeed systems. Manufacturer-warrantied. Financing available. New Roof Installation New construction, additions, and full re-roofs. Asphalt, metal, tile, TPO, and modified bitumen. We spec every option. NYC specialty Flat & Low-Slope Roofs The specialty NYC demands: brownstone fl",
+   "expect": [
+    "new_construction",
+    "single_ply_roofing",
+    "tpo_roofing"
+   ],
+   "reject": []
+  },
+  {
+   "gaf_id": "1136081",
+   "url": "https://impressivepro.com/roofing/",
+   "text": " job sites Workmanship & material warranties available Our Chimney & Masonry Services Roofing Services 1) Residential Roof Installation & Replacement New builds and re-roofs with complete systems: tear-off, decking repair, underlayment, ventilation, and flashing. We’ll review options on-site and provide a written quote. P",
+   "expect": [
+    "new_construction"
+   ],
+   "reject": [
+    "single_ply_roofing",
+    "tpo_roofing"
+   ]
+  },
+  {
+   "gaf_id": "1003374",
+   "url": "https://www.feherhomesolutions.com/",
+   "text": "Jersey roofing contractor and exterior remodeling organization is ready to provide a personal consultation to best serve your exterior service needs. Exterior Services for Homeowners, Builders, and Property Management Throughout Northern New Jersey Superior Roofing Recognized as Master Elite Installers by GAF, we have decades of experience ",
+   "expect": [
+    "new_construction"
+   ],
+   "reject": [
+    "single_ply_roofing",
+    "tpo_roofing"
+   ]
+  },
+  {
+   "gaf_id": "1149904",
+   "url": "https://scudiericonstruction.com/",
+   "text": "Looking for a Custom Home Building Services? Get a free quote Trusted Custom Home Builder in New Jersey WE MAKE YOUR DREAMS FOR YOUR HOME A REALITY It is so difficult these days to find quality, Skip to content WE MAKE YOUR DREAMS FOR YOUR",
+   "expect": [
+    "new_construction"
+   ],
+   "reject": [
+    "single_ply_roofing",
+    "tpo_roofing"
+   ]
+  },
+  {
+   "gaf_id": "1127931",
+   "url": "https://guamanbuildersllc.com/",
+   "text": "ark across New Jersey: full tear-offs, deck repairs where needed and new shingles, with the work explained from beginning to end. Get a free estimate Guaman Builders job photo Posted Mar 2025 Your home is protected while we work Tarps over the plantings and a debris trailer in the driveway keep the job contained, from tear-",
+   "expect": [],
+   "reject": [
+    "new_construction",
+    "single_ply_roofing",
+    "tpo_roofing"
+   ],
+   "note": "'Builders' in a company name"
+  },
+  {
+   "gaf_id": "1111041",
+   "url": "https://hastingsroofing.com/residential-roofing/",
+   "text": "leaks or cosmetic damage, repairing your roof can save you from a completely new roof installation. Is your roof over 20 years old ? According to the National Association of Home Builders, most asphalt shingle roofs last 15–20 years before replacement is needed. Don’t wait for leaks to remind you! We are your Local Residential Roofing ",
+   "expect": [],
+   "reject": [
+    "new_construction",
+    "single_ply_roofing",
+    "tpo_roofing"
+   ],
+   "note": "'National Association of Home Builders' citation"
+  },
+  {
+   "gaf_id": "1141588",
+   "url": "https://www.zicklincontracting.com/about-us/",
+   "text": "ews our work Our Work in a Nutshell We’ve spruced up thousands of spots – each with its own story and a happy ending. That’s what we’re all about. 35 Mighty Builders We’re a crew of 35 strong, not just workers, but craftsmen who love what they do and do it with care. Time Well Spent We don’t just clock in hours; w",
+   "expect": [],
+   "reject": [
+    "new_construction",
+    "single_ply_roofing",
+    "tpo_roofing"
+   ],
+   "note": "'Mighty Builders' = crew size, not builder work"
+  }
+ ]
+}

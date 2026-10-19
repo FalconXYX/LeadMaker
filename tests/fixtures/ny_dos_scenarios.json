@@ -1,0 +1,221 @@
+{
+  "_about": "data.ny.gov n9v6-gdp6 (Active Corporations) rows keyed by the SoQL LIKE pattern that returns them. Entities, DOS IDs, filing dates, counties and filing names/addresses are reconstructed from the ny_dos enrichment rows the live run stored in data/leadmaker.db on 2026-10-18 (match_evidence, process/chairman/principal-office addresses). Rows marked _noise and DOS ID 5615790 (the namesake behind the real 'ambiguous_with_5615790' reason) are synthetic stand-ins with the same shape. A pattern mapped to [] means the live query found nothing useful.",
+  "queries": {
+    "%CHRI%ROOF%NYC%": [
+      {
+        "dos_id": "5882416",
+        "current_entity_name": "CHRIS THE ROOFER NYC LLC",
+        "initial_dos_filing_date": "2020-11-20T00:00:00.000",
+        "county": "Richmond",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC LIMITED LIABILITY COMPANY",
+        "dos_process_name": "CHRISTOPHER VROOM",
+        "dos_process_address_1": "40 FILLAT STREET",
+        "dos_process_city": "STATEN ISLAND",
+        "dos_process_state": "NY",
+        "dos_process_zip": "10314"
+      }
+    ],
+    "%HIGHRISE%ROOF%": [
+      {
+        "dos_id": "7210262",
+        "current_entity_name": "HIGHRISE ROOFING LLC",
+        "initial_dos_filing_date": "2023-12-20T00:00:00.000",
+        "county": "Kings",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC LIMITED LIABILITY COMPANY",
+        "dos_process_name": "YMS CONSULTING SERVICES LLC",
+        "dos_process_address_1": "1570 E 12TH ST",
+        "dos_process_city": "BROOKLYN",
+        "dos_process_state": "NY",
+        "dos_process_zip": "11230"
+      }
+    ],
+    "%JC%MASTER%": [],
+    "%J%C%MASTER%": [
+      {
+        "dos_id": "6018308",
+        "current_entity_name": "J C MASTER INC",
+        "initial_dos_filing_date": "2021-05-20T00:00:00.000",
+        "county": "Queens",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC BUSINESS CORPORATION",
+        "dos_process_name": "JULIAN TELLEZ",
+        "dos_process_address_1": "8636 VANWICK EXPWY",
+        "dos_process_city": "RICHMOND HILL",
+        "dos_process_state": "NY",
+        "dos_process_zip": "11418"
+      },
+      {
+        "_noise": true,
+        "dos_id": "4410291",
+        "current_entity_name": "JC MASTER PLUMBING & HEATING CORP.",
+        "initial_dos_filing_date": "2013-06-11T00:00:00.000",
+        "county": "Kings",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC BUSINESS CORPORATION",
+        "dos_process_name": "JC MASTER PLUMBING & HEATING CORP.",
+        "dos_process_address_1": "2101 BATH AVENUE",
+        "dos_process_city": "BROOKLYN",
+        "dos_process_state": "NY",
+        "dos_process_zip": "11214"
+      },
+      {
+        "_noise": true,
+        "dos_id": "5120456",
+        "current_entity_name": "JAC MASTERWORKS LLC",
+        "initial_dos_filing_date": "2017-04-03T00:00:00.000",
+        "county": "Nassau",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC LIMITED LIABILITY COMPANY",
+        "dos_process_name": "THE LLC",
+        "dos_process_address_1": "55 FRONT STREET",
+        "dos_process_city": "ROCKVILLE CENTRE",
+        "dos_process_state": "NY",
+        "dos_process_zip": "11570"
+      },
+      {
+        "_noise": true,
+        "dos_id": "6650127",
+        "current_entity_name": "JOHN CARLO MASTER DESIGNS INC.",
+        "initial_dos_filing_date": "2022-09-14T00:00:00.000",
+        "county": "New York",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC BUSINESS CORPORATION",
+        "dos_process_name": "JOHN CARLO MASTER DESIGNS INC.",
+        "dos_process_address_1": "305 EAST 24TH STREET",
+        "dos_process_city": "NEW YORK",
+        "dos_process_state": "NY",
+        "dos_process_zip": "10010"
+      }
+    ],
+    "%MIGHTY%ROOF%SIDING%": [],
+    "%MIGHTY%ROOF%": [
+      {
+        "dos_id": "5787827",
+        "current_entity_name": "MIGHTY ROOFING CORP.",
+        "initial_dos_filing_date": "2020-07-14T00:00:00.000",
+        "county": "Queens",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC BUSINESS CORPORATION",
+        "dos_process_name": "MIGHTY ROOFING CORP.",
+        "dos_process_address_1": "44 court street",
+        "dos_process_address_2": "unit 1004",
+        "dos_process_city": "BROOKLYN",
+        "dos_process_state": "NY",
+        "dos_process_zip": "11201"
+      }
+    ],
+    "D BUILDER CONTRACTOR%": [],
+    "D%BUILD%CONTRACT%": [],
+    "%DAVID%GENERAL%CONTRACT%": [
+      {
+        "dos_id": "2942609",
+        "current_entity_name": "DAVID GENERAL CONTRACTORS, INC.",
+        "initial_dos_filing_date": "2003-08-13T00:00:00.000",
+        "county": "Bronx",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC BUSINESS CORPORATION",
+        "dos_process_name": "LUIS DAVID PIZHA",
+        "dos_process_address_1": "84 SUNNYSIDE LANE",
+        "dos_process_city": "WESTBURY",
+        "dos_process_state": "NY",
+        "dos_process_zip": "11590",
+        "chairman_name": "LUIS DAVID PIZHA",
+        "chairman_address_1": "LUIS DAVID PIZHA",
+        "chairman_city": "WESTBURY",
+        "chairman_state": "NY",
+        "chairman_zip": "11590",
+        "location_name": "DAVID GENERAL CONTRACTORS, INC.",
+        "location_address_1": "84 SUNNYSIDE LANE",
+        "location_city": "WESTBURY",
+        "location_state": "NY",
+        "location_zip": "11590"
+      },
+      {
+        "dos_id": "5615790",
+        "current_entity_name": "DAVID GENERAL CONTRACTOR LLC",
+        "initial_dos_filing_date": "2019-09-03T00:00:00.000",
+        "county": "Nassau",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC LIMITED LIABILITY COMPANY",
+        "dos_process_name": "THE LLC",
+        "dos_process_address_1": "112 POST AVENUE",
+        "dos_process_city": "WESTBURY",
+        "dos_process_state": "NY",
+        "dos_process_zip": "11590"
+      }
+    ],
+    "%ANDREW%CONSTRUCT%": [
+      {
+        "dos_id": "3589866",
+        "current_entity_name": "ANDREWS CONSTRUCTION, L.L.C.",
+        "initial_dos_filing_date": "2007-10-22T00:00:00.000",
+        "county": "Albany",
+        "jurisdiction": "New Jersey",
+        "entity_type": "FOREIGN LIMITED LIABILITY COMPANY",
+        "dos_process_name": "C/O CORPORATION SERVICE COMPANY",
+        "dos_process_address_1": "80 STATE STREET",
+        "dos_process_city": "ALBANY",
+        "dos_process_state": "NY",
+        "dos_process_zip": "12207"
+      },
+      {
+        "dos_id": "3714867",
+        "current_entity_name": "ANDREW CONSTRUCTION CORP.",
+        "initial_dos_filing_date": "2008-08-29T00:00:00.000",
+        "county": "Richmond",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC BUSINESS CORPORATION",
+        "dos_process_name": "ANDREW CONSTRUCTION CORP.",
+        "dos_process_address_1": "45 AMBOY ROAD",
+        "dos_process_city": "STATEN ISLAND",
+        "dos_process_state": "NY",
+        "dos_process_zip": "10312"
+      },
+      {
+        "dos_id": "6226467",
+        "current_entity_name": "ANDREW CONSTRUCTION GROUP LLC",
+        "initial_dos_filing_date": "2021-09-07T00:00:00.000",
+        "county": "Kings",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC LIMITED LIABILITY COMPANY",
+        "dos_process_name": "THE LLC",
+        "dos_process_address_1": "2470 EAST 16TH STREET",
+        "dos_process_city": "BROOKLYN",
+        "dos_process_state": "NY",
+        "dos_process_zip": "11229"
+      },
+      {
+        "_noise": true,
+        "dos_id": "4877120",
+        "current_entity_name": "ANDREWS CONSTRUCTION MANAGEMENT INC.",
+        "initial_dos_filing_date": "2015-12-01T00:00:00.000",
+        "county": "Suffolk",
+        "jurisdiction": "New York",
+        "entity_type": "DOMESTIC BUSINESS CORPORATION",
+        "dos_process_name": "ANDREWS CONSTRUCTION MANAGEMENT INC.",
+        "dos_process_address_1": "10 MAIN STREET",
+        "dos_process_city": "SAYVILLE",
+        "dos_process_state": "NY",
+        "dos_process_zip": "11782"
+      }
+    ],
+    "%GARC%COMPANIE%": [],
+    "%GREAT%AMERICAN%ROOF%": [
+      {
+        "dos_id": "3417122",
+        "current_entity_name": "GREAT AMERICAN ROOFING COMPANY LLC",
+        "initial_dos_filing_date": "2006-09-26T00:00:00.000",
+        "county": "Rockland",
+        "jurisdiction": "New Jersey",
+        "entity_type": "FOREIGN LIMITED LIABILITY COMPANY",
+        "dos_process_name": "GREAT AMERICAN ROOFING COMPANY LLC",
+        "dos_process_address_1": "48 CONSTITUTION DRIVE",
+        "dos_process_city": "SOUTHAMPTON",
+        "dos_process_state": "NJ",
+        "dos_process_zip": "08088"
+      }
+    ]
+  }
+}

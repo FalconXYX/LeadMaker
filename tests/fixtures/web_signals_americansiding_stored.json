@@ -1,0 +1,144 @@
+{
+ "_note": "Live results stored in data/leadmaker.db (snapshot 2026-10-18) for GAF lead 1109046; the homepage HTML is tests/fixtures/website_crawl_american_siding_home.html.",
+ "contractor": {
+  "gaf_id": "1109046",
+  "name": "American Siding Construction Corp",
+  "legal_name": "American Siding Construction Corp",
+  "dba": null,
+  "phone": "(201) 772-7713",
+  "address": "53 Euclid Ave Newark, NJ 07105",
+  "city": "Newark",
+  "state": "NJ",
+  "postal_code": "07105",
+  "website": "https://americansidingconstruction.com"
+ },
+ "website_discovery": {
+  "status": "ok",
+  "confidence": 0.8,
+  "website": "https://americansidingconstruction.com"
+ },
+ "web_signals": {
+  "status": "ok",
+  "confidence": 0.8,
+  "website": "https://americansidingconstruction.com/",
+  "data": {
+   "website": "https://americansidingconstruction.com",
+   "robots_disallowed": false,
+   "http_status": 200,
+   "final_url": "https://americansidingconstruction.com/",
+   "tech": {
+    "cms": [
+     "WordPress"
+    ],
+    "hosting": [
+     "Cloudflare"
+    ],
+    "analytics": [
+     "Google Tag Manager"
+    ]
+   },
+   "ad_pixels": [
+    "Google Ads"
+   ],
+   "advertises": true,
+   "call_tracking": [],
+   "crm_marketing": [],
+   "field_software": [],
+   "chat": [],
+   "review_widgets": [],
+   "instant_quote": [],
+   "brands": [
+    "GAF",
+    "CertainTeed",
+    "TAMKO"
+   ],
+   "social": {},
+   "careers": {
+    "page": null,
+    "hiring_text": false,
+    "ats": []
+   },
+   "copyright_year": 2026,
+   "generator": [
+    "WordPress 7.1.3"
+   ],
+   "placeholder_site": false,
+   "schema_org": {
+    "types": [
+     "homeandconstructionbusiness"
+    ],
+    "areaServed": [
+     "New Jersey"
+    ]
+   },
+   "gtm": {
+    "id": "GTM-M2W4GHDJ",
+    "ad_tags": [
+     "Google Ads"
+    ]
+   },
+   "financing": {
+    "offered": false,
+    "providers": [],
+    "page": null
+   },
+   "sitemap": {
+    "entries": 3,
+    "lastmod_max": null,
+    "url": "https://americansidingconstruction.com/wp-sitemap.xml"
+   },
+   "wayback": {
+    "first_capture": "2017-11-09",
+    "last_capture": "2026-06-15",
+    "months_captured": 41,
+    "first_year": 2017
+   },
+   "domain": {
+    "registered": "2016-11-16",
+    "expires": "2026-11-16",
+    "registrar": "eNom, LLC",
+    "rdap_url": "https://rdap.verisign.com/com/v1/domain/americansidingconstruction.com"
+   },
+   "marketing_score": 3,
+   "talking_points": [
+    "No homeowner financing advertised on the website -- pitch distributor financing programmes.",
+    "Runs paid-ads tracking (Google Ads) -- actively buying leads.",
+    "Website features GAF, CertainTeed, TAMKO.",
+    "Online since ~2016."
+   ]
+  },
+  "source_urls": [
+   "https://americansidingconstruction.com",
+   "https://www.googletagmanager.com/gtm.js?id=GTM-M2W4GHDJ",
+   "https://web.archive.org/cdx/search/cdx?url=americansidingconstruction.com&output=json&fl=timestamp,statuscode&collapse=timestamp:6",
+   "https://rdap.verisign.com/com/v1/domain/americansidingconstruction.com"
+  ]
+ },
+ "website_crawl": {
+  "status": "ok",
+  "confidence": 0.8,
+  "website": "https://americansidingconstruction.com/",
+  "source_urls": [
+   "https://americansidingconstruction.com/",
+   "https://americansidingconstruction.com/contact/",
+   "https://americansidingconstruction.com/service-areas/",
+   "https://americansidingconstruction.com/roofing/"
+  ],
+  "data": {
+   "emails": [
+    "contact@americansidingconstruction.com"
+   ],
+   "phones": [
+    "(973) 432-3273",
+    "(973) 817-9278"
+   ],
+   "pages_fetched": 4,
+   "robots_blocked": 0,
+   "final_url": "https://americansidingconstruction.com/",
+   "identity": {
+    "phone_match": false,
+    "name_match": true
+   }
+  }
+ }
+}

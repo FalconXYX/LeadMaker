@@ -1,0 +1,83 @@
+#fb external hits.
+User-agent: facebookexternalhit
+Allow: /*/public/insights/share/anniversary*?
+
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: anthropic-ai
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+Content-signal: search=yes, ai-input=yes, ai-train=yes
+Disallow: /cdn-cgi/
+Disallow: /util/
+Disallow: /authentication/*
+Disallow: /business-reviews/*
+Disallow: /get-listed/success
+Disallow: /apply/thank-you
+Disallow: /bbb-reports-on
+Disallow: /contact-form
+Disallow: /verify-sms
+Disallow: /submit-review-expiration
+Disallow: /submit-review-thank-you
+Disallow: /dynamic-seal
+Disallow: /leave-a-review/no-bid
+Disallow: /leave-a-review/no-bid/thank-you
+Disallow: /leave-a-review/no-bid/expiration
+Disallow: /manage-location
+Disallow: /file-a-complaint/*
+Disallow: /accredited-business-directory/*?
+Disallow: /test-all-page
+Disallow: /*?
+Allow: /us/*/*/profile/*/*?
+Allow: /ca/*/*/profile/*/*?
+
+#block all other user agents from the following
+User-agent: *
+Content-signal: search=yes, ai-input=yes, ai-train=yes
+Disallow: /cdn-cgi/
+Disallow: /util/
+Disallow: /authentication/*
+Disallow: /business-reviews/*
+Disallow: /get-listed/success
+Disallow: /apply/thank-you
+Disallow: /bbb-reports-on
+Disallow: /contact-form
+Disallow: /verify-sms
+Disallow: /submit-review-expiration
+Disallow: /submit-review-thank-you
+Disallow: /dynamic-seal
+Disallow: /leave-a-review/no-bid
+Disallow: /leave-a-review/no-bid/thank-you
+Disallow: /leave-a-review/no-bid/expiration
+Disallow: /manage-location
+Disallow: /file-a-complaint/*
+Disallow: /accredited-business-directory/*?
+Disallow: /test-all-page
+Disallow: /*?
+Allow: /us/*/*/profile/*/*?
+Allow: /ca/*/*/profile/*/*?
+
+sitemap: https://www.bbb.org/sitemap-business-profiles-index.xml
+sitemap: https://www.bbb.org/sitemap-accredited-business-profiles-index.xml
+sitemap: https://www.bbb.org/sitemap-articles-index.xml
+sitemap: https://www.bbb.org/sitemap-nearme-articles-index.xml
+sitemap: https://www.bbb.org/sitemap-events-index.xml
+sitemap: https://www.bbb.org/sitemap-ca-categories-index.xml
+sitemap: https://www.bbb.org/sitemap-accredited-ca-categories-index.xml
+sitemap: https://www.bbb.org/sitemap-us-categories-index.xml
+sitemap: https://www.bbb.org/sitemap-accredited-us-categories-index.xml
+sitemap: https://www.bbb.org/sitemap-ca-province-categories-index.xml
+sitemap: https://www.bbb.org/sitemap-accredited-ca-province-categories-index.xml
+sitemap: https://www.bbb.org/sitemap-us-state-categories-index.xml
+sitemap: https://www.bbb.org/sitemap-accredited-us-state-categories-index.xml
+sitemap: https://www.bbb.org/sitemap-ca-city-categories-index.xml
+sitemap: https://www.bbb.org/sitemap-accredited-ca-city-categories-index.xml
+sitemap: https://www.bbb.org/sitemap-us-city-categories-index.xml
+sitemap: https://www.bbb.org/sitemap-accredited-us-city-categories-index.xml

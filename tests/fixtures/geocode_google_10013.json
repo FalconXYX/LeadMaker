@@ -1,0 +1,31 @@
+{
+   "results" : [
+      {
+         "address_components" : [
+            { "long_name" : "10013", "short_name" : "10013", "types" : [ "postal_code" ] },
+            { "long_name" : "Manhattan", "short_name" : "Manhattan", "types" : [ "political", "sublocality", "sublocality_level_1" ] },
+            { "long_name" : "New York", "short_name" : "New York", "types" : [ "locality", "political" ] },
+            { "long_name" : "New York County", "short_name" : "New York County", "types" : [ "administrative_area_level_2", "political" ] },
+            { "long_name" : "New York", "short_name" : "NY", "types" : [ "administrative_area_level_1", "political" ] },
+            { "long_name" : "United States", "short_name" : "US", "types" : [ "country", "political" ] }
+         ],
+         "formatted_address" : "New York, NY 10013, USA",
+         "geometry" : {
+            "bounds" : {
+               "northeast" : { "lat" : 40.7282429, "lng" : -73.9959609 },
+               "southwest" : { "lat" : 40.7134089, "lng" : -74.0164051 }
+            },
+            "location" : { "lat" : 40.7217861, "lng" : -74.0094471 },
+            "location_type" : "APPROXIMATE",
+            "viewport" : {
+               "northeast" : { "lat" : 40.7282429, "lng" : -73.9959609 },
+               "southwest" : { "lat" : 40.7134089, "lng" : -74.0164051 }
+            }
+         },
+         "place_id" : "ChIJ6zkjGolZwokRgpqOSOgERY4",
+         "postcode_localities" : [ "Manhattan", "New York" ],
+         "types" : [ "postal_code" ]
+      }
+   ],
+   "status" : "OK"
+}
