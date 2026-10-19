@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeadMaker Design Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --text: #2b2d2e;
+  --muted: #5d6a77;
+  --border: #dde4ea;
+  --rule: #e8edf2;
+  --accent: #1c74dc;
+  --accent-soft: #e4f0fc;
+  --roof: #c2513a;
+  --code-bg: #eef3f7;
+  --bar: #37393a;
+  --bar-text: #f1f4f6;
+  --bar-muted: #b9c2ca;
+  --built-bg: #e2f4e9; --built-fg: #227a46;
+  --demo-bg: #fcf0d9; --demo-fg: #8f5a00;
+  --designed-bg: #e8edf2; --designed-fg: #525f6c;
+  --sans: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --bar-h: 56px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #1a1c1e; --surface: #222527; --text: #e8eef2; --muted: #a9b4be;
+    --border: #353b40; --rule: #2c3135; --accent: #5aa6f2; --accent-soft: #1b3350;
+    --roof: #e07a5c; --code-bg: #2a2e31; --bar: #121415; --bar-text: #eef2f5; --bar-muted: #98a3ad;
+    --built-bg: #183626; --built-fg: #7fd3a1; --demo-bg: #3a2c10; --demo-fg: #f0c060;
+    --designed-bg: #2c3238; --designed-fg: #b6c1cb;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1a1c1e; --surface: #222527; --text: #e8eef2; --muted: #a9b4be;
+  --border: #353b40; --rule: #2c3135; --accent: #5aa6f2; --accent-soft: #1b3350;
+  --roof: #e07a5c; --code-bg: #2a2e31; --bar: #121415; --bar-text: #eef2f5; --bar-muted: #98a3ad;
+  --built-bg: #183626; --built-fg: #7fd3a1; --demo-bg: #3a2c10; --demo-fg: #f0c060;
+  --designed-bg: #2c3238; --designed-fg: #b6c1cb;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { background: var(--bg); color: var(--text); font: 16px/1.65 var(--sans); }
+
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+  background: var(--bar); color: var(--bar-text);
+  display: flex; align-items: center; gap: 24px;
+  height: var(--bar-h); padding-inline: max(16px, 2vw);
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; white-space: nowrap; }
+.brand small { color: var(--bar-muted); font-weight: 400; font-size: 14px; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  color: var(--bar-muted); text-decoration: none; font-size: 14px; font-weight: 500;
+  padding: 7px 12px; border-radius: 8px; white-space: nowrap;
+}
+.tab:hover { color: var(--bar-text); background: rgb(255 255 255 / .08); }
+.tab.on { background: var(--accent); color: #fff; }
+.tab:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+
+main { padding-block: 28px 120px; }
+.doc {
+  display: grid;
+  grid-template-columns: [full-start] minmax(16px, 1fr) [content-start] minmax(0, 800px) [content-end] minmax(16px, 1fr) [full-end];
+}
+.doc > * { grid-column: content; }
+.doc > .diagram { grid-column: full; }
+.doc + .doc { margin-top: 72px; padding-top: 40px; border-top: 1px solid var(--border); }
+.doc-meta {
+  justify-self: start;
+  font: 500 12px/1 var(--mono); color: var(--muted); letter-spacing: .02em;
+  display: inline-block; padding: 5px 8px; border-radius: 6px; background: var(--code-bg); margin-bottom: 14px;
+}
+h1, h2, h3, h4 { text-wrap: balance; line-height: 1.25; scroll-margin-top: calc(var(--bar-h) + 20px); }
+h1 { font-size: 32px; font-weight: 700; margin: 0 0 20px; letter-spacing: -.01em; }
+h2 { font-size: 23px; font-weight: 650; margin: 44px 0 14px; padding-top: 6px; }
+h3 { font-size: 18px; font-weight: 600; margin: 30px 0 10px; }
+h4 { font-size: 16px; font-weight: 600; margin: 22px 0 8px; }
+.doc article > :first-child { margin-top: 0; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+ul, ol { padding-left: 22px; margin: 0 0 16px; }
+li + li { margin-top: 4px; }
+li > ul, li > ol { margin: 6px 0 0; }
+a { color: var(--accent); }
+strong { font-weight: 600; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 32px 0; }
+blockquote {
+  margin: 0 0 16px; padding: 10px 16px; border-left: 3px solid var(--roof);
+  background: var(--surface); color: var(--text); border-radius: 0 8px 8px 0;
+}
+blockquote p:last-child { margin: 0; }
+code { font: 0.88em/1.5 var(--mono); background: var(--code-bg); padding: 1px 5px; border-radius: 5px; }
+pre:not(.mermaid) {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; overflow-x: auto; margin: 0 0 18px; font-size: 13.5px;
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+
+.table-wrap { overflow-x: auto; margin: 0 0 20px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--rule); }
+th { font-weight: 600; background: var(--code-bg); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 500; }
+
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.pill.built { background: var(--built-bg); color: var(--built-fg); }
+.pill.demo { background: var(--demo-bg); color: var(--demo-fg); }
+.pill.designed { background: var(--designed-bg); color: var(--designed-fg); }
+
+.diagram { margin: 8px 0 28px; padding-inline: 16px; }
+.diagram pre.mermaid { margin: 0 auto; background: none; border: 0; padding: 0; display: flex; justify-content: center; }
+/* Fit the whole diagram on one screen: as wide as the page, but never taller than the window under the top bar. */
+.diagram svg { display: block; width: 100%; height: auto; max-height: calc(100vh - var(--bar-h) - 48px); }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#77b6ea"/><path d="M7 19 16 10l9 9" fill="none" stroke="#37393a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 22h10" stroke="#37393a" stroke-width="3" stroke-linecap="round"/></svg>
+    LeadMaker <small>Design docs</small>
+  </div>
+  <nav class="tabs" aria-label="Documents"><a class="tab" href="#design" data-target="design">Design</a><a class="tab" href="#requirements" data-target="requirements">Requirements</a><a class="tab" href="#system" data-target="system">System design</a><a class="tab" href="#performance" data-target="performance">Performance</a></nav>
+</header>
+
+<main id="main"><article class="doc" id="design" data-label="Design"><div class="doc-meta">DESIGN.md</div><h1 id="design-design-md">DESIGN.md</h1>
+<h2 id="design-1-overview-initial-approach">1. Overview &amp; Initial Approach</h2>
+<p>Upon seeing the challenge, I understood it as a customer relationship management (CRM) tool for generating leads for a roofing supply distribution business, which meant there would be four sections involved: the data scraping and collection, the storing, processing, and retrieval of the data, the front-end user layer, and then the AI layer.</p>
+<p>I started by creating the initial requirements in <code>docs/OpeningRequirements.MD</code>, and as I started asking questions and doing some research, I refined that into <code>docs/SystemDesign.md</code>.</p>
+<h2 id="design-2-options-considered-what-i-chose-and-why">2. Options Considered, What I Chose, and Why</h2>
+<h3 id="design-data-scraping-collection">Data Scraping &amp; Collection</h3>
+<p>My opening requirements led me to a system that scrapes data off of GAF and combines it with other sources. Rather than running a live scrape every time a user searches a location, I chose to make it run primarily on a schedule (with an option for on-demand runs) and only update what has changed rather than redoing everything from scratch. If new parameters are added, only the things that rely on those parameters get updated, which saves a lot of compute and avoids rate limits.</p>
+<p>Because GAF only gives basic info like certifications and ratings, I also chose to pull from contractor websites, Google Maps, the Better Business Bureau, and weather data sources. Depending on how big a company is, we want different contacts: for a smaller shop we just want the boss or owner, while for a bigger company we want an office or purchasing manager. Adding weather data also accounts for demand fluctuations. If there is a big storm, new-build roofing companies might be in a lull, whereas emergency and repair roofing companies will be booming and needing to order supplies beforehand.</p>
+<h3 id="design-data-storage-processing-retrieval">Data Storage, Processing &amp; Retrieval</h3>
+<p>From there, that data needed to be stored in a database. I considered NoSQL, but most of this data is very relational, and having a single source of ground truth that could be used relationally while inserting some <code>JSONB</code> columns for the non-SQL functionality I wanted was why I chose PostgreSQL. I also considered putting a dedicated search engine like Elasticsearch next to it, but Postgres indexes on the <code>JSONB</code> and tag columns (plus PostGIS for distance searches) kept filtering fast enough without running and syncing a second data store. Using <code>JSONB</code> also lets sales reps add their own custom fields (information slots) without needing to change the database schema, while custom tags live in their own small tables so the whole team can share them and filter by them.</p>
+<p>I also had to make sure that when data is re-scraped, it doesn't overwrite changes or notes that the sales team manually made, and that multiple reps can edit or leave notes on the same lead with clear tracking of who did what. To handle that, I separated the scraped data from the manual user edits in the database.</p>
+<p>I then created a series of TypeScript services to read, write, and filter the data. I considered keeping everything in one backend server, but splitting reads from writes means the heavy scraping and AI writes never slow down the reps' searches, and each side can scale on its own. Heavy searches also go through a queue that only lets a few run at once, so at peak load a rep might wait up to a second rather than the database getting overwhelmed. Because the system needs to scale to hundreds or thousands of reps, I added a read-only copy of the database alongside caching. At moments like 9:00 a.m. on a weekday, lots of sales reps will be hitting the database all at once trying to read their data, so routing reads to a read-only copy and cache takes that stress off the main database.</p>
+<h3 id="design-front-end-user-layer">Front-End User Layer</h3>
+<p>I built a React frontend for the user to interface with the platform. I have previously worked with CRMs peripherally, so I knew generally how they worked. After doing a bit of research, I chose to emulate the layout and workflow of existing CRMs because that is what sales reps are already used to, so it integrates into their workflow much better.</p>
+<p>It includes role-based views where a manager can see every lead and the whole team's activity, while an individual rep sees the leads allocated to them plus the unallocated pool, and can only edit their own. Reps start on a dashboard with an AI briefing of their territory, today's calls with a suggested pitch for each, their follow-ups (as a list or a calendar), new leads worth a call, and where their pipeline stands, with the lead map and local weather further down. In the list and profile views, I also made sure reps can create and toggle their own custom tags because they will eventually understand their business needs better than any developer, and I didn't want to overwhelm them with a million default tags.</p>
+<h3 id="design-ai-layer">AI Layer</h3>
+<p>For the AI layer, I split the work between pre-generated insights and on-demand chat so we aren't running heavy AI calls every time a page loads. After all of the data is scraped and organized, Gemini goes through it and pre-generates a summary, a recommended pitch, and talking points for each business based on its scraped data, website text, tags, and the reps' notes. I kept weather out of these per-lead calls on purpose: a cheaper rules-based layer turns weather alerts and storm reports into timing badges per county, so a storm never triggers hundreds of new AI calls. Weather does feed into the short AI briefing on each rep's dashboard. To keep the AI from making things up, every insight is checked before it's saved: it has to point to the facts it used, and anything that invents a certification or a contact, or promises something on the distributor's behalf, gets trimmed out or rejected.</p>
+<p>I considered using Claude for the AI layer, which is what I'd use in production, but stuck with Gemini's free tier for the prototype and put both behind one model interface so switching is a configuration change rather than a code change.</p>
+<p>Then, for the on-demand side, I added a chatbot in the bottom-right corner that has two main jobs: answering specific questions about a lead, and letting the user filter the list view using natural language (like saying "I'm looking for companies that have this trait" and having it control the UI filters for them).</p>
+<h2 id="design-3-limitations-what-i-d-do-with-more-time">3. Limitations &amp; What I'd Do With More Time</h2>
+<p>When it came to the AI layer, I stuck with using the free version of Gemini, which did limit the quality of some of my insights and responses. With more tuning and a better model, the quality of the insights would greatly improve.</p>
+<p>I could also get better data with more expansive search and scraping tools that require some budget, such as tools to find exact verified emails and deeper company information to feed into the large language models.</p>
+<p>On the feature side, I would integrate proper notification and email support, as well as existing calendar functionality like Google or Microsoft Calendar. On the system design side, I would implement full geographical partitioning of the database, as well as better durability through automated backups and duplication.</p></article><article class="doc" id="requirements" data-label="Requirements"><div class="doc-meta">docs/OpeningRequirements.MD</div><h1 id="requirements-b2b-sales-intelligence-platform-system-design-requirements">B2B Sales Intelligence Platform: System Design &amp; Requirements</h1>
+<h2 id="requirements-0-general-requirements-assumptions">0. General Requirements &amp; Assumptions</h2>
+<h3 id="requirements-functional-requirements">Functional Requirements</h3>
+<ul>
+<li><strong>Role-Based Access &amp; Lead Allocation:</strong> Sales reps view only the leads allocated to them plus the pool of unallocated leads (view-only), while managers have oversight across all reps and leads and are the only role that can allocate leads. A rep's territory is the set of leads allocated to them.</li>
+<li><strong>Location Search &amp; Territory Dashboard:</strong> Users can view an overview of their territory (KPIs, map, weather/news) or search by ZIP code and radius.</li>
+<li><strong>Filtering, Sorting &amp; Custom Tags:</strong> Users can filter and sort leads by system tags (size, age, GAF certifications, roof materials) or create their own custom tags and data slots.</li>
+<li><strong>Lead Profiles:</strong> Users can click a lead to view business details, size-appropriate target contacts, rep notes, weather context, and AI insights.</li>
+<li><strong>AI Summary &amp; Recommendations:</strong> Profiles display pre-generated business summaries and actionable sales recommendations tied to real-world signals.</li>
+<li><strong>Action-Enabled AI Assistant:</strong> Users can ask a chatbot questions about a specific lead or use natural language to automatically filter and sort lead lists.</li>
+</ul>
+<h3 id="requirements-non-functional-requirements-scale-reliability-etc">Non-Functional Requirements (Scale, Reliability, etc.)</h3>
+<ul>
+<li><strong>High Scalability:</strong> The platform and pipeline must reliably support hundreds to thousands of concurrent sales reps, and data volumes well beyond the initial GAF roofing list as new industries and sources are added.</li>
+<li><strong>Fast Retrieval:</strong> Lead data and base AI insights are pre-generated and stored so searching, sorting, and dashboard loading feel instant.</li>
+<li><strong>Data Consistency &amp; Concurrency:</strong> Overlapping location searches return deduplicated contractor records, and concurrent edits by multiple users (the allocated rep and managers) are tracked safely without overwriting each other.</li>
+</ul>
+<h3 id="requirements-business-persona-assumptions">Business &amp; Persona Assumptions</h3>
+<ul>
+<li><strong>Target User:</strong> An enterprise-scale roofing distributor supplying materials to roofing contractors.</li>
+<li><strong>Sales Workflow:</strong> Supports account planning for both net-new prospecting and existing account management.</li>
+<li><strong>Initial Scope:</strong> Scoped to a 25-mile radius around ZIP code 10013 using GAF contractor data as the primary seed source.</li>
+<li><strong>Single Distributor:</strong> One distributor uses the platform (single tenant), so access control is role-based within that one organization.</li>
+<li><strong>Industry-Agnostic Design:</strong> Roofing, with GAF as the seed source, is the first industry. Data sources and tag taxonomies are pluggable so the platform can extend to other industries and lead sources.</li>
+<li><strong>Production Design, Free-Tier Prototype:</strong> Everything is designed as a production system. For the prototype, paid services may be swapped for free tiers or free alternatives (with approval), and each swap notes what production would use instead.</li>
+</ul>
+<hr />
+<h2 id="requirements-1-data-acquisition-tagging">1. Data Acquisition &amp; Tagging</h2>
+<h3 id="requirements-requirements-goals">Requirements &amp; Goals</h3>
+<ul>
+<li><strong>Scheduled &amp; On-Demand Runs:</strong> The pipeline runs primarily on a recurring schedule, with support for on-demand triggers by reps or managers (e.g., refreshing a territory or searching a new area). Duplicate requests for the same area are merged, and requests are rate-limited per user.</li>
+<li><strong>Location-Based Extraction:</strong> Given a location and radius, the system collects all roofing contractors, extracts their details, generates tags and notes, and triggers AI summaries.</li>
+<li><strong>User-Guided Customization:</strong> Reps can create custom tags and information slots. Slots are also passed into the pipeline to guide LLM extraction and insight generation; this is experimental and will be dropped if it doesn't work well.</li>
+</ul>
+<h3 id="requirements-sources-raw-data-scope">Sources &amp; Raw Data Scope</h3>
+<ul>
+<li><strong>Primary Source:</strong> GAF residential contractor directory (ratings, certifications, years in business, location, contact info, roof types).</li>
+<li><strong>Secondary Business Sources:</strong> Contractor websites and public business listings to extract missing context and size-appropriate decision-makers (e.g., Owner/Boss for smaller shops vs. Office/Purchasing Manager for larger companies), defaulting to the owner when no other decision-maker can be found.</li>
+<li><strong>Contact Discovery:</strong> Better Business Bureau profiles supply owner and manager names and titles (personal-use profile scraping for the prototype; the paid BBB API in production). Hunter.io email discovery (domain search, email-pattern inference and verification) is planned for later.</li>
+<li><strong>Contextual Signal Sources:</strong> Weather/Storm APIs and local news feeds to track regional roofing demand drivers.</li>
+</ul>
+<h3 id="requirements-tagging-categorization-logic">Tagging &amp; Categorization Logic</h3>
+<ul>
+<li><strong>Structured Tagging:</strong> Maps raw fields into filterable tags (GAF Master Elite status, rating tiers, years in business).</li>
+<li><strong>Service &amp; Material Tagging:</strong> Extracts roof material specialties (metal, asphalt shingles, flat/TPO) and work types (new construction vs. storm/emergency repair).</li>
+<li><strong>Custom User Tagging:</strong> Supports rep-created tags and custom key-value data slots so the team can adapt categorization as business needs evolve.</li>
+</ul>
+<h3 id="requirements-pipeline-scaling-considerations">Pipeline &amp; Scaling Considerations</h3>
+<ul>
+<li><strong>Incremental Updates:</strong> Avoids re-scraping or re-computing from scratch; only new or changed records, records past their source's refresh window, and records affected by newly added parameters are processed to save compute.</li>
+<li><strong>Audit Logging:</strong> All data additions, updates, and generated tags are stored with timestamped logs.</li>
+<li><strong>Rate Limiting &amp; Queuing:</strong> Uses job queues to manage scraping and LLM rate limits safely when scaling across large territories.</li>
+</ul>
+<hr />
+<h2 id="requirements-2-backend-storage-retrieval">2. Backend Storage &amp; Retrieval</h2>
+<h3 id="requirements-requirements-goals-x">Requirements &amp; Goals</h3>
+<ul>
+<li><strong>Fast Storage &amp; Retrieval:</strong> Store and retrieve contractor profiles, system/custom tags, and AI insights with structures optimized for fast multi-criteria filtering.</li>
+<li><strong>Rep Edits &amp; Override Protection:</strong> Allow reps to add notes, create custom fields, and manually edit contact info, differentiating human edits from scraped data so future pipeline runs never overwrite rep changes.</li>
+<li><strong>Multi-User Collaboration &amp; Attribution:</strong> The allocated rep and managers can work on the same lead at the same time, with clear attribution (user ID and timestamp) for every note, status change, and field edit. Notes are visible to anyone who can view the lead, and notes, edits and history stay with the lead when it is reassigned.</li>
+<li><strong>Role-Based Access Control (RBAC):</strong> Built-in auth to enforce manager vs. rep permissions and lead allocations: reps can act only on the leads allocated to them and can view (but not act on) unallocated leads, and only managers can allocate or reassign leads.</li>
+</ul>
+<h3 id="requirements-data-schema-entities">Data Schema / Entities</h3>
+<ul>
+<li><strong>Companies (Core Entity):</strong> Stores an internal ID (source IDs such as GAF's live in a separate mapping), canonical business info, location coordinates, assigned rep, <code>updated_in_last_poll</code>, team-level last-checked/last-serviced timestamps, and scraped attributes. Per-rep checked/serviced state lives in a separate Lead Rep State table, and <code>unchecked</code>/<code>unserviced</code> are derived per rep and at the team level from these.</li>
+<li><strong>Manual Overrides:</strong> Rep edits to company fields and contacts live in a separate table that the pipeline never writes, so re-scrapes can't overwrite them.</li>
+<li><strong>Contacts:</strong> Stores multiple people per company, each with name, title, email, phone, source, confidence, email-verification status, and a do-not-contact flag.</li>
+<li><strong>Lead Allocations:</strong> Records which rep each lead is allocated to, which manager allocated it and when, with full history. Leads with no allocation form the shared unallocated pool.</li>
+<li><strong>Insights, Tags &amp; Custom Fields:</strong> Stores pre-generated AI summaries, sales recommendations, system tags, and user-defined custom fields/tags linked to each contractor.</li>
+<li><strong>Users, Rep Notes &amp; Audit Trail:</strong> Stores user roles (<code>rep</code>, <code>manager</code>) and links every note, checked/serviced action, and manual override to a <code>user_id</code> and timestamp. Account status (<code>prospect</code>, <code>existing_customer</code>, <code>lapsed_customer</code>, <code>do_not_contact</code>) comes from the distributor's CRM import, and each import is logged. Notes are append-only, and edits to shared fields use optimistic locking to prevent concurrent edit conflicts.</li>
+<li><strong>Ingestion Jobs / Logs:</strong> Tracks scrape timestamps, parameter versions, and pipeline run history.</li>
+</ul>
+<h3 id="requirements-storage-database-choices">Storage &amp; Database Choices</h3>
+<ul>
+<li><strong>PostgreSQL + JSONB:</strong> Use Postgres for relational integrity while leveraging <code>JSONB</code> columns for flexible, document-style data (allowing reps to add custom information slots dynamically without schema migrations; rep-created custom tags live in their own relational tables).</li>
+<li><strong>Microservices:</strong> Expose data and business logic through decoupled services, each owning one area:</li>
+<li><strong>API Gateway &amp; Auth:</strong> authentication, rep vs. manager roles, and per-user rate limits.</li>
+<li><strong>Core CRM Write Service:</strong> rep notes, checked/serviced status, manual overrides, custom tags, and lead allocations.</li>
+<li><strong>Query &amp; Filter Service:</strong> lead lists, filters, and profiles through the cache and read replicas, applying the visibility rule.</li>
+<li><strong>On-Demand AI Service:</strong> lead Q&amp;A and natural-language filtering.</li>
+<li><strong>Ingestion &amp; AI Pipeline:</strong> the Python workers for scraping, enrichment, tagging, and batch AI insights.</li>
+<li><strong>Event Bus:</strong> Services communicate through events (e.g., "pipeline updated lead", "rep edited field"), which also drive cache invalidation and dashboard updates.</li>
+<li><strong>Languages:</strong> User-facing services are written in TypeScript; the ingestion pipeline is written in Python.</li>
+</ul>
+<h3 id="requirements-retrieval-querying-caching-strategy">Retrieval, Querying &amp; Caching Strategy</h3>
+<ul>
+<li><strong>SQL Indexing &amp; Materialized Views:</strong> Use Postgres indexes (including GIN indexes for <code>JSONB</code> system tags and custom data slots) and materialized views to pre-compute team and manager dashboard KPI roll-ups.</li>
+<li><strong>Hot-Data Caching:</strong> Cache frequently accessed contractor profiles, popular territory queries, and dashboard KPI counters in an in-memory layer (e.g., Redis) to minimize database hits. Cached entries are invalidated through the event bus whenever the pipeline updates a lead or a rep edits one.</li>
+<li><strong>Read Replicas &amp; Connection Pooling:</strong> Serve read-heavy traffic from Postgres read replicas behind a connection pooler (e.g., PgBouncer), with per-user rate limits at the API, so peak usage never overloads the primary database.</li>
+</ul>
+<h3 id="requirements-future-scaling-later">Future Scaling (Later)</h3>
+<ul>
+<li><strong>Geographic Partitioning:</strong> Partition database tables by location/region while maintaining a single canonical source of truth so overlapping radius searches do not cause data desync. Deferred until data volumes require it.</li>
+</ul>
+<hr />
+<h2 id="requirements-3-frontend-user-interface">3. Frontend User Interface</h2>
+<h3 id="requirements-requirements-goals-x-x">Requirements &amp; Goals</h3>
+<ul>
+<li><strong>Familiar CRM Paradigm:</strong> Designed around a standard CRM layout and workflow so sales reps can adopt it immediately.</li>
+<li><strong>Role-Based Views:</strong> Sales reps see their allocated leads, the unallocated pool, and their territory metrics, while managers can view and allocate leads across the entire team.</li>
+<li><strong>Customizable &amp; Uncluttered:</strong> Reps can create custom tags and information slots while toggling which tags are displayed so the UI never becomes overwhelming.</li>
+</ul>
+<h3 id="requirements-core-views-rep-workflow">Core Views &amp; Rep Workflow</h3>
+<ul>
+<li><strong>Territory Dashboard:</strong> Displays KPI counters (unserviced leads, unchecked leads, net-new updates from the latest poll), an interactive lead map, local weather/news summaries, and a territory-level AI briefing.</li>
+<li><strong>Multi-View Lead Lists:</strong> Filterable and sortable CRM list views where reps can slice leads by system tags, custom tags, certifications, and roof types.</li>
+<li><strong>Lead Detail View:</strong> Full contractor profile showing scraped company info, size-adjusted target contact (Owner vs. Office/Purchasing Manager), AI insights, rep notes, custom fields, and local weather impact.</li>
+<li><strong>Lead Allocation View (Managers):</strong> An unallocated queue where new leads from each pipeline run land, bulk assignment of a filtered list to a rep, and allocation suggestions (e.g., by ZIP code) that the manager reviews and approves.</li>
+<li><strong>Persistent AI Assistant:</strong> A floating chat widget in the bottom-right corner accessible across both the dashboard and individual lead profiles.</li>
+</ul>
+<h3 id="requirements-key-features-polish">Key Features &amp; Polish</h3>
+<ul>
+<li><strong>Weather &amp; Seasonality Demand Signals:</strong> Pairs local weather forecasts and storm alerts with contractor specialties (e.g., flagging repair/emergency roofers as high priority for supply orders before/after severe storms, while noting weather lulls for new-build contractors).</li>
+<li><strong>Natural Language UI Control:</strong> Reps can tell the chatbot what kind of companies they are looking for, and the assistant automatically applies the matching filters and sorts to the list view.</li>
+<li><strong>Update &amp; Activity Highlights:</strong> Visual badges showing what data changed in the most recent pipeline poll and quick toggles to mark leads as checked/serviced.</li>
+</ul>
+<hr />
+<h2 id="requirements-4-ai-tools-insights">4. AI Tools &amp; Insights</h2>
+<h3 id="requirements-requirements-goals-x-x-x">Requirements &amp; Goals</h3>
+<ul>
+<li><strong>Hybrid Execution Model:</strong> Split AI workloads between pre-generated batch insights (computed during data ingestion) and on-demand interactive assistance (triggered by the user in the UI).</li>
+<li><strong>Actionable Sales Focus:</strong> Move beyond generic company descriptions to provide timing-aware sales recommendations and direct UI control.</li>
+</ul>
+<h3 id="requirements-inputs-context">Inputs &amp; Context</h3>
+<ul>
+<li><strong>Contractor Context:</strong> GAF profile attributes, scraped website content, company size, service/material tags, and rep-authored notes/custom fields.</li>
+<li><strong>Environmental Context:</strong> Local weather forecasts, severe storm alerts, seasonality, and regional roofing news.</li>
+</ul>
+<h3 id="requirements-generated-outputs-insights-scoring-recommendations">Generated Outputs (Insights, Scoring, Recommendations)</h3>
+<ul>
+<li><strong>Pre-Generated (Pipeline Phase):</strong></li>
+<li><strong>Structured Extraction &amp; Tagging:</strong> Parses unstructured website text to identify target decision-makers, roof material specialties, and custom user-requested fields.</li>
+<li><strong>Lead Summaries &amp; Pitch Recommendations:</strong> Generates a concise business overview and a recommended sales angle (e.g., pitching bulk shingles to a high-volume GAF Master Elite roofer, or emergency tarps/repair stock to a storm-restoration contractor); weather timing comes from the separate weather timing layer.</li>
+<li><strong>Territory Briefing:</strong> Summarizes major changes from the latest data poll and weather-driven opportunities for the rep's dashboard.</li>
+<li><strong>On-Demand (Interactive Chatbot Phase):</strong></li>
+<li><strong>Lead Q&amp;A:</strong> Answers specific rep questions about an individual contractor using their stored profile, scraped text, and team notes as context.</li>
+<li><strong>Natural Language Filtering (Tool Calling):</strong> Translates conversational requests (e.g., <em>"Show me Master Elite contractors doing metal roofs near 10013 that I haven't checked yet"</em>) into structured filter state updates that directly control the UI list view.</li>
+</ul>
+<h3 id="requirements-execution-cost-scale-strategy">Execution &amp; Cost/Scale Strategy</h3>
+<ul>
+<li><strong>Batch Pre-Computation &amp; Delta Processing:</strong> Run summary and extraction prompts asynchronously during pipeline jobs, and only re-run LLM calls when underlying contractor data, rep notes/custom fields, user-defined parameters, or the prompt/model version actually change.</li>
+<li><strong>Separate Weather Timing Layer:</strong> Weather and storm context is handled by a cheaper, rules-based timing layer per county that is joined at read time, so weather changes never re-run per-lead LLM calls.</li>
+<li><strong>Scoped Context &amp; Function Calling:</strong> Keep on-demand chatbot latency and token costs low by scoping lead Q&amp;A strictly to the active contractor's record, and using lightweight LLM tool/function calling to translate natural language search queries into the shared lead filter parameters. The assistant runs with the requesting user's permissions, so it can only see and filter leads that user can view.</li>
+<li><strong>Provider-Agnostic Models:</strong> One model interface supports multiple LLM providers (e.g., Anthropic Claude, Google Gemini), selected by configuration and API key.</li>
+</ul></article><article class="doc" id="system" data-label="System design"><div class="doc-meta">docs/SystemDesign.md</div><h1 id="system-system-design-b2b-roofing-sales-intelligence-platform">System Design: B2B Roofing Sales Intelligence Platform</h1>
+<h2 id="system-1-overview">1. Overview</h2>
+<p>A B2B lead intelligence platform for a single enterprise roofing distributor (single tenant, so there is no tenant ID; access is role-based within one organization). The system scrapes contractor data (seeded from GAF around ZIP 10013), enriches it with public business registries, company websites and local weather/news, and pre-generates sales insights. It uses a <strong>Primary/Read Replica (CQRS-style read/write split)</strong> database architecture to separate heavy asynchronous scraping/AI writes from fast, read-heavy CRM queries across thousands of reps. The design is industry-agnostic: roofing with GAF is the first industry, and every lead has an internal ID that doesn't depend on the source that found it.</p>
+<hr />
+<h2 id="system-2-system-architecture-diagram">2. System Architecture Diagram</h2>
+<div class="diagram"><pre class="mermaid">flowchart TB
+    %% Nodes
+    Client[&quot;&lt;b&gt;CRM Web App (React / TS)&lt;/b&gt;&lt;br/&gt;Dashboard, Filterable Lists, Lead Profiles, Allocation, AI Chat&quot;]
+    Gateway[&quot;&lt;b&gt;API Gateway&lt;/b&gt;&lt;br/&gt;Rep vs. Manager Scopes, Rate Limits&quot;]
+
+    subgraph Services [&quot;Backend Services (TypeScript)&quot;]
+        CRM[&quot;&lt;b&gt;Core CRM Write Service&lt;/b&gt;&lt;br/&gt;Notes, Status, Overrides, Custom Tags, Allocations&quot;]
+        Query[&quot;&lt;b&gt;Query &amp; Filter Service&lt;/b&gt;&lt;br/&gt;LeadFilter Queries + Visibility Rule&quot;]
+        Chat[&quot;&lt;b&gt;On-Demand AI Service&lt;/b&gt;&lt;br/&gt;Lead Q&amp;A + UI Filter Tool Calling&quot;]
+    end
+
+    subgraph Storage [&quot;Data &amp; Caching Layer (Read/Write Split)&quot;]
+        Redis[(&quot;&lt;b&gt;Redis&lt;/b&gt;&lt;br/&gt;Hot Cache, Event Stream &amp; Rate Limits&quot;)]
+        PrimaryDB[(&quot;&lt;b&gt;PostgreSQL Primary (Write DB)&lt;/b&gt;&lt;br/&gt;Scrapes, Insights, Rep Edits, Job Queue &amp; Outbox&quot;)]
+        ReadDB[(&quot;&lt;b&gt;PostgreSQL Read Replicas&lt;/b&gt;&lt;br/&gt;Read-Only Store + Materialized Views&quot;)]
+    end
+
+    subgraph Pipeline [&quot;Async Ingestion &amp; AI Pipeline (Python)&quot;]
+        Trigger[&quot;&lt;b&gt;Scheduler / On-Demand Trigger&lt;/b&gt;&quot;]
+        Queue[&quot;&lt;b&gt;Job Queue&lt;/b&gt;&lt;br/&gt;Postgres jobs table (SKIP LOCKED)&quot;]
+        Scrapers[&quot;&lt;b&gt;Scraper &amp; Enrichment Workers&lt;/b&gt;&lt;br/&gt;GAF Directory, Public Registries, BBB, Contractor Sites&quot;]
+        Context[&quot;&lt;b&gt;Context Workers&lt;/b&gt;&lt;br/&gt;Weather/Storm APIs + Local News&quot;]
+        Delta[&quot;&lt;b&gt;Delta Engine&lt;/b&gt;&lt;br/&gt;Content &amp; Input Hash Checks&quot;]
+        Tagger[&quot;&lt;b&gt;Rules Tagger&lt;/b&gt;&lt;br/&gt;System Tags, Segment, Priority Score&quot;]
+        LLM[&quot;&lt;b&gt;Batch LLM Workers&lt;/b&gt;&lt;br/&gt;Extraction, Summaries &amp; Pitches&quot;]
+    end
+
+    %% Client &amp; Gateway Connections
+    Client &lt;--&gt;|&quot;HTTPS / SSE&quot;| Gateway
+    Gateway --&gt; CRM &amp; Query &amp; Chat
+
+    %% Service to Storage Connections (CQRS Split)
+    CRM --&gt;|&quot;Writes Only&quot;| PrimaryDB
+    Chat --&gt;|&quot;Visibility-Scoped Reads&quot;| Query
+    Query &lt;--&gt;|&quot;Hot Reads&quot;| Redis
+    Query --&gt;|&quot;Read-Only Queries&quot;| ReadDB
+    Query -.-&gt;|&quot;Read-Your-Writes (few s after own edit)&quot;| PrimaryDB
+
+    %% DB Replication &amp; Events
+    PrimaryDB -.-&gt;|&quot;Async Replication&quot;| ReadDB
+    PrimaryDB --&gt;|&quot;Outbox Relay&quot;| Redis
+    Redis -.-&gt;|&quot;Cache Invalidation &amp; Live Updates&quot;| Gateway
+
+    %% Pipeline Connections
+    Trigger --&gt; Queue
+    Queue --&gt; Scrapers &amp; Context
+    Scrapers --&gt; Delta
+    Delta --&gt;|&quot;Write Raw Data&quot;| PrimaryDB
+    Delta --&gt; Tagger
+    Tagger --&gt;|&quot;Write Tags &amp; Scores&quot;| PrimaryDB
+    Delta --&gt;|&quot;Only New/Changed Records&quot;| LLM
+    LLM --&gt;|&quot;Write Insights&quot;| PrimaryDB
+    Context --&gt;|&quot;County Signals (no LLM)&quot;| PrimaryDB
+
+    %% Clean Black &amp; White / Grayscale Styling
+    classDef default fill:#ffffff,stroke:#333333,stroke-width:1.5px,color:#000000;
+    classDef storage fill:#f4f4f4,stroke:#333333,stroke-width:1.5px,color:#000000;
+    class Redis,PrimaryDB,ReadDB storage;</pre></div>
+<h2 id="system-3-requirements">3. Requirements</h2>
+<h3 id="system-functional">Functional</h3>
+<ul>
+<li><strong>Role-Based Access:</strong> Reps see the leads allocated to them (their territory) and can view, but not act on, unallocated leads. Managers see every lead and are the only ones who allocate or reassign leads.</li>
+<li><strong>Dashboard:</strong> Shows KPI counters (unserviced, unchecked, updated in last poll), a map of the rep's leads, weather/news alerts, and a territory AI summary.</li>
+<li><strong>Filtering &amp; Custom Fields:</strong> Filter by system tags (size, age, GAF certs, roof materials), segment, priority score and account status, or by custom tags that reps create and custom data slots.</li>
+<li><strong>Lead Profiles:</strong> Displays company details, size-based target contacts (Owner for small shops vs. Office/Purchasing Manager for larger companies, falling back to the owner), rep notes, weather context, and AI sales pitches. Notes are visible to anyone who can view the lead.</li>
+<li><strong>Lead Allocation (Managers):</strong> An unallocated queue for new leads, bulk assignment of a filtered list to a rep, and allocation suggestions that the manager approves.</li>
+<li><strong>AI Chatbot:</strong> Answers questions about specific leads and translates natural language queries into UI list filters, under the same visibility rules as the user.</li>
+</ul>
+<h3 id="system-non-functional">Non-Functional</h3>
+<ul>
+<li><strong>Read-Heavy Scalability:</strong> Supports thousands of reps via <strong>PostgreSQL Read Replicas</strong>, connection pooling (PgBouncer) and Redis caching so heavy reads never block writes.</li>
+<li><strong>Override Safety:</strong> Pipeline re-scrapes never overwrite manual rep edits.</li>
+<li><strong>Multi-User Attribution:</strong> Notes and edits track <code>user_id</code> and timestamps with optimistic locking to prevent edit collisions.</li>
+<li><strong>Delta Processing:</strong> Scrapers and LLMs reuse stored results within each source's refresh window and only reprocess records whose inputs changed, to save compute.</li>
+</ul>
+<h3 id="system-targets-sizing-assumptions">Targets (sizing assumptions)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Scale</td>
+<td>2,000 reps + 200 managers; ~500 concurrent at peak (~200 requests/s)</td>
+</tr>
+<tr>
+<td>Latency (p95)</td>
+<td>Lead list/filter ≤ 300 ms · lead profile ≤ 200 ms · dashboard KPIs ≤ 500 ms · natural-language filter ≤ 3 s</td>
+</tr>
+<tr>
+<td>Freshness</td>
+<td>A rep's edit is visible to other users within 5 s · GAF re-polled weekly · enrichments refreshed every 30 days · weather alerts polled every 15 min</td>
+</tr>
+<tr>
+<td>Availability</td>
+<td>99.9% for the read API · daily backups with point-in-time recovery</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="system-4-data-pipeline-ingestion-tagging">4. Data Pipeline (Ingestion &amp; Tagging)</h2>
+<ol>
+<li><strong>Triggers:</strong> Runs on a recurring schedule (cron) or on-demand when a rep/manager requests a territory refresh (or searches a new area) or adds a new custom extraction field. Duplicate requests for the same area are merged into one job, and requests are rate-limited per user. Jobs go through a database-backed job queue (Postgres with <code>SKIP LOCKED</code> claiming; today's offline pipeline also runs it on SQLite until the Postgres move) with retries and backoff, a dead-letter state and duplicate-job rejection. Per-host rate limits are enforced in each worker's HTTP client; in production they are shared across workers through a Redis token bucket.</li>
+<li><strong>Scrapers:</strong> Pulls base attributes from the GAF directory, enriches from public registries (NY corporations, NYC contractor licences, USDOT/FMCSA), finds decision-makers through Better Business Bureau profiles (owner/manager names and titles), and crawls contractor websites for material specialties (metal, shingle, flat/TPO), work types (new construction vs. storm repair), and target contacts. Hunter.io email discovery is parked for later.</li>
+<li><strong>Environmental Signals:</strong> Pulls regional weather forecasts/storm alerts and local roofing news per county. These feed a separate, cheap timing layer and never trigger per-lead LLM calls (see §7).</li>
+<li><strong>Delta Check:</strong> Within each source's refresh window (GAF profiles 7 days, enrichments 30 days), a stored result is reused unless its <code>input_hash</code> changed; after the window it is refreshed, and errors are always retried. <code>content_hash</code> flags which GAF listings changed, for change tracking and the audit log. LLM insights re-run only when their <code>input_hash</code> changes. A run that reads fewer results than expected is marked partial and doesn't mark leads as delisted or changed. All pipeline outputs write strictly to the <strong>Primary Write DB</strong>.
+   - When a material field changes, the Delta Engine sets <code>last_material_change_at</code>. At the end of a complete run, it sets <code>updated_in_last_poll</code> for the leads that run covered (true if new or changed).
+   - When a company is first created, its <code>county_fips</code> is set from its location (PostGIS point-in-polygon against Census county boundaries).</li>
+<li><strong>Tagging:</strong> A deterministic rules engine turns raw fields into system tags (each with a reason and source), a segment (strategic / growth / emerging / long tail) and a 0–100 priority score.</li>
+</ol>
+<hr />
+<h2 id="system-5-backend-database-architecture">5. Backend &amp; Database Architecture</h2>
+<ul>
+<li><strong>CQRS / Read-Write Split:</strong></li>
+<li><strong>PostgreSQL Primary (Write Store):</strong> Handles all pipeline ingestion writes, LLM insight writes, and rep mutations (notes, status changes, manual overrides, allocations).</li>
+<li><strong>PostgreSQL Read Replicas (Read-Only Store):</strong> Asynchronously replicates from the Primary DB (materialized views are refreshed on the Primary and replicate like any table). All dashboard loads, territory filtering, and chatbot context lookups hit the Read Replicas to isolate read traffic from write load. After a write, that user's reads go to the Primary for a few seconds so their own edit never seems to disappear.</li>
+<li><strong>PostgreSQL + JSONB + PostGIS:</strong> Stores core relational data alongside <code>JSONB</code> columns for scraped attributes, system tags and custom data slots (system tags and custom data slots GIN-indexed), so new fields need no schema migrations. <code>PostGIS</code> handles radius searches. Geographic partitioning is deferred until data volumes require it.</li>
+<li><strong>Redis:</strong> Caches hot lead profiles, common filter queries and KPI counters, and holds per-user rate-limit counters. Entries are invalidated by events whenever the pipeline or a rep changes a lead. Rep-specific cache keys include the user ID so one rep's results are never served to another.</li>
+<li><strong>Event Bus:</strong> Every write inserts an event into an <code>outbox_events</code> table in the same transaction; a relay publishes it to Redis Streams. Services subscribe to the events they need (e.g., the AI service consumes <code>lead.updated</code>), and the same events drive cache invalidation and live UI updates. Consumers are idempotent. Production can swap in Kafka or SNS+SQS.</li>
+<li><strong>Override Protection:</strong> The pipeline only writes scraped values. Rep edits go to a separate <code>field_overrides</code> table that the pipeline never touches, covering both company fields and individual contacts. The read layer shows the override when one exists, otherwise the scraped value. If the scraped value changes after a rep's edit, the profile flags "source changed since your edit".</li>
+<li><strong>Concurrency:</strong> Notes and activities are append-only, so they can't conflict. Edits to shared fields use optimistic locking: the client sends the <code>version</code> it read of the company or contact, and a stale write is rejected with the current value and who changed it. An override write supersedes the field's current override and checks that version in the same transaction; at most one active override exists per field.</li>
+</ul>
+<h3 id="system-lead-state">Lead State</h3>
+<ul>
+<li><strong>Checked (per rep):</strong> The rep marked the lead reviewed after its last material change (tier, certifications, rating, contact info, website). A material change makes it unchecked again.</li>
+<li><strong>Serviced (per rep):</strong> The rep logged a call, email or visit.</li>
+<li><strong>Team level:</strong> Checked or serviced by any rep. The CRM Write Service updates <code>companies.team_last_checked_at</code> / <code>team_last_serviced_at</code> in the same transaction as the per-rep <code>lead_rep_state</code> write.</li>
+<li><strong>Updated in last poll:</strong> New, or materially changed, in the most recent complete pipeline run.</li>
+<li><strong>Account status:</strong> <code>prospect</code>, <code>existing_customer</code>, <code>lapsed_customer</code> or <code>do_not_contact</code>, from the distributor's CRM import.</li>
+</ul>
+<h3 id="system-permissions">Permissions</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Allocated to me</th>
+<th>Unallocated</th>
+<th>Allocated to another rep</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Rep</strong></td>
+<td>View, notes, checked/serviced, activities, overrides, custom tags</td>
+<td>View only (including notes)</td>
+<td>No access</td>
+</tr>
+<tr>
+<td><strong>Manager</strong></td>
+<td>Everything</td>
+<td>Everything + allocate</td>
+<td>Everything + reassign</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Notes, overrides, custom tags and activity history stay with the lead when it is reassigned.</li>
+<li>Allocate and reassign write the <code>lead_allocations</code> history row and <code>companies.assigned_rep_id</code> in the same transaction, so the two never drift.</li>
+<li>One visibility rule is applied on every read path: lists, profiles, search, exports, cache and AI tools.</li>
+</ul>
+<h3 id="system-shared-filter-definition">Shared Filter Definition</h3>
+<p>One <code>LeadFilter</code> schema is used by the list API, saved views, bulk allocation and the AI filter tool:</p>
+<pre><code class="language-ts">type LeadFilter = {
+  scope?: &quot;mine&quot; | &quot;unallocated&quot; | &quot;all&quot; | { repId: string }; // &quot;all&quot; and repId: managers only
+  tagsAll?: string[];
+  tagsAny?: string[];
+  customTags?: string[];
+  customFields?: {
+    key: string;
+    op: &quot;eq&quot; | &quot;gte&quot; | &quot;lte&quot; | &quot;contains&quot; | &quot;exists&quot;;
+    value?: string | number | boolean;
+  }[];
+  certifications?: string[]; // source-namespaced, e.g. &quot;gaf:master_elite&quot;, &quot;gaf:certified_plus&quot;, &quot;gaf:certified&quot;, &quot;gaf:none&quot;
+  size?: (&quot;small&quot; | &quot;medium&quot; | &quot;large&quot;)[];
+  segment?: (&quot;strategic&quot; | &quot;growth&quot; | &quot;emerging&quot; | &quot;long_tail&quot;)[];
+  accountStatus?: (
+    | &quot;prospect&quot;
+    | &quot;existing_customer&quot;
+    | &quot;lapsed_customer&quot;
+    | &quot;do_not_contact&quot;
+  )[];
+  materials?: string[];
+  services?: string[];
+  minRating?: number;
+  minYearsInBusiness?: number;
+  near?: { zip: string; radiusMiles: number };
+  unchecked?: &quot;me&quot; | &quot;team&quot;;
+  unserviced?: &quot;me&quot; | &quot;team&quot;;
+  updatedSince?: string; // ISO date
+  text?: string;
+  sort?: {
+    by:
+      | &quot;priority_score&quot;
+      | &quot;distance&quot;
+      | &quot;rating&quot;
+      | &quot;review_count&quot;
+      | &quot;years_in_business&quot;
+      | &quot;last_change&quot;;
+    dir: &quot;asc&quot; | &quot;desc&quot;;
+  };
+  cursor?: string;
+  limit?: number;
+};
+</code></pre>
+<h3 id="system-core-schema">Core Schema</h3>
+<pre><code class="language-sql">CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'rep' CHECK (role IN ('rep', 'manager'))
+);
+
+-- One row per real business, whichever source found it (industry-agnostic)
+CREATE TABLE companies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    industry VARCHAR(50) NOT NULL DEFAULT 'roofing',
+    business_name VARCHAR(255) NOT NULL,
+    website_url TEXT,
+    location GEOGRAPHY(Point, 4326) NOT NULL,
+    county_fips CHAR(5),                                     -- joins to regional_signals
+    assigned_rep_id UUID REFERENCES users(id),               -- copy of the open lead_allocations row; NULL = unallocated pool
+    account_status VARCHAR(30) NOT NULL DEFAULT 'prospect',
+    scraped_attributes JSONB NOT NULL DEFAULT '{}',          -- written only by the pipeline
+    system_tags JSONB NOT NULL DEFAULT '[]',                 -- [{key, value, label, category, reason, source}]
+    custom_fields JSONB NOT NULL DEFAULT '{}',               -- rep-entered data slots; written only by the CRM Write Service
+    segment VARCHAR(20),
+    priority_score NUMERIC(4,1),                             -- 0-100
+    updated_in_last_poll BOOLEAN NOT NULL DEFAULT TRUE,
+    last_material_change_at TIMESTAMPTZ,
+    team_last_checked_at TIMESTAMPTZ,
+    team_last_serviced_at TIMESTAMPTZ,
+    content_hash VARCHAR(64) NOT NULL,
+    version INT NOT NULL DEFAULT 1
+);
+CREATE INDEX ON companies USING GIST (location);
+CREATE INDEX ON companies USING GIN (system_tags jsonb_path_ops);
+CREATE INDEX ON companies USING GIN (custom_fields jsonb_path_ops);
+CREATE INDEX ON companies (assigned_rep_id, priority_score DESC);
+
+-- Maps each source's ID (GAF, FMCSA, NY DOS, ...) to the internal company ID
+CREATE TABLE company_source_ids (
+    source VARCHAR(50) NOT NULL,
+    external_id VARCHAR(100) NOT NULL,
+    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    PRIMARY KEY (source, external_id)
+);
+
+CREATE TABLE contacts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    name VARCHAR(255),
+    title VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    source VARCHAR(50) NOT NULL,
+    confidence REAL,
+    email_verified_at TIMESTAMPTZ,
+    do_not_contact BOOLEAN NOT NULL DEFAULT FALSE,
+    version INT NOT NULL DEFAULT 1
+);
+
+-- Rep edits; the pipeline never writes here
+CREATE TABLE field_overrides (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    contact_id UUID REFERENCES contacts(id) ON DELETE CASCADE, -- NULL = company field
+    field VARCHAR(100) NOT NULL,
+    value JSONB NOT NULL,
+    scraped_value_at_edit JSONB,                             -- detects &quot;source changed since your edit&quot;
+    user_id UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    superseded_at TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX ON field_overrides (company_id, contact_id, field) NULLS NOT DISTINCT
+    WHERE superseded_at IS NULL;                             -- one active override per field
+
+CREATE TABLE lead_allocations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    rep_id UUID NOT NULL REFERENCES users(id),
+    allocated_by UUID NOT NULL REFERENCES users(id),
+    allocated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ended_at TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX ON lead_allocations (company_id) WHERE ended_at IS NULL;
+
+CREATE TABLE lead_rep_state (
+    company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id),
+    checked_at TIMESTAMPTZ,
+    serviced_at TIMESTAMPTZ,
+    PRIMARY KEY (company_id, user_id)
+);
+
+CREATE TABLE custom_tags (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) UNIQUE NOT NULL,
+    created_by UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE company_custom_tags (
+    company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+    tag_id UUID REFERENCES custom_tags(id) ON DELETE CASCADE,
+    added_by UUID NOT NULL REFERENCES users(id),
+    added_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (company_id, tag_id)
+);
+
+-- Stable insights: regenerated only when input_hash changes
+CREATE TABLE company_insights (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+    business_summary TEXT NOT NULL,
+    sales_recommendation TEXT NOT NULL,
+    model VARCHAR(100) NOT NULL,
+    prompt_version VARCHAR(20) NOT NULL,
+    input_hash VARCHAR(64) NOT NULL,                         -- hash of facts, notes, custom fields, prompt version, model
+    generated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Weather/storm timing layer: per county, rules-based, joined at read time
+CREATE TABLE regional_signals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    county_fips CHAR(5) NOT NULL,
+    kind VARCHAR(30) NOT NULL,                               -- active_alert | storm_history | news
+    payload JSONB NOT NULL,
+    valid_from TIMESTAMPTZ,
+    valid_to TIMESTAMPTZ,
+    fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX ON regional_signals (county_fips, kind, valid_to);
+
+CREATE TABLE activity_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+    actor_type VARCHAR(20) NOT NULL,                         -- user | pipeline | system
+    user_id UUID REFERENCES users(id),                       -- NULL for pipeline events
+    action_type VARCHAR(50) NOT NULL,                        -- note | call | email | visit | checked | override | allocation | scraped_change
+    note_text TEXT,
+    field_diff JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Written in the same transaction as each change; relayed to Redis Streams
+CREATE TABLE outbox_events (
+    id BIGSERIAL PRIMARY KEY,
+    event_type VARCHAR(50) NOT NULL,                         -- lead.updated | lead.allocated | note.added | ...
+    company_id UUID,
+    payload JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    published_at TIMESTAMPTZ
+);
+
+-- Team/manager roll-up: REFRESH MATERIALIZED VIEW CONCURRENTLY on the Primary every few minutes;
+-- replicas serve the replicated result.
+-- Per-rep counters: COUNT over companies WHERE assigned_rep_id = :me LEFT JOIN lead_rep_state (company_id, :me);
+-- unchecked = checked_at IS NULL OR checked_at &lt; last_material_change_at; unserviced = serviced_at IS NULL.
+-- Cached in Redis per user.
+CREATE MATERIALIZED VIEW team_dashboard_kpis AS
+SELECT
+    assigned_rep_id,                                         -- NULL row = unallocated pool
+    COUNT(*) AS lead_count,
+    COUNT(*) FILTER (WHERE team_last_serviced_at IS NULL) AS unserviced_count,
+    COUNT(*) FILTER (WHERE team_last_checked_at IS NULL
+                        OR team_last_checked_at &lt; last_material_change_at) AS unchecked_count,
+    COUNT(*) FILTER (WHERE updated_in_last_poll) AS recent_updates_count
+FROM companies GROUP BY assigned_rep_id;
+CREATE UNIQUE INDEX ON team_dashboard_kpis (assigned_rep_id);  -- required for CONCURRENTLY
+
+-- The ingestion tables already built in the Python pipeline (scrape_runs, search_hits, reviews,
+-- enrichments, jobs, schedules, audit_events, accounts) are not repeated here; they move to company_id
+-- with this schema. The existing contractors table becomes companies + company_source_ids (source = 'gaf'),
+-- and existing contacts rows migrate into the new contacts table.
+</code></pre>
+<hr />
+<h2 id="system-6-frontend-ui-workflow">6. Frontend UI Workflow</h2>
+<ul>
+<li><strong>Dashboard View:</strong> Displays top-level KPI counters (served from Read Replicas/Materialized Views and Redis), a map of assigned leads, local weather/news, and a daily AI territory briefing.</li>
+<li><strong>CRM List View:</strong> Sortable table (priority score by default) showing each lead's top ranking reasons, with toggleable tag visibility so custom tags do not clutter the screen, and a My Leads / Unallocated switch.</li>
+<li><strong>Lead Profile View:</strong> Shows merged contact info (with badges indicating rep-edited fields and "source changed since your edit"), pre-generated AI insights, weather demand impact, custom slots, and the multi-user notes feed.</li>
+<li><strong>Allocation View (Managers):</strong> The unallocated queue, bulk assignment of a filtered list, and suggestions to approve.</li>
+<li><strong>Persistent AI Widget:</strong> Floating bottom-right chat drawer accessible across all views.</li>
+</ul>
+<hr />
+<h2 id="system-7-ai-engine">7. AI Engine</h2>
+<ul>
+<li><strong>Batch Pre-Generation (Pipeline):</strong></li>
+<li>Extracts structured tags and custom slot values from unstructured website text (custom slots are experimental and will be dropped if extraction quality is poor). LLM-extracted slot values are stored under <code>scraped_attributes</code>; a rep's correction goes through <code>field_overrides</code>.</li>
+<li>Generates a business summary and sales pitch from the stored company facts, rep notes and custom fields. These are regenerated only when <code>input_hash</code> (those inputs + prompt version + model) changes.</li>
+<li><strong>Weather Timing Layer (separate and cheap):</strong></li>
+<li>Per county, rules combine active alerts and storm history with each lead's specialties into a timing badge and a one-line reason (e.g., pitching emergency repair stock to storm-restoration roofers before a storm, while flagging weather delays for new-build contractors).</li>
+<li>Computed on a schedule per county and joined at read time, so weather changes never regenerate summaries.</li>
+<li><strong>Model Providers:</strong> One model interface over multiple providers (e.g., Anthropic Claude, Google Gemini), selected by configuration and API key, so the batch pipeline and the assistant can switch models without code changes.</li>
+<li><strong>On-Demand Assistant (UI):</strong></li>
+<li><strong>Profile Q&amp;A:</strong> Answers rep questions by reading only the active lead's profile and notes through the Query service, which rejects leads the user can't view.</li>
+<li><strong>UI Filter Control:</strong> Uses LLM tool calling (<code>applyListFilters</code>) to convert natural language requests into a <code>LeadFilter</code>. The Query service applies the user's visibility rule, so the assistant can never show leads the user can't see.</li>
+</ul>
+<hr />
+<h2 id="system-8-deployment">8. Deployment</h2>
+<ul>
+<li><strong>Production:</strong> Built to be hosted. Every service and worker is a container; Postgres (primary + replicas) and Redis are managed services; secrets live in a secrets manager.</li>
+<li><strong>Security (production):</strong> Single sign-on via OIDC, with Postgres row-level security as defence in depth behind the visibility rule.</li>
+<li><strong>Local:</strong> <code>docker compose up</code> runs Postgres, Redis, the services, the web app and the pipeline worker, seeded from <code>data/leadmaker.db</code>.</li>
+<li><strong>Prototype swaps (approved):</strong> BBB profile scraping (production: BBB API); Google Places keyless map link (production: Places API key); a single Postgres primary (production: primary + replicas + PgBouncer); Gemini API free tier for all AI features (production: Anthropic Claude, Haiku 5.5 for batch work, via the same model interface). Any other paid-to-free swap needs approval.</li>
+</ul>
+<hr />
+<h2 id="system-9-open-questions">9. Open Questions</h2>
+<ul>
+<li>Which local news source to use.</li>
+</ul></article><article class="doc" id="performance" data-label="Performance"><div class="doc-meta">docs/Performance.md</div><h1 id="performance-performance-and-numbers">Performance and numbers</h1>
+<p><strong>Highlights</strong>
+- At 100k leads and about 200 req/s, search p95 dropped from about 9.6 s to 199-301 ms after tuning (target 300 ms).
+- 2,885 automated tests pass, including 43 end-to-end scenarios on a stack built from empty volumes.
+- The AI eval set (102 cases) passes offline, and 24 of 25 live cases pass on Gemini 3.5 Flash-Lite.
+- Assistant answers take 1.4-2.9 s, down from 12-47 s before the model switch.</p>
+<h2 id="performance-load-test-at-100k-leads">Load test at 100k leads</h2>
+<p>The tests ran on one laptop in Docker: 8 vCPUs, default Postgres memory settings, and a single Postgres primary. The read replica was added later and isn't in these numbers. <code>scripts/perf/synth.mjs</code> fills a separate database with 100,000 synthetic companies and 2,200 users. <code>scripts/perf/matrix.sh</code> then runs 500 virtual users with a 2.5 s think time, about 200 req/s, which is the design load. Values are p95 in milliseconds. The raw runs are in <code>scripts/perf/results/</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Run</th>
+<th>Search</th>
+<th>Profile</th>
+<th>KPIs</th>
+<th>req/s</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read-only, before tuning</td>
+<td>9,613</td>
+<td>14,403</td>
+<td>8,994</td>
+<td>49</td>
+</tr>
+<tr>
+<td>Read-only, after tuning (4 runs)</td>
+<td>199-301</td>
+<td>82-109</td>
+<td>82-120</td>
+<td>198-200</td>
+</tr>
+<tr>
+<td>5% writes, before tuning</td>
+<td>21,793</td>
+<td>21,965</td>
+<td>16,677</td>
+<td>27</td>
+</tr>
+<tr>
+<td>5% writes, after tuning (3 runs)</td>
+<td>260-326</td>
+<td>99-141</td>
+<td>90-148</td>
+<td>194-197</td>
+</tr>
+</tbody>
+</table></div>
+<p>Three changes did most of the work:
+- <strong>Indexed generated columns</strong> for tags and founding year. Single-user search queries went from up to 1,074 ms to at most 34 ms.
+- <strong>A search limiter.</strong> 8 searches run at once, up to 32 more wait at most 1 s, and anything beyond that gets a fast "try again" instead of piling up.
+- <strong>List caches invalidated only for the scopes a write touches.</strong></p>
+<p>Runs vary on a shared laptop, and write-heavy runs sit right at the 300 ms target. One known slow spot remains: a manager's facet counts across all 100k leads take about 8 s and time out. The 424-lead demo isn't affected.</p>
+<h2 id="performance-tests-ai-and-data">Tests, AI and data</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Automated tests</td>
+<td>2,885 passed, 0 failed: services, pipeline, web, evals and 43 end-to-end scenarios</td>
+</tr>
+<tr>
+<td>AI evals, offline (fake model)</td>
+<td>102 of 102: filters 53/53, lead Q&amp;A 29/29, insights 20/20</td>
+</tr>
+<tr>
+<td>AI evals, live (Gemini 3.5 Flash-Lite)</td>
+<td>24 of 25 (filters 8/8, Q&amp;A 6/6, insights 10/11)</td>
+</tr>
+<tr>
+<td>Assistant response time</td>
+<td>1.4-2.9 s</td>
+</tr>
+<tr>
+<td>Per-lead AI Refresh</td>
+<td>3.5-23 s from click to updated text</td>
+</tr>
+<tr>
+<td>AI guardrails</td>
+<td>Unsupported "distributor promise" claims fell from 42% of insights to 12% after the guard was added; the remainder are backed by rep notes</td>
+</tr>
+<tr>
+<td>Demo data</td>
+<td>424 leads, 419 with AI insights, 119 weather and news signals, 2.8 MB database snapshot</td>
+</tr>
+</tbody>
+</table></div>
+<p>All numbers are local measurements: one laptop, shared CPU, and short 30-60 s load runs. AI calls use Gemini's free tier, so the batch insights for all leads are spread across nightly runs rather than generated at once.</p></article></main>
+
+<script>
+(function () {
+  const bar = document.querySelector('.bar');
+  const offset = () => (bar ? bar.offsetHeight : 56) + 12;
+  function go(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - offset() });
+  }
+  document.querySelectorAll('[data-target]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const id = a.getAttribute('data-target');
+      go(id);
+      const doc = a.getAttribute('href').slice(1);
+      try { history.replaceState(null, '', '#' + doc); } catch (_) {}
+    });
+  });
+  if (location.hash.length > 1) setTimeout(() => go(location.hash.slice(1)), 60);
+
+  // Highlight the current document tab and section while scrolling.
+  const tabs = [...document.querySelectorAll('.tab')];
+  const docs = [...document.querySelectorAll('.doc')];
+  let ticking = false;
+  function spy() {
+    ticking = false;
+    const y = offset() + 8;
+    let doc = docs[0];
+    for (const d of docs) if (d.getBoundingClientRect().top <= y) doc = d;
+    tabs.forEach(t => t.classList.toggle('on', doc && t.dataset.target === doc.id));
+  }
+  window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(spy); } }, { passive: true });
+  spy();
+})();
+</script>
+<!-- Diagrams: Mermaid from the jsDelivr CDN (needs a network connection; the diagram source shows as text offline). -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    mermaid.initialize({ startOnLoad: true, theme: dark ? 'dark' : 'default', securityLevel: 'loose', flowchart: { htmlLabels: true, useMaxWidth: true } });
+  }
+</script>
+</body>
+</html>

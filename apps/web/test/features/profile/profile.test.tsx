@@ -825,7 +825,7 @@ describe('LeadProfilePage sales', () => {
       expect(await ins.findByRole('alert')).toHaveTextContent('Couldn’t refresh right now. Try again in a moment.');
     });
 
-    it('gives up after 90 s without a newer insight, with the same line', async () => {
+    it('gives up after 100 s without a newer insight, with the same line', async () => {
       const { calls } = setup(makeProfile({ insights: INSIGHT }), {
         handler: (c) => (c.method === 'POST' && c.path === REFRESH ? accepted() : undefined),
       });
@@ -835,10 +835,10 @@ describe('LeadProfilePage sales', () => {
         const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
         await user.click(ins.getByRole('button', { name: 'Refresh' }));
         await waitFor(() => expect(calls.filter((c) => c.path === REFRESH)).toHaveLength(1));
-        await act(() => vi.advanceTimersByTimeAsync(60_000));
+        await act(() => vi.advanceTimersByTimeAsync(95_000));
         expect(ins.getByRole('button', { name: 'Updating…' })).toBeInTheDocument();
         expect(ins.queryByRole('alert')).toBeNull();
-        await act(() => vi.advanceTimersByTimeAsync(31_000));
+        await act(() => vi.advanceTimersByTimeAsync(6_000));
         expect(ins.getByRole('alert')).toHaveTextContent('Couldn’t refresh right now. Try again in a moment.');
         expect(ins.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
         expect(ins.getByText(INSIGHT.businessSummary)).toBeVisible(); // the old text stays
@@ -850,6 +850,92 @@ describe('LeadProfilePage sales', () => {
         vi.useRealTimers();
       }
     }, 15_000);
+
+    const withAttempt = (p: LeadProfile, attempt: LeadProfile['insightAttempt']): LeadProfile =>
+      Object.assign(p, { insightAttempt: attempt });
+
+    it('a run that ends in error (insightAttempt after requestedAt) shows the neutral line within seconds', async () => {
+      const user = userEvent.setup();
+      const requestedAt = new Date().toISOString();
+      // An earlier run's error, before this request: it must not end the wait.
+      const stale = { status: 'error' as const, at: new Date(Date.now() - 60_000).toISOString() };
+      // The retry is queued after this run's error, so that error must not end the retry's wait.
+      const retryAt = new Date(Date.parse(requestedAt) + 5000).toISOString();
+      let posts = 0;
+      const { calls, setProfile } = setup(withAttempt(makeProfile({ insights: INSIGHT }), stale), {
+        handler: (c) => (c.method === 'POST' && c.path === REFRESH ? accepted(++posts === 1 ? requestedAt : retryAt) : undefined),
+      });
+      const ins = within(await screen.findByRole('region', { name: 'AI insights' }));
+      await user.click(ins.getByRole('button', { name: 'Refresh' }));
+      await waitFor(() => expect(calls.filter((c) => c.path === REFRESH)).toHaveLength(1));
+      // The poll's refetch still carries the stale error: still waiting.
+      setProfile(withAttempt(makeProfile({ insights: INSIGHT }), stale));
+      await act(() => new Promise((r) => setTimeout(r, 50)));
+      expect(ins.getByRole('button', { name: 'Updating…' })).toBeInTheDocument();
+      expect(ins.queryByRole('alert')).toBeNull();
+
+      // The worker writes this run's error row; the live event or the 3 s poll refetches the profile.
+      const t0 = Date.now();
+      setProfile(withAttempt(makeProfile({ insights: INSIGHT }), {
+        status: 'error', at: new Date(Date.parse(requestedAt) + 4000).toISOString(),
+      }));
+      expect(await ins.findByRole('alert', {}, { timeout: 4500 })).toHaveTextContent(
+        'Couldn’t update the insights this time. Try again.',
+      );
+      expect(Date.now() - t0).toBeLessThan(5000); // seconds, not the 100 s timeout
+      expect(ins.getByRole('alert')).not.toHaveTextContent(/quota|limit|3:00|resets/i);
+      const again = ins.getByRole('button', { name: 'Refresh' });
+      expect(again).toHaveAttribute('data-phase', 'error');
+      expect(again).not.toHaveAttribute('aria-disabled');
+      expect(ins.getByText(INSIGHT.businessSummary)).toBeVisible(); // the old text stays
+
+      // Polling stopped, and Refresh works again: this time the insight lands.
+      const polls = calls.filter((c) => c.method === 'GET' && c.path === `/api/leads/${LEAD_ID}`).length;
+      await act(() => new Promise((r) => setTimeout(r, 3500)));
+      expect(calls.filter((c) => c.method === 'GET' && c.path === `/api/leads/${LEAD_ID}`).length).toBe(polls);
+      await user.click(again);
+      await waitFor(() => expect(calls.filter((c) => c.path === REFRESH)).toHaveLength(2));
+      await act(() => new Promise((r) => setTimeout(r, 50)));
+      expect(ins.queryByRole('alert')).toBeNull();
+      expect(ins.getByRole('button', { name: 'Updating…' })).toBeInTheDocument();
+      const landed = fresh({ generatedAt: new Date(Date.parse(retryAt) + 3000).toISOString() });
+      setProfile(withAttempt(makeProfile({ insights: landed }), { status: 'ok', at: landed.generatedAt }));
+      expect(await ins.findByText(landed.businessSummary, {}, { timeout: 4500 })).toBeVisible();
+      expect(ins.getByRole('button', { name: 'Updated' })).toBeInTheDocument();
+    }, 20_000);
+
+    it('an error already on the profile when the request answers ends the wait at once', async () => {
+      const user = userEvent.setup();
+      const requestedAt = new Date(Date.now() - 2000).toISOString();
+      // The run failed before the POST's answer was read (e.g. a merged job): the next refetch already says so.
+      const { setProfile } = setup(makeProfile({ insights: INSIGHT }), {
+        handler: (c) => {
+          if (c.method !== 'POST' || c.path !== REFRESH) return undefined;
+          setProfile(withAttempt(makeProfile({ insights: INSIGHT }), { status: 'error', at: new Date().toISOString() }));
+          return accepted(requestedAt);
+        },
+      });
+      const ins = within(await screen.findByRole('region', { name: 'AI insights' }));
+      await user.click(ins.getByRole('button', { name: 'Refresh' }));
+      expect(await ins.findByRole('alert', {}, { timeout: 4500 })).toHaveTextContent(
+        'Couldn’t update the insights this time. Try again.',
+      );
+    }, 10_000);
+
+    it('an ok attempt without a newer insight keeps waiting (only an error or the insight ends it)', async () => {
+      const user = userEvent.setup();
+      const requestedAt = new Date().toISOString();
+      const { calls, setProfile } = setup(makeProfile({ insights: INSIGHT }), {
+        handler: (c) => (c.method === 'POST' && c.path === REFRESH ? accepted(requestedAt) : undefined),
+      });
+      const ins = within(await screen.findByRole('region', { name: 'AI insights' }));
+      await user.click(ins.getByRole('button', { name: 'Refresh' }));
+      await waitFor(() => expect(calls.filter((c) => c.path === REFRESH)).toHaveLength(1));
+      setProfile(withAttempt(makeProfile({ insights: INSIGHT }), { status: 'ok', at: INSIGHT.generatedAt }));
+      await act(() => new Promise((r) => setTimeout(r, 50)));
+      expect(ins.getByRole('button', { name: 'Updating…' })).toBeInTheDocument();
+      expect(ins.queryByRole('alert')).toBeNull();
+    });
 
     it('a do-not-contact lead gets no Refresh or Generate (the worker never sends it to the model)', async () => {
       const dnc = (insights: LeadProfile['insights']) => {

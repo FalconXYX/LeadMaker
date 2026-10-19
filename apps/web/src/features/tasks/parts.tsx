@@ -2,8 +2,9 @@ import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState, type ComponentProps, type KeyboardEvent, type ReactNode } from 'react';
 import { Button, Dialog, Field, Input, Menu, type MenuItem, type MenuProps } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import type { Task, TaskType } from './api';
-import { PRESET_LABELS, dueError, formatDay, presetDay, salesDay, today, type DueChoice, type DuePreset } from './dates';
+import type { Task, TaskScope, TaskType } from './api';
+import { BusyLine, BusyMonth, useBusyDays } from './BusyDayPicker';
+import { PRESET_LABELS, dayOfChoice, dueError, formatDay, presetDay, salesDay, today, type DueChoice, type DuePreset } from './dates';
 import { TASK_TYPE_META } from './model';
 
 export function TaskTypeIcon({ type, size = 'md', className }: { type: TaskType; size?: 'xs' | 'sm' | 'md'; className?: string }) {
@@ -112,9 +113,13 @@ export function ChipGroup<V extends string>({
 
 const shortDay = (day: string) => formatDay(day).replace(/,.*$/, '');
 
-/** Tomorrow / In 3 days / Next week / Pick a date, each with the day it means. */
+/**
+ * Tomorrow / In 3 days / Next week / Pick a date, each with the day it means. "Pick a date" opens a month calendar
+ * showing how many follow-ups each day already has (the native date input stays beside it), and the chosen day's
+ * existing follow-ups are listed underneath.
+ */
 export function DuePicker({
-  value, onChange, presets = ['tomorrow', 'in3', 'nextWeek'], labelledBy, disabled, error,
+  value, onChange, presets = ['tomorrow', 'in3', 'nextWeek'], labelledBy, disabled, error, loadScope = 'mine', loadWho,
 }: {
   value: DueChoice;
   onChange: (v: DueChoice) => void;
@@ -122,7 +127,13 @@ export function DuePicker({
   labelledBy?: string;
   disabled?: boolean;
   error?: string | null;
+  /** Whose calendar the day loads come from (the caller's; a manager assigning someone else passes rep:<id>). */
+  loadScope?: TaskScope;
+  /** That person's name, when it isn't the caller ("Priya already has on Thu…"). */
+  loadWho?: string;
 }) {
+  const busy = useBusyDays(loadScope);
+  const chosen = dayOfChoice(value);
   const dateRef = useRef<HTMLInputElement>(null);
   const [lastDate, setLastDate] = useState(value.preset === 'date' ? value.day : '');
   const options: ChipOption<DuePreset | 'date'>[] = [
@@ -147,21 +158,36 @@ export function DuePicker({
         options={options}
       />
       {picking && (
-        <Input
-          ref={dateRef}
-          type="date"
-          aria-label="Follow-up date"
-          min={today()}
-          value={value.day}
-          disabled={disabled}
-          invalid={!!error}
-          onChange={(e) => {
-            setLastDate(e.target.value);
-            onChange({ preset: 'date', day: e.target.value });
-          }}
-          className="w-full sm:w-52"
-        />
+        <div className="flex flex-col gap-2">
+          <Input
+            ref={dateRef}
+            type="date"
+            aria-label="Follow-up date"
+            min={today()}
+            value={value.day}
+            disabled={disabled}
+            invalid={!!error}
+            onChange={(e) => {
+              setLastDate(e.target.value);
+              onChange({ preset: 'date', day: e.target.value });
+            }}
+            className="w-full sm:w-52"
+          />
+          {!disabled && (
+            <BusyMonth
+              label="Pick a day: numbers show follow-ups already planned"
+              value={value.day}
+              min={today()}
+              byDay={busy.byDay}
+              onSelect={(day) => {
+                setLastDate(day);
+                onChange({ preset: 'date', day });
+              }}
+            />
+          )}
+        </div>
       )}
+      {chosen && !error && <BusyLine day={chosen} byDay={busy.byDay} who={loadWho} loading={busy.isLoading} />}
       {error && <p className="text-xs text-danger" role="alert">{error}</p>}
     </div>
   );
@@ -247,6 +273,7 @@ export function PickDateDialog({
     }
   }, [open]);
   const error = dueError({ preset: 'date', day });
+  const busy = useBusyDays('mine', open);
   return (
     <Dialog
       open={open}
@@ -273,6 +300,10 @@ export function PickDateDialog({
         <Field label="New due date" error={touched ? error : null}>
           {(p) => <Input {...p} ref={input} type="date" min={today()} value={day} onChange={(e) => setDay(e.target.value)} />}
         </Field>
+        <div className="mt-3 flex flex-col gap-2">
+          <BusyMonth label="Pick a day: numbers show follow-ups already planned" value={day} min={today()} byDay={busy.byDay} onSelect={setDay} />
+          {!error && <BusyLine day={day} byDay={busy.byDay} loading={busy.isLoading} />}
+        </div>
       </form>
     </Dialog>
   );

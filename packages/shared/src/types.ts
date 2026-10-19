@@ -216,6 +216,17 @@ export interface LeadInsight {
   generatedAt: string;
 }
 
+/**
+ * The newest AI-insight attempt for a lead, whatever its outcome (company_insights' newest row of any status), so a
+ * profile waiting on a Refresh can tell a failed attempt from one still running. `at` is when it finished (an ok
+ * attempt's `at` equals LeadInsight.generatedAt). An error carries no reason: those are internal. A Refresh that never
+ * reached the model (allowance spent, provider down) writes no attempt.
+ */
+export interface InsightAttempt {
+  status: 'ok' | 'error';
+  at: string;
+}
+
 /** activity_logs.action_type values: GET /api/leads/:id/activity?type= takes a comma-separated list of them. */
 export const ACTIVITY_TYPES = [
   'note', 'call', 'email', 'visit', 'checked', 'serviced', 'override', 'contact', 'allocation', 'custom_tag',
@@ -320,6 +331,9 @@ export interface LeadProfile {
   customFields: Record<string, unknown>;
   /** Latest pre-generated insight; null until the pipeline generates one. */
   insights: LeadInsight | null;
+  /** The newest generation attempt (ok or error); null when none was ever made. A Refresh is done once this is later
+   *  than its requestedAt: status 'ok' means `insights` holds the new text, 'error' that the attempt failed. */
+  insightAttempt: InsightAttempt | null;
   timing: TimingBadge[];
   notes: ActivityEntry[];
   /** The most recent entries; older ones via GET /api/leads/:id/activity?before={activityNextCursor}. */
@@ -700,7 +714,8 @@ export interface StageChanged {
  * POST /api/leads/:id/insights/refresh (no body): regenerate this lead's AI insight now, from its current facts
  * (tags, notes, activity, overrides, contacts, stage), even when they look unchanged. Any viewer of the lead may ask
  * (404 otherwise). 202 with the queued job, or the open one it merged into (merged: true). The new insight has a
- * generatedAt later than requestedAt and arrives as a lead.updated {fields: ['insights']} event. Errors:
+ * generatedAt later than requestedAt and arrives as a lead.updated {fields: ['insights']} event; a failed attempt
+ * emits the same event, with LeadProfile.insightAttempt {status: 'error', at > requestedAt}. Errors:
  * 409 'insights_unavailable' (a do-not-contact lead never gets one), 429 'try_again_later' (+ Retry-After).
  */
 export interface InsightsRefreshResult {

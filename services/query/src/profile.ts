@@ -9,7 +9,7 @@
 import {
   cacheKeys, canAllocate, canonicalJson, canWrite, COMPANY_OVERRIDE_FIELDS, FOUNDED_YEAR, isUuid, LEAD_PROFILE_TTL_SECONDS, raw, sql,
   TASK_SELECT, taskOut, visibilitySql, type ActivityEntry, type ActivityPage, type AllocationEntry, type EffectiveField,
-  type LeadContact, type LeadInsight, type LeadProfile, type LeadStateFlags, type SalesStage, type Sql, type SystemTag, type TargetContact,
+  type InsightAttempt, type LeadContact, type LeadInsight, type LeadProfile, type LeadStateFlags, type SalesStage, type Sql, type SystemTag, type TargetContact,
   type TaskRow, type Viewer,
 } from '@leadmaker/shared';
 import type { Cache } from './cache.ts';
@@ -76,6 +76,8 @@ export interface HeadDoc {
   tasks: TaskRow[];
   /** The latest status='ok' company_insights row (error rows are never served). */
   insight: InsightRow | null;
+  /** The newest company_insights row of any status: only its status and time (LeadProfile.insightAttempt). */
+  insight_attempt: { status: string; generated_at: string } | null;
 }
 
 /** company_insights columns the profile serves (Section 4 batch insights). */
@@ -216,7 +218,11 @@ export function headQuery(id: string, viewer: Viewer) {
            SELECT business_summary, sales_recommendation, talking_points, target_contact, product_focus, cited_facts,
                   model, prompt_version, generated_at
            FROM company_insights WHERE company_id = c.id AND status = 'ok'
-           ORDER BY generated_at DESC, id LIMIT 1) i) AS insight
+           ORDER BY generated_at DESC, id LIMIT 1) i) AS insight,
+        -- The newest attempt of any status (company_insights_latest_idx), so a waiting Refresh sees a failure.
+        (SELECT row_to_json(a) FROM (
+           SELECT status, generated_at FROM company_insights WHERE company_id = c.id
+           ORDER BY generated_at DESC, id DESC LIMIT 1) a) AS insight_attempt
       FROM companies c
       WHERE c.id = ${id}::uuid AND ${visibilitySql(viewer, 'view', 'c')}) h`;
 }
@@ -273,6 +279,12 @@ export function insightOut(r: InsightRow | null | undefined): LeadInsight | null
     promptVersion: r.prompt_version,
     generatedAt: iso(r.generated_at)!,
   };
+}
+
+/** The newest attempt's outcome; an unknown status (none today) reads as an error, never as fresh text. */
+export function insightAttemptOut(r: HeadDoc['insight_attempt'] | undefined): InsightAttempt | null {
+  if (!r || !r.generated_at) return null;
+  return { status: r.status === 'ok' ? 'ok' : 'error', at: iso(r.generated_at)! };
 }
 
 const sameJson = (a: unknown, b: unknown) => canonicalJson(a ?? null) === canonicalJson(b ?? null);
@@ -402,6 +414,7 @@ export function assembleProfile(head: HeadDoc, body: BodyDoc, viewer: Viewer, no
     })),
     customFields: body.custom_fields,
     insights: insightOut(head.insight),
+    insightAttempt: insightAttemptOut(head.insight_attempt),
     timing,
     notes: head.notes.map(activityEntry),
     activity,

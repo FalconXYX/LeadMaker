@@ -50,6 +50,12 @@ export function TaskQuickAdd({ leadId, leadName, onDone, className, autoFocus = 
   ];
   if (owner && !people.some((p) => p.value === owner.id)) people.push({ value: owner.id, label: owner.name });
 
+  // The calendar's day loads are whoever the follow-up is for: a manager assigning a rep sees that rep's days.
+  const forSomeoneElse = isManager && !!assigneeId && assigneeId !== user?.id;
+  const assigneeName = forSomeoneElse
+    ? (users.data?.items ?? []).find((u) => u.id === assigneeId)?.name ?? (owner?.id === assigneeId ? owner.name : undefined)
+    : undefined;
+
   const effectiveTitle = title.trim() || DEFAULT_TITLES[type];
   const dueProblem = dueError(due);
 
@@ -106,7 +112,14 @@ export function TaskQuickAdd({ leadId, leadName, onDone, className, autoFocus = 
       </div>
       <div className="flex flex-col gap-1.5">
         <span id={whenId} className="text-xs font-medium text-muted">When</span>
-        <DuePicker labelledBy={whenId} value={due} onChange={setDue} error={submitted ? dueProblem : null} />
+        <DuePicker
+          labelledBy={whenId}
+          value={due}
+          onChange={setDue}
+          error={submitted ? dueProblem : null}
+          loadScope={forSomeoneElse ? `rep:${assigneeId}` : 'mine'}
+          loadWho={assigneeName?.split(' ')[0]}
+        />
       </div>
       <div className="flex flex-wrap items-center justify-end gap-2">
         {isManager && people.length > 1 && (

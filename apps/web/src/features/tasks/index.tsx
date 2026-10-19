@@ -4,9 +4,11 @@ export { LogActivityDialog, type LogActivityDialogProps } from './LogActivityDia
 export { TaskQuickAdd, type TaskQuickAddProps } from './TaskQuickAdd';
 export { TaskList, type TaskListProps } from './TaskList';
 export {
-  taskKeys, useTasks, useInfiniteTasks, useTaskCounts, useCompleteTask, useRescheduleTask, useDeleteTask, useCreateTask,
+  taskKeys, useTasks, useInfiniteTasks, useCalendarTasks, useTaskCounts, useCompleteTask, useRescheduleTask, useDeleteTask, useCreateTask,
   invalidateAfterTaskWrite, type TaskListParams, type TaskCounts,
 } from './queries';
 export type { ActivityKind as ActivityType, Task, TaskDue, TaskScope, TaskStatus, TaskType } from './api';
 export { TaskTypeIcon } from './parts';
+export { TaskCalendar, type TaskCalendarProps } from './TaskCalendar';
+export { BusyMonth, BusyLine, useBusyDays } from './BusyDayPicker';
 export { TasksPage as default } from './TasksPage';

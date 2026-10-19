@@ -191,7 +191,7 @@ describe('DashboardPage (rep)', () => {
       'AI briefing', 'Today', 'New leads worth a call', 'Your pipeline', 'Territory map',
     ]);
     expect(screen.getByText('Who to call and what to say')).toBeInTheDocument();
-    expect(screen.getByText('Found by LeadMaker and ranked by AI')).toBeInTheDocument();
+    expect(screen.getByText('Found by LeadMaker, ranked by priority score, summarized by AI')).toBeInTheDocument();
 
     const briefing = await screen.findByRole('region', { name: 'Today’s calls' });
     expect(screen.getAllByRole('heading', { name: 'Follow-ups' })).toHaveLength(1);
@@ -276,10 +276,53 @@ describe('DashboardPage (rep)', () => {
     expect(new Date(body.dueAt).getHours()).toBe(9);
     expect(await screen.findByText('Follow-up moved')).toBeInTheDocument();
   });
+
+  it('switches Today between the call list and a follow-up calendar, and remembers the choice', async () => {
+    const user = userEvent.setup();
+    const first = renderPage();
+    const toggle = await screen.findByRole('radiogroup', { name: 'Show Today as' });
+    expect(within(toggle).getByRole('radio', { name: 'List' })).toHaveAttribute('aria-checked', 'true');
+    expect(await screen.findByRole('region', { name: 'Today’s calls' })).toBeInTheDocument();
+
+    await user.click(within(toggle).getByRole('radio', { name: 'Calendar' }));
+    expect(screen.getByRole('region', { name: 'Follow-up calendar' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Today’s calls' })).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Week' })).toHaveAttribute('aria-checked', 'true');
+    expect(localStorage.getItem('leadmaker.dashboard.todayView')).toBe('"calendar"');
+    await waitFor(() => expect(calls((u) => u.pathname === '/api/tasks' && u.searchParams.get('due') === 'all')).not.toHaveLength(0));
+
+    // A fresh visit opens on the calendar.
+    first.unmount();
+    renderPage();
+    expect(await screen.findByRole('region', { name: 'Follow-up calendar' })).toBeInTheDocument();
+    await user.click(within(screen.getByRole('radiogroup', { name: 'Show Today as' })).getByRole('radio', { name: 'List' }));
+    expect(await screen.findByRole('region', { name: 'Today’s calls' })).toBeInTheDocument();
+    expect(localStorage.getItem('leadmaker.dashboard.todayView')).toBe('"list"');
+  });
+
+  it('keeps working when storage throws', async () => {
+    const user = userEvent.setup();
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    renderPage();
+    await user.click(await screen.findByRole('radio', { name: 'Calendar' }));
+    expect(screen.getByRole('region', { name: 'Follow-up calendar' })).toBeInTheDocument();
+    spy.mockRestore();
+  });
 });
 
 describe('DashboardPage (manager)', () => {
   beforeEach(() => install(MANAGER));
+
+  it('shows the team’s follow-up calendar with a rep filter and legend', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('radio', { name: 'Calendar' }));
+    const cal = screen.getByRole('region', { name: 'Follow-up calendar' });
+    await waitFor(() => expect(calls((u) => u.pathname === '/api/tasks' && u.searchParams.get('due') === 'all' && u.searchParams.get('scope') === 'team')).not.toHaveLength(0));
+    const filter = await within(cal).findByRole('combobox', { name: 'Show follow-ups for' });
+    expect(within(filter).getAllByRole('option').map((o) => o.textContent)).toEqual(['All reps', ...[REP.name, REP2.name].sort()]);
+    expect(within(within(cal).getByRole('list', { name: 'Rep colours' })).getAllByRole('listitem')).toHaveLength(2);
+  });
 
   it('shows the team, the pool and lets the manager open one rep’s book', async () => {
     const user = userEvent.setup();

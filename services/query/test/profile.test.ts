@@ -100,6 +100,8 @@ describe.skipIf(!TEST_DATABASE_URL)('GET /leads/:id', () => {
       citedFacts: [{ id: 'F1', text: 'business_name: Acme Roofing' }, { id: 'F3', text: 'gaf_tier: GAF Master Elite' }],
       model: 'gemini:gemini-3.8-flash', promptVersion: 'insights/v1', generatedAt: '2026-10-15T00:00:00.000Z',
     });
+    // The newer failed attempt is not served as text, but insightAttempt reports it (status only, no reason).
+    expect(p.insightAttempt).toEqual({ status: 'error', at: '2026-10-16T00:00:00.000Z' });
     expect(p.timing.map((b) => b.key)).toEqual(['storm_response', 'season']);
     expect(p.timing[0]).toMatchObject({ severity: 'medium', label: 'Storm response: Severe Thunderstorm Warning' });
     expect(p.notes.map((n) => n.text)).toEqual(['Manager note', 'Called, owner out until Monday']);
@@ -141,6 +143,7 @@ describe.skipIf(!TEST_DATABASE_URL)('GET /leads/:id', () => {
     expect(p.notes.map((n) => n.text)).toEqual(['Pool note']);
     expect(p.allocation.current).toBeNull();
     expect(p.insights).toBeNull();
+    expect(p.insightAttempt).toBeNull();
     expect(p.details.inBusinessSince).toBe(1975);
   });
 
@@ -193,6 +196,7 @@ describe.skipIf(!TEST_DATABASE_URL)('GET /leads/:id', () => {
       const second = await get(f.ids.acme, f.users.rep1);
       expect([second.headers['x-cache'], second.body.version]).toEqual(['hit', v]);
       expect(second.body.insights).toMatchObject({ businessSummary: 'Newest summary', talkingPoints: [], targetContact: null, citedFacts: [] });
+      expect(second.body.insightAttempt).toEqual({ status: 'ok', at: second.body.insights.generatedAt });
       // A body cached before insights moved to the head still holds one: it is ignored.
       const k = `lead:${f.ids.acme}:v${v}`;
       const cached = JSON.parse((await h.redis.get(k))!);

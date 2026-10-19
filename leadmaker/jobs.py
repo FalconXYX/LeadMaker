@@ -332,7 +332,9 @@ class JobQueue:
         now = now or utcnow()
         with self.engine.connect() as conn:
             due = [dict(r._mapping) for r in conn.execute(
-                select(schedules).where(schedules.c.enabled.is_(True), schedules.c.next_run_at <= now)
+                # every_hours NULL: a manual-only territory (run from the Territories page), never due.
+                select(schedules).where(schedules.c.enabled.is_(True), schedules.c.every_hours.is_not(None),
+                                        schedules.c.next_run_at <= now)
             )]
         return [job_id for s in due if (job_id := self._fire_schedule(s, now))]
 
@@ -494,11 +496,30 @@ def ensure_ai_schedules(q: JobQueue) -> dict[str, int]:
     out: dict[str, int] = {}
     for name, (kind, params, every) in AI_SCHEDULES.items():
         s = have.get(name)
-        if s is not None and s["kind"] == kind and (s["params"] or {}) == params and float(s["every_hours"]) == every:
+        if s is not None and s["kind"] == kind and (s["params"] or {}) == params and s["every_hours"] is not None \
+                and float(s["every_hours"]) == every:
             out[name] = int(s["id"])
             continue
         out[name] = q.add_schedule(name, kind, params, every)
     return out
+
+
+def _scrape_summary(rep: Any) -> dict[str, Any]:
+    return {"run_id": rep.run_id, "status": rep.status, "upsert": rep.stats.get("upsert"),
+            "profiles": rep.stats.get("profiles"), "delisted": rep.stats.get("delisted"),
+            "completeness": rep.stats.get("completeness")}
+
+
+def refresh_stats(reads: Sequence[Any]) -> dict[str, int]:
+    """The run's headline numbers (job result "stats", shown in the manager's run history): listings found in the
+    area, how many were new leads and how many existing leads changed, summed over every ZIP the job read."""
+    found = new = updated = 0
+    for rep in reads:
+        upsert = rep.stats.get("upsert") or {}
+        found += int(rep.stats.get("parsed") or 0)
+        new += int(upsert.get("new") or 0)
+        updated += int(upsert.get("changed") or 0)
+    return {"found": found, "new": new, "updated": updated}
 
 
 async def execute(settings: Settings, repo: Repository, kind: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -524,21 +545,37 @@ async def execute(settings: Settings, repo: Repository, kind: str, params: dict[
     from .pipeline.tag import run_tagging
 
     area = {k: params[k] for k in ("postal_code", "radius_miles") if k in params}
+    # A territory's extra ZIPs (params.also_zips, from the manager's Territories page): each is read with the
+    # same radius and gets the same counties -> tag -> AI follow-ups chain as the main area.
+    extra_areas: list[dict[str, Any]] = []
     out: dict[str, Any] = {}
     if kind in ("scrape", "pipeline"):
         scrape_keys = ScrapeOptions.__dataclass_fields__.keys()
-        rep = await run_scrape(settings, repo, ScrapeOptions(**{k: v for k, v in params.items() if k in scrape_keys}))
+        base = {k: v for k, v in params.items() if k in scrape_keys}
+        rep = await run_scrape(settings, repo, ScrapeOptions(**base))
         if rep.area is not None:  # the area as read (ScrapeOptions defaults included), as its search hits store it
             area = {"postal_code": rep.area.postal_code, "radius_miles": rep.area.radius_miles}
-        out["scrape"] = {"run_id": rep.run_id, "status": rep.status, "upsert": rep.stats.get("upsert"),
-                         "profiles": rep.stats.get("profiles"), "delisted": rep.stats.get("delisted"),
-                         "completeness": rep.stats.get("completeness")}
+        out["scrape"] = _scrape_summary(rep)
+        reads = [rep]
+        also = [str(z) for z in params.get("also_zips") or [] if str(z) != area.get("postal_code")]
+        for z in dict.fromkeys(also):  # in order, without repeats
+            # Coordinates given for the main ZIP do not apply to another one: it is geocoded.
+            extra = await run_scrape(settings, repo, ScrapeOptions(**{
+                **{k: v for k, v in base.items() if k not in ("latitude", "longitude")}, "postal_code": z}))
+            reads.append(extra)
+            a = ({"postal_code": extra.area.postal_code, "radius_miles": extra.area.radius_miles}
+                 if extra.area is not None else {"postal_code": z, "radius_miles": area.get("radius_miles", 25)})
+            extra_areas.append({**a, "scrape": _scrape_summary(extra)})
+        out["stats"] = refresh_stats(reads)
     if kind in ("enrich", "pipeline"):
         enrich_keys = EnrichOptions.__dataclass_fields__.keys()
         rep = await run_enrich(settings, repo, EnrichOptions(**{k: v for k, v in params.items() if k in enrich_keys}))
         out["enrich"] = {"run_id": rep.run_id, "status": rep.status, "by_source": rep.stats.get("by_source")}
     if kind in ("scrape", "pipeline"):
         ids = repo.area_company_ids(area["postal_code"], area["radius_miles"]) if len(area) == 2 else None
+        if ids is not None:
+            for a in extra_areas:
+                ids = list(dict.fromkeys([*ids, *repo.area_company_ids(a["postal_code"], a["radius_miles"])]))
         try:
             out["counties"] = await run_counties(settings, repo, ids)
         except Exception as e:  # the scrape landed; the next refresh or signals run assigns the county
@@ -547,6 +584,11 @@ async def execute(settings: Settings, repo: Repository, kind: str, params: dict[
     if kind in ("scrape", "tag", "pipeline"):
         out["tag"] = run_tagging(repo, area.get("postal_code"), area.get("radius_miles"))
         out["follow_up"] = enqueue_ai_follow_ups(repo, settings, area)
+        for a in extra_areas:
+            a["tag"] = run_tagging(repo, a["postal_code"], a["radius_miles"])
+            a["follow_up"] = enqueue_ai_follow_ups(repo, settings, a)
+        if extra_areas:
+            out["also_zips"] = extra_areas
     if kind == "signals":
         from .pipeline.signals import run_signals
 

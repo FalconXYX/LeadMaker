@@ -9,7 +9,7 @@ import { sseHandler, type EventHub } from './events.ts';
 import { requestLogger } from './logger.ts';
 import { proxy } from './proxy.ts';
 import { rateLimit, type RateLimiter } from './rateLimit.ts';
-import { cachedRoles, currentRole, type Roles } from './roles.ts';
+import { cachedRoles, currentRole, managersOnly, type Roles } from './roles.ts';
 
 export type Deps = {
   config: Config;
@@ -74,6 +74,9 @@ export function createApp({ config, log, tokens, directory, limiter, hub, redis,
     rateLimit(limiter, (req) => `rl:user:${req.user!.id}`, log),
     currentRole(roles),
   );
+
+  // Territories and run history: reads go to the query service, writes to crm-write (upstreamFor), managers only.
+  app.use('/api/admin', managersOnly);
 
   app.get('/api/me', async (req, res) => {
     const user = await directory.userById(req.user!.id);

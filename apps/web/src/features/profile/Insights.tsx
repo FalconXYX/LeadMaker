@@ -1,7 +1,8 @@
 // AI insights on the Overview tab: one card that reads top to bottom (the business summary, how to approach them and
 // who to ask for, then the talking points) and collapses as a whole from its header; the choice is remembered on this
 // device. The batch insights job writes them (Section 4). The header's Refresh regenerates them for this lead from what
-// it holds now (tags, notes, logged activity, edits); a lead without any shows the card with Generate.
+// it holds now (tags, notes, logged activity, edits); a lead without any shows the card with Generate. A run that ends
+// in error (profile.insightAttempt) shows the neutral line within seconds instead of waiting out the timeout.
 import { Check, ChevronDown, RefreshCw, Sparkles } from 'lucide-react';
 import { useId, useState } from 'react';
 import { Card, Tooltip } from '@/components/ui';
@@ -9,7 +10,7 @@ import { cn } from '@/lib/cn';
 import { formatRelative } from '@/lib/format';
 import { safeStorage } from '@/lib/storage';
 import { useProfile } from './context';
-import { REFRESH_ERROR, useInsightsRefresh, type RefreshPhase } from './insightsRefresh';
+import { attemptOf, useInsightsRefresh, type RefreshPhase } from './insightsRefresh';
 
 /** localStorage key for the card's state: "0" collapsed; "1" or nothing expanded. */
 export const INSIGHTS_OPEN_KEY = 'leadmaker.profile.insights.open';
@@ -37,7 +38,7 @@ export function InsightsCard() {
   const uid = useId();
   const headingId = `${uid}-heading`;
   const bodyId = `${uid}-body`;
-  const { phase, refresh } = useInsightsRefresh(profile.id, ins?.generatedAt);
+  const { phase, problem, refresh } = useInsightsRefresh(profile.id, ins?.generatedAt, attemptOf(profile));
   const summary = ins?.businessSummary?.trim() ?? '';
   const pitch = ins?.salesRecommendation?.trim() ?? '';
   const sparkle = <span className="flex text-muted"><Sparkles className="size-4" aria-hidden /></span>;
@@ -56,7 +57,7 @@ export function InsightsCard() {
             <h2 id={headingId} className="min-w-0 flex-1 text-sm font-semibold text-fg">AI insights</h2>
             <RefreshButton phase={phase} onClick={refresh} idleLabel="Generate" busyLabel="Generating…" />
           </div>
-          <RefreshProblem phase={phase} />
+          <RefreshProblem phase={phase} message={problem} />
           <p className={cn('p-4 text-sm leading-6 text-muted transition-opacity sm:p-5', updating && 'opacity-60')}>
             No AI insights for this lead yet. Generate writes a summary and talking points from its profile, tags, notes
             and activity.
@@ -106,7 +107,7 @@ export function InsightsCard() {
             </div>
           )}
         </div>
-        <RefreshProblem phase={phase} />
+        <RefreshProblem phase={phase} message={problem} />
         <div
           id={bodyId}
           hidden={!open}
@@ -179,9 +180,9 @@ function RefreshButton({ phase, onClick, idleLabel, busyLabel }: {
 }
 
 /** The failure line, under the header so it shows on a collapsed card too. */
-function RefreshProblem({ phase }: { phase: RefreshPhase }) {
+function RefreshProblem({ phase, message }: { phase: RefreshPhase; message: string }) {
   if (phase !== 'error') return null;
-  return <p role="alert" className="px-4 pt-3 text-xs text-danger sm:px-5">{REFRESH_ERROR}</p>;
+  return <p role="alert" className="px-4 pt-3 text-xs text-danger sm:px-5">{message}</p>;
 }
 
 /** Screen readers hear the start and the end; the button's own text says the same on screen. */

@@ -399,9 +399,9 @@ model schedules {
   name             String    @unique @db.VarChar(128)
   kind             String    @db.VarChar(32)
   params           Json      @default("{}")
-  every_hours      Float
+  every_hours      Float?
   enabled          Boolean   @default(true)
-  next_run_at      DateTime  @db.Timestamptz(6)
+  next_run_at      DateTime? @db.Timestamptz(6)
   last_enqueued_at DateTime? @db.Timestamptz(6)
   created_at       DateTime  @default(now()) @db.Timestamptz(6)
   jobs             jobs[]

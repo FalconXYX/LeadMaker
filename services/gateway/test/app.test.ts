@@ -138,6 +138,46 @@ describe.skipIf(!hasInfra)('gateway (Postgres + Redis)', () => {
     });
   });
 
+  describe('admin routes', () => {
+    const as = async (u: { id: string; role: string; name: string }) => ({ Authorization: `Bearer ${await tokenFor(u)}` });
+
+    it('answer 403 to a rep before any service sees the request', async () => {
+      const auth = await as(fixtures.rep1);
+      for (const [method, path] of [
+        ['get', '/api/admin/territories'], ['get', '/api/admin/runs?limit=5'], ['post', '/api/admin/territories'],
+        ['patch', '/api/admin/territories/1'], ['delete', '/api/admin/territories/1'], ['post', '/api/admin/territories/1/run'],
+        ['get', '/api/ADMIN/territories'], ['get', '/api/admin'],
+      ] as const) {
+        const res = await request(base)[method](path).set(auth).send(method === 'get' ? undefined : {});
+        expect(res.status, `${method} ${path}`).toBe(403);
+        expect(res.body).toEqual({ error: 'forbidden', message: 'managers only' });
+      }
+      expect(query.calls).toHaveLength(0);
+      expect(crm.calls).toHaveLength(0);
+    });
+
+    it('checks the role users has now: a token minted as manager for a rep is still a rep', async () => {
+      await request(base).get('/api/admin/territories').set(await as({ ...fixtures.rep2, role: 'manager' })).expect(403);
+      expect(query.calls).toHaveLength(0);
+    });
+
+    it('route a manager\'s reads to query and writes to crm-write', async () => {
+      const auth = await as(fixtures.manager);
+      await request(base).get('/api/admin/territories').set(auth).expect(201);
+      await request(base).get('/api/admin/runs?limit=5').set(auth).expect(201);
+      expect(query.calls.map((c) => [c.method, c.url])).toEqual([['GET', '/api/admin/territories'], ['GET', '/api/admin/runs?limit=5']]);
+      expect(query.calls[0].headers['x-user-role']).toBe('manager');
+      await request(base).post('/api/admin/territories').set(auth).send({ zip: '10013', radiusMiles: 25 }).expect(201);
+      await request(base).patch('/api/admin/territories/1').set(auth).send({ enabled: false }).expect(201);
+      await request(base).delete('/api/admin/territories/1').set(auth).expect(201);
+      await request(base).post('/api/admin/territories/1/run').set(auth).expect(201);
+      expect(crm.calls.map((c) => [c.method, c.url])).toEqual([
+        ['POST', '/api/admin/territories'], ['PATCH', '/api/admin/territories/1'], ['DELETE', '/api/admin/territories/1'],
+        ['POST', '/api/admin/territories/1/run'],
+      ]);
+    });
+  });
+
   describe('role freshness', () => {
     const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
     const listen = async (over: Partial<Config>) => {

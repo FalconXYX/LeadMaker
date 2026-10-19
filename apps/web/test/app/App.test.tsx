@@ -88,6 +88,28 @@ describe('App shell', () => {
     expect(screen.queryByText(/^Live$/)).toBeNull();
   });
 
+  it('keeps Admin out of a rep’s top bar and sends reps away from /admin', async () => {
+    const server = mockApi();
+    server.signIn('rep1@demo.local');
+    window.history.pushState({}, '', '/admin');
+    render(<App />);
+    expect(await screen.findByText('Admin is for managers')).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
+    expect(nav().queryByRole('link', { name: 'Admin' })).toBeNull();
+    expect(server.fetchMock.mock.calls.some(([u]) => String(u).includes('/api/admin'))).toBe(false);
+  });
+
+  it('shows managers Admin in the top bar and opens it', async () => {
+    const server = mockApi((path) => (path.startsWith('/api/admin/') ? json([]) : undefined));
+    server.signIn('manager@demo.local');
+    render(<App />);
+    await userEvent.click(await screen.findByRole('link', { name: 'Admin' }));
+    expect(window.location.pathname).toBe('/admin');
+    await waitFor(() => expect(nav().getByRole('link', { name: 'Admin' })).toHaveAttribute('aria-current', 'page'));
+    expect(await screen.findByRole('heading', { name: 'Lead sourcing' })).toBeInTheDocument();
+    expect(await screen.findByText('No areas yet')).toBeInTheDocument();
+  });
+
   it('opens the Tasks page from the top bar', async () => {
     const server = mockApi();
     server.signIn('rep1@demo.local');

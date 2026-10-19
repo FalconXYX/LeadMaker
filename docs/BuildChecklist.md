@@ -66,7 +66,8 @@ Final run on 2026-10-18: 631 TypeScript tests, 890 offline + 15 Postgres Python 
 | Push and email notifications | Designed | Needs the web app's service worker and an email provider |
 | Performance at 100k leads (synthetic) | Built | 500 users read-only: search p95 199–240 ms, profile 68 ms, KPIs 72 ms at 200 req/s (all targets met). With 5% writes: search p95 260–301 ms (target 300; 2 of 3 runs pass on a loaded laptop), profile 173 ms. Harness and results in `scripts/perf/` |
 | Search pools, admission control, timeouts | Built | Separate search pool with a concurrency limit and 2 s statement timeout, so profiles and KPIs stay fast under search load |
-| Read replicas, PgBouncer | Designed | Code reads `DATABASE_REPLICA_URL` (empty = primary) and routes a user's reads to the primary for 5 s after their write; statement timeouts become per-role settings behind PgBouncer |
+| Read replica | Built | A local streaming hot standby (`postgres-replica`); the query service reads from it and routes a user's reads to the primary for 5 s after their own write |
+| More replicas, PgBouncer | Designed | Statement timeouts become per-role settings behind PgBouncer |
 | SSO (OIDC), row-level security, backups with point-in-time recovery | Designed | |
 | Saved views and per-user UI preferences | Built | `/api/views` (managers can share a view with the team) and `/api/preferences` with optimistic locking |
 | Bulk endpoints and limits | Built | Bulk tag attach, bulk unassign, tag rename/delete, facet counts, map points; limits served by `/api/config` |

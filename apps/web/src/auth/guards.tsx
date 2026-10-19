@@ -97,17 +97,26 @@ function SignInRequired() {
   );
 }
 
+interface ManagersOnlyNotice {
+  /** The toast a rep sees on the way to the dashboard (defaults to the Allocation wording). */
+  title?: string;
+  description?: string;
+}
+
 /** Managers only; reps are sent to the dashboard with a short explanation. */
-export function RequireManager({ children }: { children?: ReactNode }) {
+export function RequireManager({ children, title, description }: { children?: ReactNode } & ManagersOnlyNotice) {
   const { isManager } = useAuth();
-  if (!isManager) return <ManagersOnly />;
+  if (!isManager) return <ManagersOnly title={title} description={description} />;
   return children ?? <Outlet />;
 }
 
-function ManagersOnly() {
+function ManagersOnly({
+  title = 'Allocation is for managers',
+  description = 'Your manager assigns leads to you. Here is your dashboard.',
+}: ManagersOnlyNotice) {
   const toast = useToast();
   useEffect(() => {
-    toast({ id: 'managers-only', variant: 'info', title: 'Allocation is for managers', description: 'Your manager assigns leads to you. Here is your dashboard.' });
-  }, [toast]);
+    toast({ id: 'managers-only', variant: 'info', title, description });
+  }, [toast, title, description]);
   return <Navigate to="/" replace />;
 }

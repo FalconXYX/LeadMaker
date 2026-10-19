@@ -8,8 +8,8 @@
     attempts < LEADMAKER_INSIGHTS_MAX_ATTEMPTS, at most hourly);
   * prune to the newest 3 rows per company, always keeping the newest ok row (so a string of failures never hides
     the last good insight);
-  * ok rows only: one outbox 'lead.updated' {fields: ['insights'], material: false} carrying the company's current
-    version, in the same transaction. companies is never written: insights are derived data, and a version bump
+  * ok and error rows: one outbox 'lead.updated' {fields: ['insights'], material: false} carrying the company's
+    current version, in the same transaction (an error row so a waiting profile Refresh sees the failed attempt). companies is never written: insights are derived data, and a version bump
     would hand reps editing the lead a false "changed while you were editing" conflict (D4).
 Deferred results (provider errors) write nothing.
 """
@@ -75,8 +75,9 @@ def save_result(repo: Repository, r: InsightResult, run_id: int | None) -> str |
         update["attempts"] = company_insights.c.attempts + 1
         conn.execute(ins.on_conflict_do_update(index_elements=["company_id", "input_hash"], set_=update))
         prune(conn, r.company_id)
-        if values["status"] == "ok":
-            Repository._lead_updated(conn, {r.company_id: {"fields": {"insights"}, "material": False}}, run_id)
+        # ok and error rows alike: a profile waiting on a Refresh learns of a failed attempt within seconds
+        # (LeadProfile.insightAttempt) instead of timing out; readers still serve only the newest ok row.
+        Repository._lead_updated(conn, {r.company_id: {"fields": {"insights"}, "material": False}}, run_id)
     return values["status"]
 
 

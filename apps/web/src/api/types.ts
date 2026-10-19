@@ -4,6 +4,9 @@ export type * from '@shared/types.ts';
 export type { LeadFilter, LeadScope, SortField, CustomFieldCondition } from '@shared/filter.ts';
 export type { EventType, LeadEvent, EventPayload, ActorType } from '@shared/events.ts';
 export type { Role } from '@shared/visibility.ts';
+export type {
+  Territory, TerritoryCreate, TerritoryPatch, TerritoryRunResult, Run, RunStatus,
+} from '@shared/admin.ts';
 // Named for discoverability (the star export above already carries them): saved views, preferences, config,
 // bulk unallocate, tag rename/delete, the activity ?type= values, and notification.created's title/body/actor_name.
 export type {

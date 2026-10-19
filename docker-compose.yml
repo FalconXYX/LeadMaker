@@ -1,7 +1,7 @@
 # Local stack. Data services and migrations:   docker compose up -d postgres redis dbmate
 # Seeded demo (same as npm run stack:up):       docker compose --profile app up -d --build
-#   migrations, the Section 1 import (a copy of data/leadmaker.db), db/seed, then the services, the worker and
-#   the web app (http://localhost:3000).
+#   migrations, the demo snapshot (db/snapshot, only into an empty database), the Section 1 import (a copy of
+#   data/leadmaker.db, if present), db/seed, then the services, the worker and the web app (http://localhost:3000).
 # AI (Section 4): the assistant service answers /api/assistant/* behind the gateway (lead Q&A and NL filtering) and
 #   the worker writes batch insights and territory briefs. With no GEMINI_API_KEY (or other provider) in .env both
 #   stay off and the app works as before. AI schedules are opt-in (LEADMAKER_AI_SCHEDULES=1). Gemini defaults: both
@@ -55,16 +55,44 @@ services:
       # The image's init script loads PostGIS (plus topology/tiger) into POSTGRES_DB; keep that in
       # the maintenance DB so dbmate creates 'leadmaker' clean and the migrations own every extension.
       POSTGRES_DB: postgres
+      REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:-replicator}  # used once, by db/init/20-replication.sh
     shm_size: 256mb  # parallel query workers share memory through /dev/shm (Docker's default is 64 MB)
     ports:
       - "127.0.0.1:${POSTGRES_HOST_PORT:-55432}:5432"  # host-only: default password; the gateway is the only public port
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./db/init/20-replication.sh:/docker-entrypoint-initdb.d/20-replication.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
       interval: 2s
       timeout: 5s
       retries: 30
+
+  # Read-only hot standby fed by streaming replication; the query service sends its reads here.
+  postgres-replica:
+    profiles: ["app"]
+    image: ${POSTGIS_IMAGE:-imresamu/postgis:16-3.4}
+    entrypoint: ["/usr/local/bin/replica-entrypoint.sh"]
+    restart: unless-stopped
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      PRIMARY_HOST: postgres
+      REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:-replicator}
+      POSTGRES_USER: ${POSTGRES_USER:-leadmaker}
+    shm_size: 256mb
+    ports:
+      - "127.0.0.1:${REPLICA_HOST_PORT:-55433}:5432"
+    volumes:
+      - pgreplica:/var/lib/postgresql/data
+      - ./db/replica/entrypoint.sh:/usr/local/bin/replica-entrypoint.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres && [ \"$$(psql -U $${POSTGRES_USER} -d postgres -Atc 'SELECT pg_is_in_recovery()')\" = t ]"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15m
+    depends_on:
+      postgres: { condition: service_healthy }
 
   redis:
     image: redis:7-alpine
@@ -93,7 +121,26 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
 
-  # One-shot after dbmate: imports the Section 1 SQLite file (scripts/docker/import-section1.sh). Only this
+  # One-shot after dbmate: loads the demo snapshot (db/snapshot/leadmaker-demo.dump, data only) when the database
+  # has no companies yet, so a fresh clone starts with real leads, AI insights, briefs and signals plus the demo
+  # users and history (scripts/db-restore-snapshot.sh). It never restores over existing data. SNAPSHOT_RESTORE=0
+  # skips it; SNAPSHOT_SHIFT_DATES=0 keeps the demo history's dates as captured.
+  restore:
+    profiles: ["app"]
+    image: ${POSTGIS_IMAGE:-imresamu/postgis:16-3.4}  # for its pg_restore and psql
+    entrypoint: ["sh", "/app/scripts/db-restore-snapshot.sh"]
+    environment:
+      DATABASE_URL: *db-url
+      SNAPSHOT_RESTORE: ${SNAPSHOT_RESTORE:-1}
+      SNAPSHOT_SHIFT_DATES: ${SNAPSHOT_SHIFT_DATES:-1}
+    volumes:
+      - ./scripts/db-restore-snapshot.sh:/app/scripts/db-restore-snapshot.sh:ro
+      - ./db/snapshot:/app/db/snapshot:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+      dbmate: { condition: service_completed_successfully }
+
+  # One-shot after the restore: imports the Section 1 SQLite file (scripts/docker/import-section1.sh). Only this
   # service mounts data/, read-only, and it copies just the main file; re-runs skip what is already there.
   import:
     profiles: ["app"]
@@ -108,7 +155,7 @@ services:
       - ${SECTION1_DIR:-./data}:/seed:ro
     depends_on:
       postgres: { condition: service_healthy }
-      dbmate: { condition: service_completed_successfully }
+      restore: { condition: service_completed_successfully }
 
   # One-shot after the import: demo users, ~50 leads per rep, then their demo sales history (scripts/db-seed.sh,
   # idempotent). db/seed/003_demo_activity.sql reads SEED_DEMO_ACTIVITY as the setting seed.demo_activity (PGOPTIONS).
@@ -171,6 +218,8 @@ services:
     environment:
       <<: [*node-env, *limits-env]
       PORT: "8081"
+      # Reads go to the replica; a user's reads go to the primary for 5 s after their own write.
+      DATABASE_REPLICA_URL: postgres://${POSTGRES_USER:-leadmaker}:${POSTGRES_PASSWORD:-leadmaker}@postgres-replica:5432/leadmaker?sslmode=disable
       LEAD_LIST_CACHE_TTL_SECONDS: ${LEAD_LIST_CACHE_TTL_SECONDS:-60}
       DATABASE_SEARCH_POOL_MAX: ${DATABASE_SEARCH_POOL_MAX:-8}
       SEARCH_CONCURRENCY: ${SEARCH_CONCURRENCY:-8}
@@ -183,6 +232,11 @@ services:
     healthcheck:
       <<: *node-health
       test: ["CMD", "node", "-e", *probe, "http://localhost:8081/readyz"]
+    depends_on:  # replaces the anchor's list: the replica must be up before query reads from it
+      postgres: { condition: service_healthy }
+      postgres-replica: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      seed: { condition: service_completed_successfully }
 
   crm-write:
     <<: *node-service
@@ -339,5 +393,6 @@ services:
 
 volumes:
   pgdata:
+  pgreplica:
   redisdata:
   worker-cache:

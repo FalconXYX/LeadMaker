@@ -48,3 +48,12 @@ export function currentRole(roles: Roles) {
     next();
   };
 }
+
+/** After currentRole: manager-only paths (/api/admin/*, the Territories page) answer 403 to reps before any upstream. */
+export function managersOnly(req: Request, res: Response, next: NextFunction) {
+  if (req.user?.role === 'manager') {
+    next();
+    return;
+  }
+  res.status(403).json({ error: 'forbidden', message: 'managers only' });
+}

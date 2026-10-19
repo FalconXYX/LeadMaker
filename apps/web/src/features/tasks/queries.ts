@@ -7,7 +7,9 @@ import { VersionConflictError, isRecord } from '@/api/errors';
 import { invalidateLead, qk } from '@/api/queries';
 import * as ep from '@/api/endpoints';
 import type { LeadProfile, TasksPage, TaskUpdate } from '@/api/types';
+import { useMemo } from 'react';
 import { getTasks, type Task, type TaskDue, type TaskScope, type TaskStatus, type TaskType } from './api';
+import { mergeTasks } from './calendar';
 import { bucketOf, daysBetween, salesDay, today } from './dates';
 
 export interface TaskListParams {
@@ -26,6 +28,8 @@ export const taskKeys = {
   page: (p: TaskListParams) => ['tasks', 'list', 'page', norm(p)] as const,
   infinite: (p: TaskListParams) => ['tasks', 'list', 'infinite', norm(p)] as const,
   summary: (scope: TaskScope) => ['tasks', 'list', 'summary', scope] as const,
+  /** The calendar's reads (and the follow-up picker's busy days): every open task, and the latest done ones. */
+  calendar: (scope: TaskScope, status: TaskStatus) => ['tasks', 'list', 'calendar', scope, status] as const,
 };
 
 /** One page of GET /api/tasks (contract hook; TaskList pages through useInfiniteTasks). */
@@ -95,6 +99,61 @@ export function useTaskCounts(scope: TaskScope) {
     doneCapped: !!done.data?.nextCursor,
   };
   return { counts, isLoading: open.isLoading, error: open.error, refetch: () => void open.refetch() };
+}
+
+// ---- the calendar ----------------------------------------------------------------------------------------------
+
+/** The server's largest page; the calendar reads up to CALENDAR_PAGES of them. */
+const CALENDAR_PAGE = SUMMARY_LIMIT;
+const CALENDAR_PAGES = 5;
+
+/**
+ * Pages through GET /api/tasks for one status, up to `pages` pages. The API has due windows (overdue, today, week,
+ * upcoming, all) but no date range yet, so the calendar reads every window ("all") and filters days on the client:
+ * fine at demo scale; production would add dueFrom/dueTo so a week or month reads only its own days.
+ */
+async function readPages(scope: TaskScope, status: TaskStatus, pages: number, signal: AbortSignal): Promise<TasksPage> {
+  const items: Task[] = [];
+  let cursor: string | null = null;
+  for (let i = 0; i < pages; i++) {
+    const page = await getTasks({ scope, due: 'all', status, limit: CALENDAR_PAGE, cursor }, { signal });
+    items.push(...page.items);
+    cursor = page.nextCursor;
+    if (!cursor) break;
+  }
+  return { items, nextCursor: cursor };
+}
+
+/**
+ * Follow-ups for the calendar: every open one (overdue included) and, unless `done` is false, the most recently
+ * completed ones. Cached under taskKeys.mine, so ticking a task off or moving it updates the calendar straight away.
+ */
+export function useCalendarTasks(scope: TaskScope, opts: { enabled?: boolean; done?: boolean } = {}) {
+  const enabled = opts.enabled ?? true;
+  const open = useQuery({
+    queryKey: taskKeys.calendar(scope, 'open'),
+    queryFn: ({ signal }) => readPages(scope, 'open', CALENDAR_PAGES, signal),
+    staleTime: 30_000,
+    enabled,
+  });
+  const done = useQuery({
+    queryKey: taskKeys.calendar(scope, 'done'),
+    queryFn: ({ signal }) => readPages(scope, 'done', 1, signal),
+    staleTime: 30_000,
+    enabled: enabled && opts.done !== false,
+  });
+  const tasks = useMemo(() => mergeTasks(open.data?.items ?? [], done.data?.items ?? []), [open.data, done.data]);
+  return {
+    tasks,
+    isLoading: open.isLoading,
+    error: open.error ?? done.error,
+    /** More open follow-ups than the calendar reads: the busiest far-off days may be missing some. */
+    capped: !!open.data?.nextCursor,
+    refetch: () => {
+      void open.refetch();
+      if (opts.done !== false) void done.refetch();
+    },
+  };
 }
 
 // ---- optimistic cache edits ------------------------------------------------------------------------

@@ -2,8 +2,11 @@
 
     attempt 1: one call for the whole batch (K leads, refs L1..LK)
       -> items missing for some refs, or items with violations?
-    attempt 2: ONE retry for just those leads (same refs), with the violations appended as feedback
-      -> still failing: InsightResult(ok=False, violations, attempts=2), stored as a status='error' row
+    salvage: an item whose problems are local to a sentence or a talking point loses those parts and is kept when the
+      rest passes every guard (validate.salvage_item); no retry is spent on it
+    attempt 2: a retry for just the leads still failing (same refs), with the violations appended as feedback
+      (a manual profile Refresh gets a third attempt: model_attempts=MANUAL_ATTEMPTS)
+      -> still failing: InsightResult(ok=False, violations, attempts=n), stored as a status='error' row
 
 A whole-call LlmOutputError (invalid JSON, truncation, safety block) on a batch of several leads retries each
 lead alone once; on a single lead it retries once. Provider errors never raise out of here: the leads they hit
@@ -26,9 +29,12 @@ from ..llm.base import (
 )
 from .facts import LeadFacts, input_hash
 from .prompt import MAX_OUTPUT_TOKENS, OUTPUT_SCHEMA, SCHEMA_NAME, SYSTEM_PROMPT, lead_refs, render_leads_block
-from .validate import clean_item, cross_lead_problems, repair_item, validate_item
+from .validate import clean_item, cross_lead_problems, repair_item, salvage_item, validate_item
 
 log = logging.getLogger(__name__)
+
+BATCH_ATTEMPTS = 2  # model calls per lead in a batch run: the answer and one retry
+MANUAL_ATTEMPTS = 3  # a rep's profile Refresh: the answer and two retries (its own allowance; a rep is waiting)
 
 @dataclass
 class InsightResult:
@@ -36,7 +42,7 @@ class InsightResult:
     ok: bool
     insight: dict | None  # {"summary","pitch","talking_points","target_contact","product_focus","cited_facts"}
     violations: list[str]
-    attempts: int  # model calls this lead took in this run: 1 or 2
+    attempts: int  # model calls this lead took in this run: 1 to model_attempts
     usage: dict
     input_hash: str = ""
     model: str = ""  # provider fingerprint, e.g. "gemini:gemini-3.8-flash"
@@ -124,8 +130,16 @@ def _judge(leads: Sequence[_Lead], payload: dict[str, Any] | None) -> tuple[dict
             bad[x.ref] = ["no item was returned for this lead"]
             continue
         item = repair_item(item)
-        problems = validate_item(item, x.facts) or cross_lead_problems(item, x.facts,
-                                                                        [o.facts for o in leads if o is not x])
+        problems = validate_item(item, x.facts)
+        if problems:
+            # Problems local to a sentence or a talking point: drop those parts and keep the rest when it passes
+            # every guard, instead of spending a retry (and the rep's wait) on the whole answer.
+            fixed, dropped = salvage_item(item, x.facts)
+            if fixed is not None:
+                log.info("insights %s: answer salvaged (dropped %s) from: %s", x.facts.company_id, ", ".join(dropped),
+                         "; ".join(problems)[:400])
+                item, problems = fixed, []
+        problems = problems or cross_lead_problems(item, x.facts, [o.facts for o in leads if o is not x])
         if problems:
             bad[x.ref] = problems
             # Only the final attempt's problems reach the error row; log every attempt's so a failed Refresh is
@@ -137,12 +151,15 @@ def _judge(leads: Sequence[_Lead], payload: dict[str, Any] | None) -> tuple[dict
 
 
 async def generate(provider: LlmProvider, http, leads: Sequence[LeadFacts], *,
-                   stats: dict[str, int] | None = None) -> list[InsightResult]:
+                   stats: dict[str, int] | None = None, model_attempts: int = BATCH_ATTEMPTS) -> list[InsightResult]:
     """Insights for one batch; one InsightResult per lead, in input order. A lead with a skip_reason
-    (do_not_contact, delisted) is never sent: its result is `deferred=<skip_reason>` with 0 attempts (no row)."""
+    (do_not_contact, delisted) is never sent: its result is `deferred=<skip_reason>` with 0 attempts (no row).
+    `model_attempts` caps the calls per lead: 2 for batch runs (an answer and one retry), MANUAL_ATTEMPTS (3) for a
+    rep's profile Refresh, which has its own allowance and a rep waiting on it."""
     fp = provider.fingerprint
     live = [f for f in leads if not f.skip_reason]
-    got = iter(await _generate(provider, http, live, stats=stats) if live else [])
+    got = iter(await _generate(provider, http, live, stats=stats, model_attempts=max(1, model_attempts))
+               if live else [])
     return [
         InsightResult(company_id=f.company_id, ok=False, insight=None, violations=[], attempts=0, usage={},
                       input_hash=input_hash(f, fp), model=fp, deferred=f.skip_reason)
@@ -152,7 +169,7 @@ async def generate(provider: LlmProvider, http, leads: Sequence[LeadFacts], *,
 
 
 async def _generate(provider: LlmProvider, http, leads: Sequence[LeadFacts], *,
-                    stats: dict[str, int] | None = None) -> list[InsightResult]:
+                    stats: dict[str, int] | None = None, model_attempts: int = 2) -> list[InsightResult]:
     if not leads:
         return []
     fp = provider.fingerprint
@@ -179,47 +196,69 @@ async def _generate(provider: LlmProvider, http, leads: Sequence[LeadFacts], *,
 
     # attempt 1: the whole batch
     retry: dict[str, list[str]] = {}
+    unusable: set[str] = set()  # refs whose last answer was unusable: their retry gets no feedback
     try:
         resp = await _call(provider, http, work, stats=stats)
     except LlmOutputError as e:
         retry = {x.ref: [f"the previous answer was unusable ({e})"] for x in work}
-        payload = None
+        unusable = set(retry)
         solo = len(work) > 1
     except (LlmQuotaExceeded, LlmAuthError, LlmRateLimited, LlmApiError, LlmError) as e:
         defer_rest(e)
         return [done[x.ref] for x in work]
     else:
-        payload, solo = resp.data, False
-        good, retry = _judge(work, payload)
+        solo = False
+        good, retry = _judge(work, resp.data)
         for ref, item in good.items():
             done[ref] = result(by_ref[ref], item=item)
 
-    # attempt 2: one retry for what failed (alone after a whole-batch output failure, else together)
-    groups = [[by_ref[r]] for r in retry] if solo else ([[by_ref[r] for r in retry]] if retry else [])
-    for group in groups:
-        if all(x.ref in done for x in group):
-            continue
-        problems = {x.ref: retry[x.ref] for x in group}
-        try:
-            resp = await _call(provider, http, group, extra=feedback(problems) if payload is not None else "",
-                               stats=stats)
-        except LlmOutputError as e:
-            for x in group:
-                done[x.ref] = result(x, violations=[*problems[x.ref], f"retry was unusable too ({e})"])
-            continue
-        except (LlmQuotaExceeded, LlmAuthError) as e:
-            defer_rest(e)
+    # attempts 2..model_attempts: retry what failed (alone after a whole-batch output failure, else together), with the
+    # latest violations as feedback
+    attempt = 1
+    while retry and attempt < model_attempts:
+        attempt += 1
+        last = attempt == model_attempts
+        groups = [[by_ref[r]] for r in retry] if solo else [[by_ref[r] for r in retry]]
+        retry_next: dict[str, list[str]] = {}
+        stopped = False
+        for group in groups:
+            if all(x.ref in done for x in group):
+                continue
+            problems = {x.ref: retry[x.ref] for x in group}
+            told = {r: ps for r, ps in problems.items() if r not in unusable}
+            try:
+                resp = await _call(provider, http, group, extra=feedback(told) if told else "", stats=stats)
+            except LlmOutputError as e:
+                for x in group:
+                    if last:
+                        done[x.ref] = result(x, violations=[*problems[x.ref], f"retry was unusable too ({e})"])
+                    else:
+                        retry_next[x.ref] = [f"the previous answer was unusable ({e})"]
+                        unusable.add(x.ref)
+                continue
+            except (LlmQuotaExceeded, LlmAuthError) as e:
+                defer_rest(e)
+                stopped = True
+                break
+            except (LlmRateLimited, LlmApiError, LlmError) as e:
+                for x in group:
+                    done[x.ref] = result(x, deferred=_deferral(e), error=_safe(e))
+                continue
+            good, bad = _judge(group, resp.data)
+            for ref, item in good.items():
+                done[ref] = result(by_ref[ref], item=item)
+            for ref, problems_now in bad.items():
+                unusable.discard(ref)
+                if last:
+                    done[ref] = result(by_ref[ref], violations=problems_now)
+                else:
+                    retry_next[ref] = problems_now
+        if stopped:
             break
-        except (LlmRateLimited, LlmApiError, LlmError) as e:
-            for x in group:
-                done[x.ref] = result(x, deferred=_deferral(e), error=_safe(e))
-            continue
-        good, bad = _judge(group, resp.data)
-        for ref, item in good.items():
-            done[ref] = result(by_ref[ref], item=item)
-        for ref, problems_now in bad.items():
-            done[ref] = result(by_ref[ref], violations=problems_now)
+        retry = retry_next
+    for ref, problems in retry.items():  # model_attempts=1: attempt 1's failures are final
+        done.setdefault(ref, result(by_ref[ref], violations=problems))
     return [done[x.ref] for x in work]
 
 
-__all__ = ["InsightResult", "feedback", "generate", "items_by_ref", "norm_ref"]
+__all__ = ["BATCH_ATTEMPTS", "MANUAL_ATTEMPTS", "InsightResult", "feedback", "generate", "items_by_ref", "norm_ref"]

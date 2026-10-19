@@ -3,9 +3,8 @@ __pycache__/
 *.pyc
 .pytest_cache/
 # Kept out of git until they settle down (they change constantly)
-data
+/data
 research
-tests
 node_modules
 .coverage
 # Local secrets (copy .env.example to .env)
@@ -13,3 +12,7 @@ node_modules
 .env.*
 !.env.example
 scripts/perf/results/runs/
+# Case-study brief: kept locally, not published (removed from the repo)
+/2026 SWE Insights Case Study*.pdf
+# macOS Finder metadata
+.DS_Store

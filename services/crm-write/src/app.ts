@@ -14,6 +14,7 @@ import { overrideRoutes } from './routes/overrides.ts';
 import { preferenceRoutes } from './routes/preferences.ts';
 import { refreshRoutes } from './routes/refresh.ts';
 import { taskRoutes } from './routes/tasks.ts';
+import { territoryRoutes } from './routes/territories.ts';
 import { viewRoutes } from './routes/views.ts';
 import { configureInsightsHook, writer } from './tx.ts';
 
@@ -51,7 +52,7 @@ export function createApp({ db, redis, config, log }: AppOptions): Express {
   const api = Router();
   api.use(
     leadRoutes(deps), overrideRoutes(deps), contactRoutes(deps), customRoutes(deps), allocationRoutes(deps), refreshRoutes(deps),
-    viewRoutes(deps), preferenceRoutes(deps), taskRoutes(deps), insightsRoutes(deps),
+    viewRoutes(deps), preferenceRoutes(deps), taskRoutes(deps), insightsRoutes(deps), territoryRoutes(deps),
   );
   // The gateway forwards /api/* unchanged; the bare paths are accepted too.
   app.use('/api', api);

@@ -21,6 +21,8 @@
     "db:pull": "npm run pull -w @leadmaker/db",
     "db:generate": "npm run generate -w @leadmaker/db",
     "db:seed": "sh scripts/db-seed.sh",
+    "db:snapshot": "sh scripts/db-snapshot.sh",
+    "db:restore-snapshot": "sh scripts/db-restore-snapshot.sh",
     "db:psql": "docker compose exec postgres psql -U leadmaker -d leadmaker",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",

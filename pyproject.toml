@@ -15,7 +15,7 @@ dependencies = [
 # Gemini and OpenAI-compatible providers need no extra packages (they use the shared HttpClient).
 llm = ["anthropic>=1.0"]
 postgres = ["psycopg[binary]>=3.1"]
-dev = ["pytest>=8", "pytest-asyncio>=0.23", "pytest-cov>=5"]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "pytest-cov>=5", "markdown>=3.5"]
 
 [project.scripts]
 leadmaker = "leadmaker.cli:main"

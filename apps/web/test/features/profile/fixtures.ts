@@ -116,6 +116,7 @@ export function makeProfile(patch: Partial<LeadProfile> = {}): LeadProfile {
     customTags: [],
     customFields: {},
     insights: null,
+    insightAttempt: null,
     timing: [
       { key: 'recent_storm', label: 'Recent storm activity', reason: '3 storm reports in 30 days.', source: 'noaa_storm_events', severity: 'medium' },
     ],

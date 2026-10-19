@@ -467,9 +467,9 @@ schedules = Table(
     Column("name", String(128), nullable=False, unique=True),
     Column("kind", String(32), nullable=False),
     Column("params", JSONType, nullable=False, default=dict),
-    Column("every_hours", Float, nullable=False),
+    Column("every_hours", Float),  # NULL: manual only (a territory run from the Territories page)
     Column("enabled", Boolean, nullable=False, default=True),
-    Column("next_run_at", DateTime(timezone=True), nullable=False),
+    Column("next_run_at", DateTime(timezone=True)),  # NULL while every_hours is NULL
     Column("last_enqueued_at", DateTime(timezone=True)),
     Column("created_at", DateTime(timezone=True), nullable=False, default=_now),
     CheckConstraint("every_hours > 0", name="schedules_every_hours_check"),

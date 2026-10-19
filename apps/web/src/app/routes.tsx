@@ -13,6 +13,7 @@ const LeadsPage = lazy(() => import('@/features/leads').then((m) => ({ default: 
 const LeadProfilePage = lazy(() => import('@/features/profile').then((m) => ({ default: m.LeadProfilePage })));
 const AllocationPage = lazy(() => import('@/features/allocation').then((m) => ({ default: m.AllocationPage })));
 const TasksPage = lazy(() => import('@/features/tasks').then((m) => ({ default: m.TasksPage })));
+const AdminPage = lazy(() => import('@/features/admin').then((m) => ({ default: m.AdminPage })));
 
 export const routes: RouteObject[] = [
   // Sign-in is silent (demo mode) or the identity provider's (production): old /login links go home.
@@ -34,6 +35,10 @@ export const routes: RouteObject[] = [
               { path: 'leads/:id', element: <LeadProfilePage /> },
               { path: 'tasks', element: <TasksPage /> },
               { element: <RequireManager />, children: [{ path: 'allocation', element: <AllocationPage /> }] },
+              {
+                element: <RequireManager title="Admin is for managers" description="Your manager sets where LeadMaker finds leads. Here is your dashboard." />,
+                children: [{ path: 'admin', element: <AdminPage /> }],
+              },
               { path: '*', element: <NotFound /> },
             ],
           },

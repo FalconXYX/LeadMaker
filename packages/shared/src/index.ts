@@ -11,3 +11,4 @@ export * from './limits.ts';
 export * from './views.ts';
 export * from './sales.ts';
 export * from './assistant.ts';
+export * from './admin.ts';

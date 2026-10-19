@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeadMaker Design Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --text: #2b2d2e;
+  --muted: #5d6a77;
+  --border: #dde4ea;
+  --rule: #e8edf2;
+  --accent: #1c74dc;
+  --accent-soft: #e4f0fc;
+  --roof: #c2513a;
+  --code-bg: #eef3f7;
+  --bar: #37393a;
+  --bar-text: #f1f4f6;
+  --bar-muted: #b9c2ca;
+  --built-bg: #e2f4e9; --built-fg: #227a46;
+  --demo-bg: #fcf0d9; --demo-fg: #8f5a00;
+  --designed-bg: #e8edf2; --designed-fg: #525f6c;
+  --sans: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --bar-h: 56px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #1a1c1e; --surface: #222527; --text: #e8eef2; --muted: #a9b4be;
+    --border: #353b40; --rule: #2c3135; --accent: #5aa6f2; --accent-soft: #1b3350;
+    --roof: #e07a5c; --code-bg: #2a2e31; --bar: #121415; --bar-text: #eef2f5; --bar-muted: #98a3ad;
+    --built-bg: #183626; --built-fg: #7fd3a1; --demo-bg: #3a2c10; --demo-fg: #f0c060;
+    --designed-bg: #2c3238; --designed-fg: #b6c1cb;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1a1c1e; --surface: #222527; --text: #e8eef2; --muted: #a9b4be;
+  --border: #353b40; --rule: #2c3135; --accent: #5aa6f2; --accent-soft: #1b3350;
+  --roof: #e07a5c; --code-bg: #2a2e31; --bar: #121415; --bar-text: #eef2f5; --bar-muted: #98a3ad;
+  --built-bg: #183626; --built-fg: #7fd3a1; --demo-bg: #3a2c10; --demo-fg: #f0c060;
+  --designed-bg: #2c3238; --designed-fg: #b6c1cb;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { background: var(--bg); color: var(--text); font: 16px/1.65 var(--sans); }
+
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+  background: var(--bar); color: var(--bar-text);
+  display: flex; align-items: center; gap: 24px;
+  height: var(--bar-h); padding-inline: max(16px, 2vw);
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; white-space: nowrap; }
+.brand small { color: var(--bar-muted); font-weight: 400; font-size: 14px; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  color: var(--bar-muted); text-decoration: none; font-size: 14px; font-weight: 500;
+  padding: 7px 12px; border-radius: 8px; white-space: nowrap;
+}
+.tab:hover { color: var(--bar-text); background: rgb(255 255 255 / .08); }
+.tab.on { background: var(--accent); color: #fff; }
+.tab:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+
+main { padding-block: 28px 120px; }
+.doc {
+  display: grid;
+  grid-template-columns: [full-start] minmax(16px, 1fr) [content-start] minmax(0, 800px) [content-end] minmax(16px, 1fr) [full-end];
+}
+.doc > * { grid-column: content; }
+.doc > .diagram { grid-column: full; }
+.doc + .doc { margin-top: 72px; padding-top: 40px; border-top: 1px solid var(--border); }
+.doc-meta {
+  justify-self: start;
+  font: 500 12px/1 var(--mono); color: var(--muted); letter-spacing: .02em;
+  display: inline-block; padding: 5px 8px; border-radius: 6px; background: var(--code-bg); margin-bottom: 14px;
+}
+h1, h2, h3, h4 { text-wrap: balance; line-height: 1.25; scroll-margin-top: calc(var(--bar-h) + 20px); }
+h1 { font-size: 32px; font-weight: 700; margin: 0 0 20px; letter-spacing: -.01em; }
+h2 { font-size: 23px; font-weight: 650; margin: 44px 0 14px; padding-top: 6px; }
+h3 { font-size: 18px; font-weight: 600; margin: 30px 0 10px; }
+h4 { font-size: 16px; font-weight: 600; margin: 22px 0 8px; }
+.doc article > :first-child { margin-top: 0; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+ul, ol { padding-left: 22px; margin: 0 0 16px; }
+li + li { margin-top: 4px; }
+li > ul, li > ol { margin: 6px 0 0; }
+a { color: var(--accent); }
+strong { font-weight: 600; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 32px 0; }
+blockquote {
+  margin: 0 0 16px; padding: 10px 16px; border-left: 3px solid var(--roof);
+  background: var(--surface); color: var(--text); border-radius: 0 8px 8px 0;
+}
+blockquote p:last-child { margin: 0; }
+code { font: 0.88em/1.5 var(--mono); background: var(--code-bg); padding: 1px 5px; border-radius: 5px; }
+pre:not(.mermaid) {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; overflow-x: auto; margin: 0 0 18px; font-size: 13.5px;
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+
+.table-wrap { overflow-x: auto; margin: 0 0 20px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--rule); }
+th { font-weight: 600; background: var(--code-bg); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 500; }
+
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.pill.built { background: var(--built-bg); color: var(--built-fg); }
+.pill.demo { background: var(--demo-bg); color: var(--demo-fg); }
+.pill.designed { background: var(--designed-bg); color: var(--designed-fg); }
+
+.diagram { margin: 8px 0 28px; padding-inline: 16px; }
+.diagram pre.mermaid { margin: 0 auto; background: none; border: 0; padding: 0; display: flex; justify-content: center; }
+/* Fit the whole diagram on one screen: as wide as the page, but never taller than the window under the top bar. */
+.diagram svg { display: block; width: 100%; height: auto; max-height: calc(100vh - var(--bar-h) - 48px); }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#77b6ea"/><path d="M7 19 16 10l9 9" fill="none" stroke="#37393a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 22h10" stroke="#37393a" stroke-width="3" stroke-linecap="round"/></svg>
+    LeadMaker <small>Design docs</small>
+  </div>
+  <nav class="tabs" aria-label="Documents">{{TABS}}</nav>
+</header>
+
+<main id="main">{{DOCS}}</main>
+
+<script>
+(function () {
+  const bar = document.querySelector('.bar');
+  const offset = () => (bar ? bar.offsetHeight : 56) + 12;
+  function go(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - offset() });
+  }
+  document.querySelectorAll('[data-target]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const id = a.getAttribute('data-target');
+      go(id);
+      const doc = a.getAttribute('href').slice(1);
+      try { history.replaceState(null, '', '#' + doc); } catch (_) {}
+    });
+  });
+  if (location.hash.length > 1) setTimeout(() => go(location.hash.slice(1)), 60);
+
+  // Highlight the current document tab and section while scrolling.
+  const tabs = [...document.querySelectorAll('.tab')];
+  const docs = [...document.querySelectorAll('.doc')];
+  let ticking = false;
+  function spy() {
+    ticking = false;
+    const y = offset() + 8;
+    let doc = docs[0];
+    for (const d of docs) if (d.getBoundingClientRect().top <= y) doc = d;
+    tabs.forEach(t => t.classList.toggle('on', doc && t.dataset.target === doc.id));
+  }
+  window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(spy); } }, { passive: true });
+  spy();
+})();
+</script>
+<!-- Diagrams: Mermaid from the jsDelivr CDN (needs a network connection; the diagram source shows as text offline). -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    mermaid.initialize({ startOnLoad: true, theme: dark ? 'dark' : 'default', securityLevel: 'loose', flowchart: { htmlLabels: true, useMaxWidth: true } });
+  }
+</script>
+</body>
+</html>

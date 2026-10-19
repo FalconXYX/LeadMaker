@@ -1,7 +1,8 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { z } from 'zod';
 import {
-  ACTIVITY_TYPES, authenticateInternal, DEFAULT_WEEKLY_ACTIVITY_GOAL, isManager, leadFilterSchema, TASK_DUE, type Viewer,
+  ACTIVITY_TYPES, ADMIN_RUNS_DEFAULT_LIMIT, ADMIN_RUNS_MAX_LIMIT, authenticateInternal, DEFAULT_WEEKLY_ACTIVITY_GOAL,
+  isManager, leadFilterSchema, TASK_DUE, type Viewer,
 } from '@leadmaker/shared';
 import { allocationSuggestions, DEFAULT_SUGGESTION_LIMIT, listUsers } from './admin.ts';
 import { getAiContext } from './ai-context.ts';
@@ -19,6 +20,7 @@ import { CountySignals } from './lead-timing.ts';
 import { getMap } from './map.ts';
 import { ACTIVITY_LIMIT, getActivity, getProfile } from './profile.ts';
 import { searchLeads } from './search.ts';
+import { listRuns, listTerritories } from './territories.ts';
 import { defaultScope, getSignals } from './signals.ts';
 import { DEFAULT_TASK_LIMIT, listTasks, MAX_TASK_LIMIT, salesScope } from './tasks.ts';
 import { getPreferences, listViews } from './views.ts';
@@ -43,6 +45,7 @@ export interface AppDeps {
 const searchBody = z.object({ filter: leadFilterSchema.optional() }).strict();
 const usersQuery = z.object({ role: z.enum(['rep', 'manager']).optional() });
 const suggestionsQuery = z.object({ limit: z.coerce.number().int().min(1).max(5000).optional() });
+const runsQuery = z.object({ limit: z.coerce.number().int().min(1).max(ADMIN_RUNS_MAX_LIMIT).optional() });
 const KNOWN_ACTIVITY_TYPES = new Set<string>(ACTIVITY_TYPES);
 // ?type=call,email,visit: any of these action types.
 const activityTypes = z.string().max(500).transform((value, ctx) => {
@@ -236,6 +239,17 @@ export function createApp(deps: AppDeps) {
     const q = suggestionsQuery.safeParse(req.query);
     if (!q.success) throw badRequest('invalid query', z.treeifyError(q.error));
     res.json(await allocationSuggestions(fast(res), q.data.limit ?? DEFAULT_SUGGESTION_LIMIT));
+  });
+
+  // The Territories page (managers only; the gateway answers 403 to reps before this).
+  api.get('/admin/territories', managersOnly, async (_req, res) => {
+    res.json(await listTerritories(fast(res)));
+  });
+
+  api.get('/admin/runs', managersOnly, async (req, res) => {
+    const q = runsQuery.safeParse(req.query);
+    if (!q.success) throw badRequest('invalid query', z.treeifyError(q.error));
+    res.json(await listRuns(fast(res), q.data.limit ?? ADMIN_RUNS_DEFAULT_LIMIT));
   });
 
   // Reachable as /leads/... (gateway strips /api) and /api/leads/... (gateway forwards the path as is).

@@ -17,8 +17,10 @@
    list, and talking points stay on supply (no financing or marketing advice) with varied openings;
 9. injection canaries are covered by 2-8 and by the eval set; cross-lead copying inside one batch call is
    checked by generate() with cross_lead_problems().
-Messages are short and model-readable: generate() sends them back for the one retry. repair_item() first fixes
-what needs no model: a role-only contact becomes null, product_focus is de-duplicated and cut to 3.
+Messages are short and model-readable: generate() sends them back for the retry. repair_item() first fixes
+what needs no model: a role-only contact becomes null, product_focus is de-duplicated and cut to 3. salvage_item()
+then rescues an answer whose problems are local to a sentence or a talking point: it drops those parts and keeps the
+answer when what is left passes every guard (and enough is left).
 """
 
 from __future__ import annotations
@@ -81,13 +83,34 @@ PRODUCT_WORDS = re.compile(
 # check lead times"), but never next to an assertive commitment ("we offer", "our yard", "we can deliver").
 CHECK_WORDS = re.compile(r"\b(check|checking|see (if|whether)|find out|look into|ask (if|whether|about)"
                          r"|confirm (if|whether)|whether)\b", re.I)
-# "our <noun>" right after a check word ("check our metal stock", "see if our stock fits", "whether our inventory")
-# is the offer to check itself, not a claim; the retry feedback asks for exactly that, so it must not fail again.
-ASSERTIVE = re.compile(r"(?<!can )(?<!could )(?<!would )(?<!should )(?<!if )(?<!whether )(?<!do )(?<!did )"
-                       r"\bwe (can|will|ll|offer|provide|have|carry|stock|deliver|guarantee|give|always|never)\b"
-                       r"|(?<!check )(?<!checking )(?<!if )(?<!whether )(?<!about )"
-                       r"\bour (\w+ )?(yard|yards|warehouse|branch|branches|trucks?|prices?|pricing|terms|program|programs"
-                       r"|inventory|stock|delivery|deliveries|discounts?|rebates?|credit)\b")
+# Refresh fix (2026-10-19): a hedged first-person offer is an offer, not a promise ("we could check", "we may be able
+# to price it", "happy to see if our stock fits"); the rep still has to confirm it.
+HEDGE_WORDS = re.compile(r"\b(could|might|may|maybe|perhaps|possibly|be able to|happy to|glad to|willing to|offer to"
+                         r"|open to|if it helps)\b", re.I)
+# A flat commitment, checked on the normalised sentence even when it is hedged: "we offer", "we can deliver", "we
+# will have", "we stock". Not after a question or conditional word ("would it help if we ..."), and "we can / we will"
+# followed by a check verb ("we can check", "we will see if") is the offer to check itself.
+FLAT_WE = re.compile(r"(?<!can )(?<!could )(?<!would )(?<!should )(?<!if )(?<!whether )(?<!do )(?<!did )(?<!how )"
+                     r"\bwe (can|will|offer|provide|have|carry|stock|deliver|guarantee|give|always|never|ship|keep)\b"
+                     r"(?: (\w+))?")
+CHECK_VERBS = frozenset("check see look find ask confirm compare review talk walk".split())
+# "our <asset>": a claim that the distributor has it ("our yard", "with our metal stock", "how can our yard ...") unless
+# the word right before it asks or offers to check ("check our metal stock", "see if our stock fits", "whether our").
+OUR_ASSET = re.compile(r"\bour (?:\w+ ){0,3}?(yard|yards|warehouse|branch|branches|trucks?|prices?|pricing|terms"
+                       r"|programs?|inventory|stock|delivery|deliveries|discounts?|rebates?|credit)\b")
+OUR_CHECKED_BY = frozenset("check checking see if whether about how compare confirm consider review".split())
+
+
+def assertive(said: str) -> bool:
+    """A flat commitment in a normalised sentence (see FLAT_WE and OUR_ASSET)."""
+    for m in FLAT_WE.finditer(said):
+        if m.group(1) in ("can", "will") and m.group(2) in CHECK_VERBS:
+            continue
+        return True
+    for m in OUR_ASSET.finditer(said):
+        if not OUR_CHECKED_BY.intersection(said[:m.start()].split()[-1:]):
+            return True
+    return False
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z\"'(])")
 # Talking points are a supplier talking to a contractor: no consulting on the contractor's own business.
 CONSULTING = re.compile(r"\b(financ\w*|marketing|advertis\w*|ads|seo|social media|online presence|branding"
@@ -187,7 +210,8 @@ def sentences(text: str) -> list[str]:
 
 def distributor_problems(text: str, facts_norm: str) -> list[str]:
     """'we offer next-day delivery', 'our yard in Garfield': a claim about the distributor that no fact grounds.
-    Checked per sentence; a question or an offer to check is fine unless it also asserts a commitment."""
+    Checked per sentence; a question, an offer to check or a hedged offer ("we could", "we may be able to") is fine
+    unless it also asserts a commitment ("we offer", "we can deliver", "with our metal stock")."""
     for sent in sentences(text):
         m = WE.search(sent)
         if not m:
@@ -196,8 +220,8 @@ def distributor_problems(text: str, facts_norm: str) -> list[str]:
         term = next((t for t in DISTRIBUTOR_TERMS if f" {t}" in said and f" {t}" not in facts_norm), None)
         if term is None:
             continue
-        hedged = sent.rstrip().endswith("?") or CHECK_WORDS.search(sent)
-        if hedged and not ASSERTIVE.search(said):
+        hedged = sent.rstrip().endswith("?") or CHECK_WORDS.search(sent) or HEDGE_WORDS.search(sent)
+        if hedged and not assertive(said):
             continue
         return [f"speaks for the distributor ('{m.group(0)} ... {term}'), which no fact supports: ask a question or "
                 "offer to check instead of promising terms, stock, delivery or locations"]
@@ -379,6 +403,84 @@ def repair_item(item: Any) -> Any:
     return out
 
 
+SALVAGE_MIN_CHARS = 60  # a salvaged summary or pitch keeps at least this much text
+
+
+def _keep_sentences(text: str, bad) -> tuple[str | None, int]:
+    """(text without the sentences `bad` flags, how many were dropped); None when too little would remain: fewer than
+    half the sentences, or under SALVAGE_MIN_CHARS."""
+    sents = sentences(text)
+    good = [s for s in sents if not bad(s)]
+    if len(good) == len(sents):
+        return text, 0
+    kept = " ".join(good)
+    if not good or 2 * len(good) < len(sents) or len(kept) < SALVAGE_MIN_CHARS:
+        return None, len(sents) - len(good)
+    return kept, len(sents) - len(good)
+
+
+def salvage_item(item: Any, facts: LeadFacts) -> tuple[dict[str, Any] | None, list[str]]:
+    """A rejected item minus the parts that broke a sentence-level guard (a promise for the distributor, a season
+    word, an ungrounded certification, contact data, consulting advice, a repeated opening, a pitch sentence listing 3+
+    products): the offending talking points, summary or pitch sentences, and the contact's `why`. Returns (the item, what was dropped) when what is
+    left passes validate_item in full, else (None, ...): at least 2 talking points must remain, and the summary and
+    pitch each keep at least half their sentences and SALVAGE_MIN_CHARS. Structural problems (schema, counts, cited
+    ids, no product line) are never salvaged; the caller still runs cross_lead_problems on the result."""
+    parsed, _ = parse_item(item)
+    if parsed is None or not isinstance(item, dict):
+        return None, []
+    fact_texts = [f.text for f in facts.facts]
+    has_cert = has_certification(facts)
+    bad = lambda s: bool(text_problems(s, fact_texts, has_cert))  # noqa: E731
+    out = dict(item)
+    dropped: list[str] = []
+
+    points = item.get("talking_points") if isinstance(item.get("talking_points"), list) else []
+    keep: list[Any] = []
+    seen: set[tuple[str, ...]] = set()
+    templated = 0
+    for i, p in enumerate(points, start=1):
+        text = p.get("text") if isinstance(p, dict) else None
+        if not isinstance(text, str):
+            keep.append(p)
+            continue
+        opening = tuple(_norm(text).split()[:2])
+        first = opening[0] if opening else ""
+        if bad(text) or talking_point_problems([text], fact_texts) or opening in seen \
+                or (first in TEMPLATE_OPENERS and templated):
+            dropped.append(f"talking point {i}")
+            continue
+        seen.add(opening)
+        templated += first in TEMPLATE_OPENERS
+        keep.append(p)
+    if len(keep) < POINTS[0]:
+        return None, dropped
+    out["talking_points"] = keep
+
+    # The pitch also drops a sentence that strings 3+ products together (product_list_problems is per sentence).
+    bad_pitch = lambda s: bad(s) or bool(product_list_problems(s))  # noqa: E731
+    for key in ("summary", "pitch"):
+        text, n = _keep_sentences(str(item.get(key) or ""), bad_pitch if key == "pitch" else bad)
+        if text is None:
+            return None, [*dropped, f"{n} {key} sentence(s)"]
+        if n:
+            out[key] = text
+            dropped.append(f"{n} {key} sentence(s)")
+
+    tc = item.get("target_contact")
+    if isinstance(tc, dict):
+        if bad(str(tc.get("name") or "")) or bad(str(tc.get("title") or "")):
+            out["target_contact"] = None
+            dropped.append("target_contact")
+        elif bad(str(tc.get("why") or "")):
+            out["target_contact"] = {**tc, "why": ""}
+            dropped.append("target_contact.why")
+
+    if not dropped or validate_item(out, facts):
+        return None, dropped
+    return out, dropped
+
+
 def _shingles(text: str, n: int = SHINGLE_WORDS) -> set[str]:
     words = _norm(text).split()
     return {" ".join(words[i:i + n]) for i in range(len(words) - n + 1)}
@@ -409,5 +511,5 @@ def cross_lead_problems(item: Any, own: LeadFacts, others: list[LeadFacts]) -> l
 
 
 __all__ = ["CERT_PHRASES", "InsightItem", "clean_item", "cross_lead_problems", "distributor_problems",
-           "has_certification", "is_role_only", "parse_item", "product_list_problems", "repair_item", "sentences",
-           "talking_point_problems", "text_problems", "validate_item"]
+           "has_certification", "is_role_only", "parse_item", "product_list_problems", "repair_item", "salvage_item",
+           "sentences", "talking_point_problems", "text_problems", "validate_item"]

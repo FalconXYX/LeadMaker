@@ -1,4 +1,4 @@
-import { Building2, LayoutDashboard, ListChecks, Menu as MenuIcon, Shuffle, X, type LucideIcon } from 'lucide-react';
+import { Building2, LayoutDashboard, ListChecks, Menu as MenuIcon, Settings, Shuffle, X, type LucideIcon } from 'lucide-react';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '@/auth/AuthContext';
@@ -26,6 +26,7 @@ const NAV: NavItem[] = [
   { to: '/leads', label: 'Leads', icon: Building2 },
   { to: '/tasks', label: 'Tasks', icon: ListChecks },
   { to: '/allocation', label: 'Allocation', icon: Shuffle, managerOnly: true },
+  { to: '/admin', label: 'Admin', icon: Settings, managerOnly: true },
 ];
 
 export function AppShell() {

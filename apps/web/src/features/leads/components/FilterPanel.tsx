@@ -70,7 +70,12 @@ const STATE_OPTIONS = [
   { value: 'team', label: 'By team' },
 ] as const;
 
-const FOLLOW_UP_OPTIONS = [{ value: 'any', label: 'Any' }, ...FOLLOW_UPS.map((v) => ({ value: v, label: FOLLOW_UP_LABELS[v] }))] as const;
+// Five choices share the 288px panel: "This week" shows as "Week" (its accessible name stays "This week") so the
+// last choice, None, is not cut off.
+const FOLLOW_UP_OPTIONS = [
+  { value: 'any', label: 'Any' },
+  ...FOLLOW_UPS.map((v) => (v === 'week' ? { value: v, label: 'Week', ariaLabel: FOLLOW_UP_LABELS[v] } : { value: v, label: FOLLOW_UP_LABELS[v] })),
+] as const;
 
 type ContactChoice = 'any' | 'never' | '7' | '30';
 const CONTACT_OPTIONS: readonly { value: ContactChoice; label: string }[] = [
@@ -170,6 +175,7 @@ export function FilterPanel({ filter, setFilter, alertOnly, tagOptions, facetFil
             value={filter.followUp ?? 'any'}
             onChange={(v) => setFilter({ followUp: v === 'any' ? undefined : (v as FollowUp) })}
             options={FOLLOW_UP_OPTIONS}
+            className="[&_[role=radio]]:px-1.5"
           />
         </Labeled>
         <LastContactedChoice filter={filter} setFilter={setFilter} />
@@ -397,7 +403,7 @@ function LastContactedChoice({ filter, setFilter }: Pick<FilterPanelProps, 'filt
   });
   return (
     <Labeled label="Last contacted">
-      <Segmented label="Last contacted" size="sm" fullWidth value={value} onChange={choose} options={CONTACT_OPTIONS} />
+      <Segmented label="Last contacted" size="sm" fullWidth value={value} onChange={choose} options={CONTACT_OPTIONS} className="[&_[role=radio]]:px-2" />
       {value === null && <p className="text-xs text-muted">Set by a link or saved view; pick an option to replace it.</p>}
     </Labeled>
   );

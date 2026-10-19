@@ -16,7 +16,8 @@ auth failure aborts it (the job fails and dead-letters after 2 attempts).
 A rep's "Refresh" on one profile (crm-write POST /api/leads/:id/insights/refresh) queues a job with
 {company_ids: [id], force: true, requested_by}: a manual run. It skips the input_hash check like --force and draws
 on its own small daily allowance (LEADMAKER_MANUAL_INSIGHTS_PER_DAY, default 40; 0 = share the batch budget), a
-separate limiter on the same model, so it still runs once the batch budget is spent and never eats into it.
+separate limiter on the same model, so it still runs once the batch budget is spent and never eats into it. A
+manual run gives each lead up to MANUAL_ATTEMPTS (3) model calls instead of a batch run's 2.
 """
 
 from __future__ import annotations
@@ -37,7 +38,7 @@ from ..db.schema import activity_logs, companies, company_insights, enrichments
 from ..llm import LlmAuthError, LlmProvider, get_provider
 from ..llm.ratelimit import get_limiter
 from .facts import LeadFacts, build_facts, input_hash
-from .generate import InsightResult, generate
+from .generate import BATCH_ATTEMPTS, MANUAL_ATTEMPTS, InsightResult, generate
 from .store import latest_rows, redact, save_result
 
 log = logging.getLogger(__name__)
@@ -316,7 +317,8 @@ async def run_insights(settings: Settings, repo: Repository, opts: InsightsOptio
                 for _ in batch:
                     stats["deferred"] += 1
                 return
-            results: list[InsightResult] = await generate(ready, client, batch, stats=counter)
+            results: list[InsightResult] = await generate(
+                ready, client, batch, stats=counter, model_attempts=MANUAL_ATTEMPTS if opts.manual else BATCH_ATTEMPTS)
             for r in results:
                 status = save_result(repo, r, run_id)
                 if status == "ok":

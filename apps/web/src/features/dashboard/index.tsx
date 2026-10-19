@@ -3,7 +3,7 @@
 // pipeline (sales stages beside the book at a glance), the Team table for managers, and the territory map. Reps see
 // their own book; managers see the team, or one rep (?rep=<id>).
 import { useQuery } from '@tanstack/react-query';
-import { ListChecks } from 'lucide-react';
+import { CalendarDays, List, ListChecks } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import * as ep from '@/api/endpoints';
@@ -11,7 +11,8 @@ import { qk, useConfig, useLeadMap, useSignals, useUsers } from '@/api/queries';
 import type { LeadMapPoint, LeadMapScope, SessionUser, UserRef } from '@/api/types';
 import { useAuth } from '@/auth/AuthContext';
 import { errorMessage } from '@/api/errors';
-import { Button, Card, Select, Toggle, buttonClasses } from '@/components/ui';
+import { Button, Card, Segmented, Select, Toggle, buttonClasses } from '@/components/ui';
+import { TaskCalendar } from '@/features/tasks/TaskCalendar';
 import { Page } from '@/layout/PageHeader';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
 import { cn } from '@/lib/cn';
@@ -30,6 +31,13 @@ import { RecentActivityList } from './RecentActivity';
 import { firstName, salesLeadsHref, weekPace } from './sales';
 import { PipelineCard, TodaySidePanel } from './Scorecard';
 import { TeamTable } from './TeamTable';
+
+export const TODAY_VIEW_KEY = 'leadmaker.dashboard.todayView';
+type TodayView = 'list' | 'calendar';
+const TODAY_VIEWS = [
+  { value: 'list', label: <><List aria-hidden />List</> },
+  { value: 'calendar', label: <><CalendarDays aria-hidden />Calendar</> },
+] as const;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NO_POINTS: LeadMapPoint[] = [];
@@ -120,6 +128,10 @@ function SalesDashboardView({ user, isManager }: { user: SessionUser; isManager:
   const [lowerRef, lowerInView] = useInView<HTMLDivElement>('800px');
   const [mapOpen, setMapOpen] = useStoredState<boolean>('leadmaker.dashboard.mapOpen', true);
   const [showPool, setShowPool] = useStoredState<boolean>('leadmaker.dashboard.showPool', false);
+  // Today as the call list (default) or as a follow-up calendar; remembered per browser.
+  const [storedTodayView, setTodayView] = useStoredState<string>(TODAY_VIEW_KEY, 'list');
+  const todayView: TodayView = storedTodayView === 'calendar' ? 'calendar' : 'list';
+  const calendarReps = useMemo(() => [...reps].map(([id, name]) => ({ id, name })), [reps]);
   const mapScope: LeadMapScope = scope === 'mine' ? 'mine' : scope === 'team' ? 'all' : scope;
   const map = useLeadMap(mapScope, { enabled: lowerInView && mapOpen });
   const poolMap = useLeadMap('unallocated', { enabled: lowerInView && mapOpen && scope === 'mine' && showPool });
@@ -182,7 +194,16 @@ function SalesDashboardView({ user, isManager }: { user: SessionUser; isManager:
       />
 
       <section aria-labelledby="today-heading">
-        <SectionHeading id="today-heading" title="Today" subtitle="Who to call and what to say" />
+        <SectionHeading
+          id="today-heading"
+          title="Today"
+          subtitle={todayView === 'calendar' ? `${scope === 'team' ? 'The team’s' : scope === 'mine' ? 'Your' : `${viewedRep ? firstName(viewedRep) : 'This rep'}’s`} follow-ups, day by day` : 'Who to call and what to say'}
+          action={<Segmented label="Show Today as" size="sm" value={todayView} onChange={setTodayView} options={TODAY_VIEWS} />}
+        />
+        {todayView === 'calendar' ? (
+          <TaskCalendar scope={scope} reps={calendarReps} now={now} />
+        ) : (
+        <>
         {/* Desktop: the call list (3/5) beside one column of Follow-ups and This week (2/5). Collapsed, both columns end
             at the same height; opened ("Show more"), the list grows and the column stays at the top. */}
         <div className={cn('grid gap-6 lg:grid-cols-5 lg:gap-7', briefOpen ? 'items-start' : 'items-stretch')}>
@@ -219,10 +240,12 @@ function SalesDashboardView({ user, isManager }: { user: SessionUser; isManager:
             )}
           />
         </div>
+        </>
+        )}
       </section>
 
       <section aria-labelledby="picks-heading" className="mt-10 lg:mt-12">
-        <SectionHeading id="picks-heading" title="New leads worth a call" subtitle="Found by LeadMaker and ranked by AI" />
+        <SectionHeading id="picks-heading" title="New leads worth a call" subtitle="Found by LeadMaker, ranked by priority score, summarized by AI" />
         <AiPicksCard scope={scope} data={dash.data} error={dash.error} onRetry={cardProps.onRetry} />
       </section>
 
