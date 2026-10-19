@@ -1,9 +1,10 @@
-// The sales dashboard: today's call list first, with Follow-ups beside it on desktop, then the scorecard, book health
-// and recent activity; weather and the territory map sit at the bottom. Reps see their own book; managers see the team,
-// or one rep (?rep=<id>).
+// The sales dashboard, in titled sections rather than a grid of cards: the AI briefing banner (territory brief, weather,
+// Ask AI), Today (the call list beside follow-ups and this week's activity), New leads worth a call (AI picks), Your
+// pipeline (sales stages beside the book at a glance), the Team table for managers, and the territory map. Reps see
+// their own book; managers see the team, or one rep (?rep=<id>).
 import { useQuery } from '@tanstack/react-query';
 import { ListChecks } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import * as ep from '@/api/endpoints';
 import { qk, useConfig, useLeadMap, useSignals, useUsers } from '@/api/queries';
@@ -13,19 +14,22 @@ import { errorMessage } from '@/api/errors';
 import { Button, Card, Select, Toggle, buttonClasses } from '@/components/ui';
 import { Page } from '@/layout/PageHeader';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
-import { DEFAULT_WEEKLY_GOAL, type DashboardScope } from './api';
-import { BookHealthCard, BookMixCard } from './BookHealth';
+import { cn } from '@/lib/cn';
+import { formatNumber } from '@/lib/format';
+import { AiHero } from './AiHero';
+import { AiPicksCard } from './AiPicks';
+import { DEFAULT_WEEKLY_GOAL, type DashboardData, type DashboardScope } from './api';
+import { BookOverviewCard } from './BookHealth';
 import { Briefing } from './Briefing';
 import { countKinds, prioritiesSentence } from './callList';
 import { useInView, useNow, useStoredState } from './hooks';
 import { LeadMapCard, type MapLead } from './LeadMap';
 import { useBriefing, useRecentActivity, useSalesDashboard, useUpcomingTasks } from './queries';
-import { RecentActivityCard } from './RecentActivity';
+import { SectionHeading } from './parts';
+import { RecentActivityList } from './RecentActivity';
 import { firstName, salesLeadsHref, weekPace } from './sales';
-import { AccountsCard, ActivityCard, FollowUpsCard, PipelineCard } from './Scorecard';
+import { PipelineCard, TodaySidePanel } from './Scorecard';
 import { TeamTable } from './TeamTable';
-import { TerritoryBrief } from './TerritoryBrief';
-import { WeatherCard } from './WeatherCard';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NO_POINTS: LeadMapPoint[] = [];
@@ -34,6 +38,19 @@ const dateFmt = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long
 function greeting(now: number): string {
   const h = new Date(now).getHours();
   return h < 5 ? 'Good evening' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+}
+
+const leadsWord = (k: number) => `${formatNumber(k)} ${k === 1 ? 'lead' : 'leads'}`;
+
+/** The banner's plain summary when there is no territory brief worth showing: built from the dashboard's numbers. */
+export function heroFallback(d: DashboardData | undefined, whose: string): string | null {
+  if (!d) return null;
+  const out = [`${leadsWord(d.newSinceLastPoll)} in ${whose} book ${d.newSinceLastPoll === 1 ? 'is' : 'are'} new or updated in the latest data, and ${formatNumber(d.neverContacted)} ${d.neverContacted === 1 ? 'has' : 'have'} never been called.`];
+  const top = d.aiPicks[0];
+  if (top) out.push(`The best of the new ones is ${top.name}${top.city ? ` in ${top.city}` : ''}: see the AI picks below.`);
+  const warm = d.pipeline.interested + d.pipeline.quoting;
+  if (warm > 0) out.push(`${formatNumber(warm)} warm ${warm === 1 ? 'deal is' : 'deals are'} still open.`);
+  return out.join(' ');
 }
 
 function toMapLeads(points: readonly LeadMapPoint[], ownerName: (id: string) => string): MapLead[] {
@@ -96,10 +113,11 @@ function SalesDashboardView({ user, isManager }: { user: SessionUser; isManager:
       : undefined,
   }) : null;
 
-  // Lower sections load once scrolled near.
+  // The banner's weather line and the latest touches sit near the top; the map loads once scrolled near.
+  const signals = useSignals(scope === 'mine' ? 'mine' : 'all');
+  const recent = useRecentActivity(scope, true, 3);
+  const [briefOpen, setBriefOpen] = useState(false);
   const [lowerRef, lowerInView] = useInView<HTMLDivElement>('800px');
-  const recent = useRecentActivity(scope, lowerInView);
-  const signals = useSignals(scope === 'mine' ? 'mine' : 'all', { enabled: lowerInView });
   const [mapOpen, setMapOpen] = useStoredState<boolean>('leadmaker.dashboard.mapOpen', true);
   const [showPool, setShowPool] = useStoredState<boolean>('leadmaker.dashboard.showPool', false);
   const mapScope: LeadMapScope = scope === 'mine' ? 'mine' : scope === 'team' ? 'all' : scope;
@@ -152,80 +170,104 @@ function SalesDashboardView({ user, isManager }: { user: SessionUser; isManager:
         </div>
       </header>
 
-      {/* Desktop: the briefing (3/5) with Follow-ups beside it (2/5), both top-aligned. Phones and tablets stack them. */}
-      <div className="grid items-start gap-6 lg:grid-cols-5 lg:gap-7">
-        <Briefing
-          className="lg:col-span-3"
-          scope={scope}
-          rows={briefing.rows}
-          isLoading={briefing.isLoading}
-          isFetchingMore={briefing.isFetchingMore}
-          error={briefing.error}
-          partialError={briefing.partialError}
-          onRetry={briefing.refetch}
-          showOwner={scope === 'team'}
-          intro={<TerritoryBrief scope={scope} className="mx-4 mb-4" />}
-        />
-        <FollowUpsCard {...cardProps} className="lg:col-span-2" upcoming={upcoming.data} showOwner={scope === 'team'} />
-      </div>
+      <AiHero
+        className="mb-9 lg:mb-11"
+        scope={scope}
+        fallback={heroFallback(dash.data, whose)}
+        signals={signals.data}
+        signalsLoading={signals.isLoading}
+        signalsError={signals.error}
+        who={scope === 'mine' ? 'your' : 'the team’s'}
+        now={now}
+      />
 
-      {scope === 'team' && (
-        <TeamTable
-          className="mt-6 lg:mt-7"
-          reps={dash.data?.reps}
-          goalPerWeek={repGoal}
-          poolSize={kpis.data?.team?.unallocated.allocated}
-          isLoading={dash.isLoading}
-          error={dash.error}
-          onRetry={() => void dash.refetch()}
-          onSelectRep={selectRep}
-          now={now}
-        />
-      )}
+      <section aria-labelledby="today-heading">
+        <SectionHeading id="today-heading" title="Today" subtitle="Who to call and what to say" />
+        {/* Desktop: the call list (3/5) beside one column of Follow-ups and This week (2/5). Collapsed, both columns end
+            at the same height; opened ("Show more"), the list grows and the column stays at the top. */}
+        <div className={cn('grid gap-6 lg:grid-cols-5 lg:gap-7', briefOpen ? 'items-start' : 'items-stretch')}>
+          <Briefing
+            className="lg:col-span-3"
+            scope={scope}
+            rows={briefing.rows}
+            isLoading={briefing.isLoading}
+            isFetchingMore={briefing.isFetchingMore}
+            error={briefing.error}
+            partialError={briefing.partialError}
+            onRetry={briefing.refetch}
+            showOwner={scope === 'team'}
+            pitches={dash.data?.callPitches}
+            expanded={briefOpen}
+            onExpandedChange={setBriefOpen}
+          />
+          <TodaySidePanel
+            {...cardProps}
+            className="lg:col-span-2"
+            upcoming={upcoming.data}
+            showOwner={scope === 'team'}
+            now={now}
+            recent={(
+              <RecentActivityList
+                scope={scope}
+                items={recent.items.slice(0, 3)}
+                isLoading={recent.isLoading}
+                error={recent.error}
+                onRetry={recent.refetch}
+                viewerId={user.id}
+                now={now}
+              />
+            )}
+          />
+        </div>
+      </section>
 
-      <div className="mt-6 grid gap-6 md:grid-cols-2 lg:mt-7 lg:gap-7 xl:grid-cols-3">
+      <section aria-labelledby="picks-heading" className="mt-10 lg:mt-12">
+        <SectionHeading id="picks-heading" title="New leads worth a call" subtitle="Found by LeadMaker and ranked by AI" />
+        <AiPicksCard scope={scope} data={dash.data} error={dash.error} onRetry={cardProps.onRetry} />
+      </section>
+
+      <section aria-labelledby="pipeline-heading" className="mt-10 lg:mt-12">
+        <SectionHeading
+          id="pipeline-heading"
+          title={scope === 'mine' ? 'Your pipeline' : scope === 'team' ? 'Team pipeline' : `${viewedRep ? firstName(viewedRep) : 'This rep'}’s pipeline`}
+          subtitle={`Where ${whose} deals stand, and what ${whose} leads look like`}
+        />
         {dash.error && !dash.data ? (
-          <Card role="alert" className="flex flex-wrap items-center justify-between gap-4 self-start px-5 py-4 sm:px-6 sm:py-5 md:col-span-2">
+          <Card role="alert" className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6 sm:py-5">
             <p className="text-sm text-fg">
-              <span className="font-semibold">The scorecard didn’t load.</span>{' '}
+              <span className="font-semibold">The pipeline didn’t load.</span>{' '}
               <span className="text-muted">{errorMessage(dash.error)}</span>
             </p>
             <Button size="sm" onClick={() => void dash.refetch()}>Try again</Button>
           </Card>
         ) : (
-          <>
-            {/* Follow-ups moved up beside the briefing; Activity takes its place so the 3-column grid has no gap. */}
-            <ActivityCard {...cardProps} now={now} className="xl:col-span-2" />
-            <AccountsCard {...cardProps} />
-            <PipelineCard {...cardProps} className="xl:col-span-2" />
-            <BookHealthCard scope={scope} data={dash.data} error={dash.error} onRetry={cardProps.onRetry} now={now} />
-            <BookMixCard scope={scope} data={dash.data} error={dash.error} onRetry={cardProps.onRetry} className="md:col-span-2" />
-          </>
+          <div className="grid gap-6 lg:grid-cols-2 lg:gap-7">
+            <PipelineCard {...cardProps} now={now} />
+            <BookOverviewCard scope={scope} data={dash.data} error={dash.error} onRetry={cardProps.onRetry} />
+          </div>
         )}
-        <RecentActivityCard
-          className="md:col-span-2 xl:col-span-1"
-          scope={scope}
-          items={recent.items}
-          isLoading={!lowerInView || recent.isLoading}
-          error={recent.error}
-          onRetry={recent.refetch}
-          viewerId={user.id}
-          now={now}
-        />
-      </div>
+      </section>
+
+      {scope === 'team' && (
+        <section aria-labelledby="team-heading" className="mt-10 lg:mt-12">
+          <SectionHeading id="team-heading" title="Team" subtitle="How each rep is doing: leads, stages, this week’s activity and overdue follow-ups" />
+          <TeamTable
+            reps={dash.data?.reps}
+            goalPerWeek={repGoal}
+            poolSize={kpis.data?.team?.unallocated.allocated}
+            isLoading={dash.isLoading}
+            error={dash.error}
+            onRetry={() => void dash.refetch()}
+            onSelectRep={selectRep}
+            now={now}
+          />
+        </section>
+      )}
       <div ref={lowerRef} aria-hidden />
 
-      <WeatherCard
-        className="mt-6 lg:mt-7"
-        signals={signals.data}
-        isLoading={!lowerInView || signals.isLoading}
-        error={signals.error}
-        who={scope === 'mine' ? 'your' : 'the team’s'}
-        now={now}
-      />
-
+      <section aria-labelledby="map-heading" className="mt-10 lg:mt-12">
+        <SectionHeading id="map-heading" title="Territory map" subtitle={`Where ${whose} leads are. Bigger dots are higher priority.`} />
       <LeadMapCard
-        className="mt-6 lg:mt-7"
         leads={mapLeads}
         variant={scope === 'team' ? 'manager' : 'rep'}
         isLoading={!lowerInView || map.isLoading}
@@ -238,10 +280,11 @@ function SalesDashboardView({ user, isManager }: { user: SessionUser; isManager:
         listHref={salesLeadsHref(scope)}
         controls={scope === 'mine' && (
           <div className="inline-flex h-8 items-center rounded-full border border-border bg-surface pr-3 pl-2">
-            <Toggle size="sm" checked={showPool} onCheckedChange={setShowPool} label={<span className="text-xs font-medium">Show pool</span>} className="items-center" />
+            <Toggle size="sm" checked={showPool} onCheckedChange={setShowPool} label={<span className="text-xs font-medium">Show unassigned leads</span>} className="items-center" />
           </div>
         )}
       />
+      </section>
     </Page>
   );
 }

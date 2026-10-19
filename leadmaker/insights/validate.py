@@ -81,9 +81,12 @@ PRODUCT_WORDS = re.compile(
 # check lead times"), but never next to an assertive commitment ("we offer", "our yard", "we can deliver").
 CHECK_WORDS = re.compile(r"\b(check|checking|see (if|whether)|find out|look into|ask (if|whether|about)"
                          r"|confirm (if|whether)|whether)\b", re.I)
+# "our <noun>" right after a check word ("check our metal stock", "see if our stock fits", "whether our inventory")
+# is the offer to check itself, not a claim; the retry feedback asks for exactly that, so it must not fail again.
 ASSERTIVE = re.compile(r"(?<!can )(?<!could )(?<!would )(?<!should )(?<!if )(?<!whether )(?<!do )(?<!did )"
                        r"\bwe (can|will|ll|offer|provide|have|carry|stock|deliver|guarantee|give|always|never)\b"
-                       r"|\bour (\w+ )?(yard|yards|warehouse|branch|branches|trucks?|prices?|pricing|terms|program|programs"
+                       r"|(?<!check )(?<!checking )(?<!if )(?<!whether )(?<!about )"
+                       r"\bour (\w+ )?(yard|yards|warehouse|branch|branches|trucks?|prices?|pricing|terms|program|programs"
                        r"|inventory|stock|delivery|deliveries|discounts?|rebates?|credit)\b")
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z\"'(])")
 # Talking points are a supplier talking to a contractor: no consulting on the contractor's own business.

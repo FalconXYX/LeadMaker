@@ -10,6 +10,7 @@ import { Composer } from './Composer';
 import { useAssistant, type Connection } from './context';
 import { MessageList, Suggestions, Welcome } from './Messages';
 import { placeKey } from './pageContext';
+import { UNAVAILABLE_MESSAGE } from './state';
 
 export const PANEL_ID = 'lm-assistant-panel';
 
@@ -78,7 +79,7 @@ export function AssistantPanel({ launcherRef }: { launcherRef: RefObject<HTMLBut
     inputRef.current?.focus();
   };
 
-  // A status that says the AI can't answer (no key, the day's quota, the service missing): say so up front and
+  // A status that says the AI can't answer (no key, no requests left for now): say so up front and
   // don't invite questions that would only fail. A provider hiccup (provider_down) still lets the user try.
   const paused = pausedMessage(status, connection, busy);
   const last = messages.at(-1);
@@ -141,35 +142,15 @@ export function AssistantPanel({ launcherRef }: { launcherRef: RefObject<HTMLBut
   );
 }
 
-const SALES_TZ = 'America/New_York';
-const etTime = new Intl.DateTimeFormat('en-US', { timeZone: SALES_TZ, hour: 'numeric', minute: '2-digit' });
-const etDay = new Intl.DateTimeFormat('en-CA', { timeZone: SALES_TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
-const etWeekday = new Intl.DateTimeFormat('en-US', { timeZone: SALES_TZ, weekday: 'long' });
-
 /**
- * "tomorrow 3:00 AM ET": the quota reset in the sales team's zone with a day word, the same way the server's error
- * copy says it (so a non-ET browser never shows two different times). null for an unusable value.
- */
-export function resetLabel(iso: string | null, now = new Date()): string | null {
-  const at = iso ? new Date(iso) : null;
-  if (!at || Number.isNaN(at.getTime())) return null;
-  const day = etDay.format(at);
-  const word = day === etDay.format(now) ? 'today'
-    : day === etDay.format(new Date(now.getTime() + 86_400_000)) ? 'tomorrow' : etWeekday.format(at);
-  return `${word} ${etTime.format(at)} ET`;
-}
-
-/**
- * Why the composer is closed, or null when the assistant can take a question: the day's quota is spent or no
- * provider is set up. Offline (the service not answering) and a provider hiccup keep the box open: a retry can work.
+ * Why the composer is closed, or null when the assistant can take a question: the AI can't take requests for now or
+ * no provider is set up. Offline (the service not answering) and a provider hiccup keep the box open: a retry can work.
  */
 export function pausedMessage(status: AssistantStatusView | null, _connection: Connection, busy: boolean): string | null {
   if (busy || !status || status.available) return null;
   switch (status.reason) {
-    case 'quota_exhausted': {
-      const when = resetLabel(status.resetsAt);
-      return `AI answers are paused until ${when ?? 'the daily limit resets'}. Filters and profiles work as usual.`;
-    }
+    case 'quota_exhausted':
+      return UNAVAILABLE_MESSAGE;
     case 'not_configured':
       return 'AI isn’t set up on this server. Filters and profiles work as usual.';
     default:
@@ -189,10 +170,8 @@ export function statusLine(busy: boolean, connection: Connection, status: Assist
   switch (status?.reason) {
     case 'not_configured':
       return 'AI isn’t set up on this server';
-    case 'quota_exhausted': {
-      const when = resetLabel(status.resetsAt);
-      return when ? `Daily AI limit reached · back ${when}` : 'Daily AI limit reached';
-    }
+    case 'quota_exhausted':
+      return 'AI answers aren’t available right now';
     case 'provider_down':
       return 'AI temporarily unavailable';
     default:

@@ -1,10 +1,11 @@
-// The territory briefing: one short muted paragraph at the top of the "Today's briefing" card, above the call list.
-// It is the worker's digest of the latest data poll and weather alerts, or the AI rewrite of that digest when one
-// matches it. It is optional content, so loading, errors, an empty or quiet brief and a stale one (the worker isn't
-// running) all render nothing: no skeleton, no card, no heading.
+// The territory briefing: the paragraph in the dashboard's AI briefing banner. It is the worker's sales-first morning
+// digest (follow-ups, quiet deals, new leads, pipeline moves, then weather), or the AI rewrite of that digest when one
+// matches it. When there is no brief
+// worth showing (loading, an error, an empty or quiet brief, or a stale one because the worker isn't running) the
+// banner shows the deterministic `fallback` line built from the dashboard's own numbers instead.
 import { useQuery } from '@tanstack/react-query';
 import { Info } from 'lucide-react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import * as ep from '@/api/endpoints';
 import { qk } from '@/api/queries';
 import type { TerritoryBrief as Brief } from '@/api/types';
@@ -31,40 +32,48 @@ export function visibleBrief(brief: Brief | null | undefined): Brief | null {
 }
 
 export function briefNote(brief: Brief, now = Date.now()): string {
-  if (brief.source !== 'ai') return 'Summary of the latest data poll and weather alerts.';
+  if (brief.source !== 'ai') return 'Summary of follow-ups, quiet deals, new leads, pipeline moves and weather.';
   const model = brief.model ? brief.model.slice(brief.model.indexOf(':') + 1) : '';
   const when = brief.generatedAt ? formatRelative(brief.generatedAt, now) : '';
-  return ['Summary of the latest data poll and weather, written by AI from the facts', model, when].filter(Boolean).join(' · ');
+  return ['Summary of follow-ups, quiet deals, new leads, pipeline moves and weather, written by AI from the facts', model, when].filter(Boolean).join(' · ');
 }
 
-/** Phones clamp the brief to 3 lines; one this long gets a "more" to read the rest. */
-export const BRIEF_CLAMP_CHARS = 140;
+// A dot inside a company or street name ("Smith Bros. Roofing", "MJT & Co. Inc", "St. Louis") is not a sentence
+// end. Names often END a sentence ("... Direct Call Construction LLC."), so LLC / Inc / Corp still split.
+const ABBREVIATION = /\b(?:bros|st|mt|ft|jr|sr|mr|mrs|ms|dr|no|vs)\.$/i;
+const CO_THEN_SUFFIX = /\bco\.$/i;
+const SUFFIX = /^(?:inc|llc|corp|ltd)\b/i;
 
-export function TerritoryBrief({ scope, className }: { scope: DashboardScope; className?: string }) {
+/** [the first sentence, the rest] of a brief; the rest is '' for a one-sentence brief. */
+export function splitFirstSentence(text: string): [string, string] {
+  const re = /[.!?]\s+(?=[A-Z0-9])/g;
+  for (let m = re.exec(text); m; m = re.exec(text)) {
+    const end = m.index + 1;
+    const before = text.slice(Math.max(0, end - 6), end);
+    const after = text.slice(m.index + m[0].length);
+    if (ABBREVIATION.test(before) || (CO_THEN_SUFFIX.test(before) && SUFFIX.test(after))) continue;
+    return [text.slice(0, end), text.slice(end).trim()];
+  }
+  return [text, ''];
+}
+
+/** Phones show the brief's whole first sentence (the most actionable item) and a "Read more" for the rest. */
+export function TerritoryBrief({ scope, fallback, className }: { scope: DashboardScope; fallback?: string | null; className?: string }) {
   const q = useTerritoryBrief(scope);
   const [expanded, setExpanded] = useState(false);
   const brief = visibleBrief(q.isError ? null : q.data?.brief);
-  const text = brief ? brief.text.trim() : '';
-  // Inside the briefing card the tile is narrow on a phone, so a brief well under BRIEF_CLAMP_CHARS can still be
-  // cut at 3 lines: measure the paragraph and offer "Read more" whenever the clamp actually hides text.
-  const textRef = useRef<HTMLParagraphElement>(null);
-  const [overflows, setOverflows] = useState(false);
-  useLayoutEffect(() => {
-    const el = textRef.current;
-    if (!el || expanded || typeof ResizeObserver === 'undefined') return;
-    const check = () => setOverflows(el.scrollHeight > el.clientHeight + 1);
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [text, expanded]);
-  if (!brief) return null;
-  const clampable = overflows || text.length > BRIEF_CLAMP_CHARS;
+  const text = brief ? brief.text.trim() : q.isPending ? '' : (fallback ?? '').trim();
+  if (!text) return null;
+  const [first, rest] = splitFirstSentence(text);
+  const clampable = rest !== '';
   return (
-    <div className={cn('flex items-start gap-1.5 rounded-lg bg-surface-2 px-3 py-2.5 sm:px-4 sm:py-3', className)} data-testid="territory-brief">
+    <div className={cn('flex items-start gap-1.5', className)} data-testid={brief ? 'territory-brief' : 'territory-brief-fallback'}>
       <div className="min-w-0">
         {/* Company names stay plain text: calm, and the call list is where leads are opened. */}
-        <p ref={textRef} id="territory-brief-text" className={cn('max-w-3xl text-sm text-muted', !expanded && 'max-sm:line-clamp-3')}>{text}</p>
+        <p id="territory-brief-text" className="max-w-3xl text-[15px] leading-relaxed text-fg">
+          {first}
+          {rest && <span className={cn(!expanded && 'max-sm:hidden')}> {rest}</span>}
+        </p>
         {clampable && !expanded && (
           <button
             type="button"
@@ -77,7 +86,7 @@ export function TerritoryBrief({ scope, className }: { scope: DashboardScope; cl
           </button>
         )}
       </div>
-      <InfoTip about="this summary" className="max-sm:size-11 max-sm:-my-3">{briefNote(brief)}</InfoTip>
+      {brief && <InfoTip about="this summary" className="max-sm:size-11 max-sm:-my-3">{briefNote(brief)}</InfoTip>}
     </div>
   );
 }

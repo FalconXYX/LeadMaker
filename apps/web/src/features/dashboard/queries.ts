@@ -116,10 +116,10 @@ export interface RecentTouch {
 }
 
 /** The leads contacted most recently, each with its latest call / email / visit / note. */
-export function useRecentActivity(scope: DashboardScope, enabled: boolean) {
+export function useRecentActivity(scope: DashboardScope, enabled: boolean, limit = RECENT_LIMIT) {
   const filter = useMemo<LeadFilter>(
-    () => ({ scope: leadScope(scope), sort: { by: 'last_contacted', dir: 'desc' }, limit: RECENT_LIMIT }),
-    [scope],
+    () => ({ scope: leadScope(scope), sort: { by: 'last_contacted', dir: 'desc' }, limit }),
+    [scope, limit],
   );
   const leads = useSalesLeads(scope, 'recent', filter, enabled);
   const contacted = useMemo(() => (leads.data ?? NO_LEADS).filter((l) => l.lastContactedAt), [leads.data]);

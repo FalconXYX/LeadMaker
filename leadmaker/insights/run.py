@@ -12,11 +12,17 @@ LEADMAKER_INSIGHTS_CONCURRENCY in flight (the provider's limiter spaces them); a
 leads or pool leads only, never a mix (owner_batches) and are saved as each one returns,
 so a stopped run resumes where it left off. A spent daily quota stops the run ("partial", reason "quota"); an
 auth failure aborts it (the job fails and dead-letters after 2 attempts).
+
+A rep's "Refresh" on one profile (crm-write POST /api/leads/:id/insights/refresh) queues a job with
+{company_ids: [id], force: true, requested_by}: a manual run. It skips the input_hash check like --force and draws
+on its own small daily allowance (LEADMAKER_MANUAL_INSIGHTS_PER_DAY, default 40; 0 = share the batch budget), a
+separate limiter on the same model, so it still runs once the batch budget is spent and never eats into it.
 """
 
 from __future__ import annotations
 
 import asyncio
+import copy
 import logging
 import os
 from dataclasses import asdict, dataclass, fields
@@ -29,6 +35,7 @@ from ..config import Settings
 from ..db.repository import Repository, as_utc, utcnow
 from ..db.schema import activity_logs, companies, company_insights, enrichments
 from ..llm import LlmAuthError, LlmProvider, get_provider
+from ..llm.ratelimit import get_limiter
 from .facts import LeadFacts, build_facts, input_hash
 from .generate import InsightResult, generate
 from .store import latest_rows, redact, save_result
@@ -40,6 +47,7 @@ ERROR_RETRY_AFTER = timedelta(hours=1)
 STALE_ACTIVITY_TYPES = ("note", "call", "email", "visit")
 STALE_ENRICHMENT_SOURCES = ("website_crawl", "llm_extract")
 FACTS_CHUNK = 200
+MANUAL_MAX_LEADS = 5  # a manual (rep-requested) run covers one profile; more ids is a batch job, on the batch budget
 
 
 def _env_int(name: str, default: int, lo: int | None = None, hi: int | None = None) -> int:
@@ -68,6 +76,11 @@ def max_attempts_default() -> int:
     return _env_int("LEADMAKER_INSIGHTS_MAX_ATTEMPTS", 3, 1)
 
 
+def manual_per_day_default() -> int:
+    """Model calls per quota day for manual refreshes (LEADMAKER_MANUAL_INSIGHTS_PER_DAY); 0 = no separate allowance."""
+    return _env_int("LEADMAKER_MANUAL_INSIGHTS_PER_DAY", 40, 0)
+
+
 @dataclass
 class InsightsOptions:
     postal_code: str | None = None
@@ -78,6 +91,13 @@ class InsightsOptions:
     force: bool = False  # regenerate even when the hash matches
     batch_size: int | None = None  # default LEADMAKER_INSIGHTS_BATCH_SIZE (1); 1..8
     dry_run: bool = False  # facts + hashes only; no LLM calls, no writes
+    requested_by: str | None = None  # the rep who pressed Refresh on a profile (job params only, not jobs.requested_by)
+
+    @property
+    def manual(self) -> bool:
+        """A rep's on-demand refresh of a profile: forced, a requester, and only a few company ids."""
+        return bool(self.force and self.requested_by and self.company_ids
+                    and len(self.company_ids) <= MANUAL_MAX_LEADS)
 
     @classmethod
     def from_params(cls, params: dict[str, Any] | None) -> "InsightsOptions":
@@ -90,6 +110,8 @@ class InsightsOptions:
         known = {f.name for f in fields(cls)}
         opts = cls(**{k: v for k, v in p.items() if k in known})
         opts.stale, opts.force, opts.dry_run = bool(opts.stale), bool(opts.force), bool(opts.dry_run)
+        if opts.requested_by is not None:
+            opts.requested_by = str(opts.requested_by) or None
         if opts.radius_miles is not None:
             opts.radius_miles = float(opts.radius_miles)
         if opts.postal_code is not None:
@@ -116,6 +138,19 @@ def provider_ready(settings: Settings, provider: LlmProvider | None = None) -> t
         return None, "no LLM provider configured"
     ok, why = provider.is_configured()
     return (provider, "") if ok else (None, why)
+
+
+def manual_provider(settings: Settings, provider: LlmProvider, per_day: int | None = None) -> LlmProvider:
+    """The provider on the manual-refresh allowance: a shallow copy with its own limiter ("<provider>:<model>:manual",
+    the same per-minute spacing, `per_day` requests per quota day, persisted next to the batch counter). The batch
+    limiter is left as it is. per_day <= 0 returns the provider unchanged (manual runs share the batch budget)."""
+    per_day = manual_per_day_default() if per_day is None else per_day
+    if per_day <= 0:
+        return provider
+    manual = copy.copy(provider)
+    manual.limiter = get_limiter(f"{provider.fingerprint}:manual", getattr(provider.limiter, "rpm", 0), per_day,
+                                 settings.llm_usage_file)
+    return manual
 
 
 # --------------------------------------------------------------------------- lead selection
@@ -220,6 +255,8 @@ async def run_insights(settings: Settings, repo: Repository, opts: InsightsOptio
     ready, why = provider_ready(settings, provider)
     if ready is None and not opts.dry_run:
         return {"run_id": None, "status": "skipped", "reason": "no_provider", "detail": why}
+    if ready is not None and opts.manual and not opts.dry_run:
+        ready = manual_provider(settings, ready)
     if ready is not None:
         fingerprint = ready.fingerprint
     else:  # dry run without a usable provider: hash against the configured (or no) model
@@ -232,6 +269,8 @@ async def run_insights(settings: Settings, repo: Repository, opts: InsightsOptio
     stats: dict[str, Any] = {"considered": len(ids), "skipped_unchanged": 0, "skipped_dnc": 0, "skipped_failed": 0,
                              "skipped_backoff": 0, "generated": 0, "errors": 0, "deferred": 0, "llm_calls": 0,
                              "batch_size": batch_size, "model": fingerprint}
+    if opts.manual:
+        stats["manual"] = True
     todo: list[LeadFacts] = []
     hashes: dict[str, str] = {}
     for i in range(0, len(ids), FACTS_CHUNK):
@@ -329,5 +368,6 @@ async def run_insights(settings: Settings, repo: Repository, opts: InsightsOptio
     return {"run_id": run_id, "status": status, **stats}
 
 
-__all__ = ["InsightsOptions", "batch_size_default", "candidates", "concurrency_default", "lead_set",
-           "max_attempts_default", "ordered", "owner_batches", "owners", "provider_ready", "run_insights"]
+__all__ = ["InsightsOptions", "MANUAL_MAX_LEADS", "batch_size_default", "candidates", "concurrency_default",
+           "lead_set", "manual_per_day_default", "manual_provider", "max_attempts_default", "ordered", "owner_batches",
+           "owners", "provider_ready", "run_insights"]

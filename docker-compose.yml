@@ -196,6 +196,8 @@ services:
       # later, merged per lead); the worker calls the model only if the lead's input_hash changed.
       LEADMAKER_INSIGHTS_ON_EDIT: ${LEADMAKER_INSIGHTS_ON_EDIT:-1}
       LEADMAKER_INSIGHTS_EDIT_DELAY_SECONDS: ${LEADMAKER_INSIGHTS_EDIT_DELAY_SECONDS:-60}
+      # The profile's Refresh button (POST /api/leads/:id/insights/refresh): presses per user per rolling day.
+      LEADMAKER_MANUAL_INSIGHTS_PER_USER_PER_DAY: ${LEADMAKER_MANUAL_INSIGHTS_PER_USER_PER_DAY:-30}
     healthcheck:
       <<: *node-health
       test: ["CMD", "node", "-e", *probe, "http://localhost:8082/health"]
@@ -318,6 +320,10 @@ services:
       # territory briefs. AI schedules are opt-in: 1 adds 'insights-stale' (15 min) and 'briefing' (1 h).
       LEADMAKER_INSIGHTS_BATCH_SIZE: ${LEADMAKER_INSIGHTS_BATCH_SIZE:-5}
       LEADMAKER_INSIGHTS_ON_REFRESH: ${LEADMAKER_INSIGHTS_ON_REFRESH:-1}
+      # A profile Refresh runs on its own model allowance (calls per quota day), separate from the batch RPD above,
+      # and wakes an idle worker within LEADMAKER_WORKER_URGENT_POLL_SECONDS.
+      LEADMAKER_MANUAL_INSIGHTS_PER_DAY: ${LEADMAKER_MANUAL_INSIGHTS_PER_DAY:-40}
+      LEADMAKER_WORKER_URGENT_POLL_SECONDS: ${LEADMAKER_WORKER_URGENT_POLL_SECONDS:-1}
       LEADMAKER_AI_SCHEDULES: ${LEADMAKER_AI_SCHEDULES:-0}
       LEADMAKER_BRIEFING_AI: ${LEADMAKER_BRIEFING_AI:-1}
       LEADMAKER_ALLOW_FAKE_LLM: ${LEADMAKER_ALLOW_FAKE_LLM:-0}

@@ -129,6 +129,8 @@ export function dashboardBody(over: Partial<SalesDashboard> = {}): SalesDashboar
     newSinceLastPoll: 31,
     topTags: [{ key: 'service:gutters', label: 'Gutters', count: 37, kind: 'system' }, { key: 'tag-1', label: 'Hot lead', count: 4, kind: 'custom' }],
     segments: [{ segment: 'strategic', count: 23 }, { segment: 'growth', count: 27 }, { segment: 'emerging', count: 0 }, { segment: 'long_tail', count: 0 }],
+    aiPicks: [],
+    callPitches: {},
     generatedAt: '2026-10-18T20:00:00.000Z',
     ...over,
   };

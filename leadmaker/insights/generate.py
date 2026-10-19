@@ -16,6 +16,7 @@ provider batch API (Anthropic Message Batches, 50% price) can reuse both later.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -27,6 +28,7 @@ from .facts import LeadFacts, input_hash
 from .prompt import MAX_OUTPUT_TOKENS, OUTPUT_SCHEMA, SCHEMA_NAME, SYSTEM_PROMPT, lead_refs, render_leads_block
 from .validate import clean_item, cross_lead_problems, repair_item, validate_item
 
+log = logging.getLogger(__name__)
 
 @dataclass
 class InsightResult:
@@ -126,6 +128,9 @@ def _judge(leads: Sequence[_Lead], payload: dict[str, Any] | None) -> tuple[dict
                                                                         [o.facts for o in leads if o is not x])
         if problems:
             bad[x.ref] = problems
+            # Only the final attempt's problems reach the error row; log every attempt's so a failed Refresh is
+            # explainable even when the retry never ran.
+            log.info("insights %s: answer rejected: %s", x.facts.company_id, "; ".join(problems)[:500])
         else:
             good[x.ref] = item
     return good, bad

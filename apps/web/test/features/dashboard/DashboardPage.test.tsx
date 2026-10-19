@@ -3,7 +3,7 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LeadFilter, SessionUser } from '@/api/types';
+import type { AiPick, LeadFilter, SessionUser } from '@/api/types';
 import { AuthProvider } from '@/auth/AuthContext';
 import { sessionStore } from '@/auth/session';
 import { ToastProvider } from '@/components/ui';
@@ -28,8 +28,18 @@ const quote = makeLead({ businessName: 'Quote Pending Roofing', salesStage: 'quo
 const fresh = makeLead({ businessName: 'Fresh Roofing Co', updatedInLastPoll: true, priorityScore: 80 });
 const overdue = makeTask({ companyId: overdueLead.id, companyName: overdueLead.businessName, dueAt: daysAgo(2), title: 'Call Mike about the TPO quote' });
 const dueToday = makeTask({ companyId: todayLead.id, companyName: todayLead.businessName, dueAt: new Date(new Date().setHours(23, 0, 0, 0)).toISOString() });
+const picks: AiPick[] = [
+  { id: fresh.id, name: 'Fresh Roofing Co', city: 'Hackensack, NJ', county: 'Bergen County, NJ', priorityScore: 81, aiSummary: 'Storm-restoration roofer with 200 reviews.', aiPitch: 'Pitch emergency tarps.', foundAt: daysAgo(3), label: 'new' },
+  { id: 'pick-2', name: 'Top Shelf Roofing', city: 'Wayne, NJ', county: null, priorityScore: 77, aiSummary: 'Commercial flat-roof specialist.', aiPitch: null, foundAt: daysAgo(40), label: 'top_match' },
+];
 const profiles = new Map([
-  [overdueLead.id, makeProfile(overdueLead, { contacts: [makeContact({ id: 'c1', name: 'Mike Russo', title: 'Owner', phone: '2015550111', isTarget: true })] })],
+  [overdueLead.id, makeProfile(overdueLead, {
+    contacts: [makeContact({ id: 'c1', name: 'Mike Russo', title: 'Owner', phone: '2015550111', isTarget: true })],
+    insights: {
+      businessSummary: 'Residential roofer in Paramus.', salesRecommendation: 'Lead with TPO samples and next-day delivery. Then ask about the strip-mall job.',
+      talkingPoints: [], targetContact: null, productFocus: [], citedFacts: [], model: 'gemini:flash', promptVersion: 'v3', generatedAt: daysAgo(1),
+    },
+  })],
   [todayLead.id, makeProfile(todayLead)],
   [quote.id, makeProfile(quote)],
   [fresh.id, makeProfile(fresh)],
@@ -54,6 +64,8 @@ function install(user: SessionUser, opts: Options = {}) {
       const scope = u.searchParams.get('scope');
       return json(dashboardBody({
         scope: scope as 'mine',
+        aiPicks: picks,
+        callPitches: { [todayLead.id]: 'Offer a ridge-vent bundle.' },
         ...(scope === 'team' ? {
           activity: { ...dashboardBody().activity, goalPerWeek: 50 },
           reps: [
@@ -168,21 +180,82 @@ describe('DashboardPage (rep)', () => {
     expect(calls((u) => u.pathname === '/api/users' || u.pathname === '/api/kpis')).toHaveLength(0);
   });
 
-  it('puts Follow-ups beside the briefing, once, ahead of the scorecard', async () => {
+  it('lays out titled sections: the AI banner, Today (calls beside one Follow-ups + This week column), AI picks, pipeline, map', async () => {
+    const user = userEvent.setup();
     renderPage();
-    const briefing = await screen.findByRole('region', { name: 'Today’s briefing' });
-    const followUps = screen.getAllByRole('heading', { level: 2, name: 'Follow-ups' });
-    expect(followUps).toHaveLength(1);
-    const card = followUps[0]!.closest('.lg\\:col-span-2')!;
-    // One row: the briefing takes 3 of 5 columns on desktop, Follow-ups the other 2; phones stack them in this order.
-    expect(card.parentElement).toBe(briefing.parentElement);
-    expect(briefing.parentElement).toHaveClass('grid', 'items-start', 'lg:grid-cols-5');
+    const hero = await screen.findByRole('region', { name: 'AI briefing' });
+    expect(within(hero).getByRole('search', { name: 'Ask AI about your leads' })).toBeInTheDocument();
+    expect(await within(hero).findByText('No weather alerts in your counties right now.')).toBeInTheDocument();
+    // Section headings, in order, outside any card.
+    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual([
+      'AI briefing', 'Today', 'New leads worth a call', 'Your pipeline', 'Territory map',
+    ]);
+    expect(screen.getByText('Who to call and what to say')).toBeInTheDocument();
+    expect(screen.getByText('Found by LeadMaker and ranked by AI')).toBeInTheDocument();
+
+    const briefing = await screen.findByRole('region', { name: 'Today’s calls' });
+    expect(screen.getAllByRole('heading', { name: 'Follow-ups' })).toHaveLength(1);
+    const side = screen.getByRole('region', { name: 'Follow-ups' });
+    // One row: the call list takes 3 of 5 columns, the side column the other 2, both stretched to the same height.
+    expect(side.parentElement).toBe(briefing.parentElement);
+    expect(briefing.parentElement).toHaveClass('grid', 'items-stretch', 'lg:grid-cols-5');
     expect(briefing).toHaveClass('lg:col-span-3');
-    expect(briefing.nextElementSibling).toBe(card);
-    expect(await within(card as HTMLElement).findByRole('link', { name: /^2\s*Overdue/ })).toBeInTheDocument();
-    const activity = screen.getByRole('heading', { level: 2, name: 'Activity this week' });
-    expect(card.compareDocumentPosition(activity) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(card.contains(activity)).toBe(false);
+    expect(side).toHaveClass('lg:col-span-2');
+    expect(briefing.nextElementSibling).toBe(side);
+    expect(await within(side).findByRole('link', { name: /^2\s*Overdue/ })).toBeInTheDocument();
+    // This week and the latest touches live in the same column (one card), not in boxes of their own.
+    const week = within(side).getByRole('region', { name: 'This week' });
+    expect(within(week).getByText('of 25 goal')).toBeInTheDocument();
+    expect(within(side).getByRole('heading', { name: 'Recently contacted' })).toBeInTheDocument();
+    expect(within(side).getAllByRole('link', { name: /See all/ }).map((l) => l.getAttribute('href'))).toEqual(['/tasks', '/leads?scope=mine&sort=last_contacted%3Adesc']);
+    // Opening the list lets it grow; the column stays at the top.
+    await user.click(await screen.findByRole('button', { name: 'Show 1 more' }));
+    expect(briefing.parentElement).toHaveClass('items-start');
+
+    // AI pitch on the call: the first sentence of the lead's insight.
+    const rows = within(screen.getByRole('list', { name: 'Today’s call list' })).getAllByRole('listitem');
+    expect(await within(rows[0]!).findByTestId('ai-pitch')).toHaveTextContent('AI pitch: AILead with TPO samples and next-day delivery.');
+    expect(within(rows[0]!).getByTestId('ai-pitch')).not.toHaveTextContent('strip-mall');
+    // The server's callPitches wins when it has one for the lead.
+    expect(within(rows[1]!).getByTestId('ai-pitch')).toHaveTextContent('Offer a ridge-vent bundle.');
+
+    // AI picks: one card, a row per lead, with the label, priority, AI summary and Open / Call.
+    const pickList = screen.getByRole('list', { name: 'AI picks' });
+    const pickRows = within(pickList).getAllByRole('listitem');
+    expect(pickRows).toHaveLength(2);
+    expect(pickRows[0]).toHaveTextContent(/Fresh Roofing Co.*Hackensack, NJ · Bergen County, NJ.*New · found/);
+    expect(pickRows[0]).toHaveTextContent('Priority 81');
+    expect(pickRows[0]).toHaveTextContent('Storm-restoration roofer with 200 reviews.');
+    expect(pickRows[1]).toHaveTextContent('Top match');
+    expect(within(pickRows[1]!).getByRole('link', { name: 'Open Top Shelf Roofing' })).toHaveAttribute('href', '/leads/pick-2');
+
+    // Pipeline: sales stages beside one "Your leads at a glance" card (accounts, reach, tags and the priority mix).
+    const glance = screen.getByRole('heading', { name: 'Your leads at a glance' });
+    expect(screen.getByRole('heading', { name: 'Sales stages' })).toBeInTheDocument();
+    for (const part of ['Who buys from us', 'Can we reach them?', 'What they do most', 'Priority mix']) {
+      expect(glance.closest('section, [class*="flex-col"]')).toHaveTextContent(part);
+    }
+    // The old separate boxes are gone (merged), the weather card too (it lives in the banner).
+    for (const old of ['Book health', 'What’s in the book', 'Accounts', 'Recent activity', 'Activity this week', 'Today’s briefing']) {
+      expect(screen.queryByRole('heading', { name: old })).toBeNull();
+    }
+  });
+
+  it('the Ask AI bar and its suggestions open the assistant with the question', async () => {
+    const asked: string[] = [];
+    const onAsk = (e: Event) => asked.push((e as CustomEvent<{ text: string }>).detail.text);
+    window.addEventListener('leadmaker:assistant-ask', onAsk);
+    try {
+      const user = userEvent.setup();
+      renderPage();
+      const hero = await screen.findByRole('region', { name: 'AI briefing' });
+      await user.click(within(hero).getByRole('button', { name: 'Who should I call first today?' }));
+      await user.type(within(hero).getByRole('textbox', { name: 'Ask AI about your leads' }), 'Which quotes are going cold?{Enter}');
+      expect(asked).toEqual(['Who should I call first today?', 'Which quotes are going cold?']);
+      expect(within(hero).getByRole('textbox', { name: 'Ask AI about your leads' })).toHaveValue('');
+    } finally {
+      window.removeEventListener('leadmaker:assistant-ask', onAsk);
+    }
   });
 
   it('reschedules a follow-up and opens the log-a-call dialog', async () => {
@@ -212,14 +285,16 @@ describe('DashboardPage (manager)', () => {
     const user = userEvent.setup();
     renderPage();
     expect(await screen.findByText(/^The team has 2 overdue follow-ups, 3 due today/)).toBeInTheDocument();
-    const team = await screen.findByRole('region', { name: 'Team' });
+    expect(await screen.findByRole('heading', { level: 2, name: 'Team' })).toBeInTheDocument();
+    const team = await screen.findByRole('region', { name: 'Reps' });
     expect(within(team).getByText('Weekly goal: 25 calls, emails and visits per rep')).toBeInTheDocument();
     expect(within(team).getAllByText('Priya Shah').length).toBeGreaterThan(0);
-    expect(within(team).getByRole('link', { name: /Allocate/ })).toHaveAttribute('href', '/allocation');
+    expect(within(team).getByRole('link', { name: /Assign leads/ })).toHaveAttribute('href', '/allocation');
     expect(within(team).getByText('274')).toBeInTheDocument();
-    // Follow-ups sits beside the briefing, above the Team table.
-    const followUps = screen.getByRole('heading', { level: 2, name: 'Follow-ups' }).closest('.lg\\:col-span-2')!;
-    expect(followUps.parentElement).toBe(screen.getByRole('region', { name: 'Today’s briefing' }).parentElement);
+    // Follow-ups sits beside the call list, above the Team table.
+    const followUps = screen.getByRole('region', { name: 'Follow-ups' });
+    expect(followUps.parentElement).toBe(screen.getByRole('region', { name: 'Today’s calls' }).parentElement);
+    expect(screen.getByRole('heading', { level: 2, name: 'Team pipeline' })).toBeInTheDocument();
     expect(followUps.compareDocumentPosition(team) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(calls((u) => u.pathname === '/api/dashboard' && u.searchParams.get('scope') === 'team')).not.toHaveLength(0);
     expect(calls((u) => u.pathname === '/api/tasks' && u.searchParams.get('scope') === 'team')).not.toHaveLength(0);
@@ -227,32 +302,37 @@ describe('DashboardPage (manager)', () => {
     await user.selectOptions(screen.getByRole('combobox', { name: 'Whose dashboard' }), REP2.id);
     await waitFor(() => expect(calls((u) => u.pathname === '/api/dashboard' && u.searchParams.get('scope') === `rep:${REP2.id}`)).not.toHaveLength(0));
     expect(await screen.findByText(/Viewing Priya Shah’s book/)).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Team' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Reps' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Team' })).toBeNull();
     expect(searches).toEqual(expect.arrayContaining([expect.objectContaining({ scope: { repId: REP2.id }, stages: ['interested', 'quoting'] })]));
   });
 });
 
 describe('DashboardPage territory brief', () => {
   const brief = () => screen.queryByTestId('territory-brief');
-  const briefing = () => screen.getByRole('region', { name: 'Today’s briefing' });
+  const hero = () => screen.getByRole('region', { name: 'AI briefing' });
   const sentence = 'Start with 2 overdue follow-ups, 3 due today and 1 warm deal gone quiet.';
 
-  it('opens the briefing card with one short muted paragraph and an ⓘ, above the call list', async () => {
+  it('opens the AI briefing banner with the brief and an ⓘ, above the call list and with the weather line', async () => {
     const text = 'Severe Thunderstorm Warning in Bergen County until 8 PM: 4 storm-restoration roofers there may need tarps and repair stock. Since Saturday’s poll: 3 new leads in this territory.';
     install(REP, { brief: () => json({ brief: makeBrief({ text }) }) });
     renderPage();
     await screen.findByText(sentence);
-    const p = await screen.findByText(text);
-    expect(p.tagName).toBe('P');
-    expect(p).toHaveClass('text-sm', 'text-muted', 'max-sm:line-clamp-3');
+    // Phones show the whole first sentence; the rest hides behind "Read more" (never a clamp mid-sentence).
+    const p = (await screen.findByText(/^Severe Thunderstorm Warning in Bergen County until 8 PM/)).closest('p')!;
+    expect(p.textContent).toBe(text);
+    expect(p.querySelector('span')).toHaveTextContent('Since Saturday’s poll: 3 new leads in this territory.');
+    expect(p.querySelector('span')).toHaveClass('max-sm:hidden');
     expect(p.closest('header')).toBeNull();
-    expect(briefing()).toContainElement(p);
+    expect(hero()).toContainElement(p);
+    // The small tile inside the call list is gone: the banner has the brief now.
+    expect(screen.getByRole('region', { name: 'Today’s calls' })).not.toContainElement(p);
     const list = await screen.findByRole('list', { name: 'Today’s call list' });
     expect(p.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(p.compareDocumentPosition(screen.getByText('No weather alerts in your counties right now.')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // Plain text: no links or icons in it, just the ⓘ beside it.
     expect(within(brief()!).queryAllByRole('link')).toHaveLength(0);
-    // Phones clamp it to 3 lines; "Read more" (sm:hidden) shows the rest (product review L1).
+    // "Read more" (sm:hidden) shows the rest on phones (product review L1).
     expect(within(brief()!).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual(['Read more', 'About this summary']);
     expect(calls((u) => u.pathname === '/api/territory-brief').map(([url]) => new URL(String(url), 'http://localhost').searchParams.get('scope'))).toEqual(['mine']);
   });
@@ -264,15 +344,17 @@ describe('DashboardPage territory brief', () => {
     ['an empty text', () => json({ brief: makeBrief({ text: '  ' }) })],
     ['an error', () => json({ error: 'internal' }, 500)],
     ['a missing endpoint', () => json({ error: 'not_found' }, 404)],
-  ])('renders nothing for %s', async (_what, res) => {
+  ])('falls back to a plain summary from the numbers for %s', async (_what, res) => {
     install(REP, { brief: res });
     renderPage();
     await screen.findByText(sentence);
     await waitFor(() => expect(calls((u) => u.pathname === '/api/territory-brief')).not.toHaveLength(0));
-    await new Promise((r) => setTimeout(r, 20));
+    const fallback = await screen.findByTestId('territory-brief-fallback');
     expect(brief()).toBeNull();
     expect(screen.queryByRole('button', { name: 'About this summary' })).toBeNull();
-    expect(briefing()).toBeInTheDocument();
+    expect(hero()).toContainElement(fallback);
+    expect(fallback).toHaveTextContent(/in your book (is|are) new or updated in the latest data, and \d+ (has|have) never been called\./);
+    expect(fallback).toHaveTextContent('The best of the new ones is Fresh Roofing Co in Hackensack, NJ: see the AI picks below.');
   });
 
   it('renders nothing while loading (no skeleton)', async () => {
@@ -289,7 +371,7 @@ describe('DashboardPage territory brief', () => {
     const user = userEvent.setup();
     renderPage();
     expect(await screen.findByText('Brief for team.')).toBeInTheDocument();
-    expect(briefing()).toContainElement(screen.getByText('Brief for team.'));
+    expect(hero()).toContainElement(screen.getByText('Brief for team.'));
     await user.selectOptions(screen.getByRole('combobox', { name: 'Whose dashboard' }), REP2.id);
     expect(await screen.findByText(`Brief for rep:${REP2.id}.`)).toBeInTheDocument();
   });

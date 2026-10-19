@@ -1,7 +1,20 @@
 """Deterministic briefing text (render_digest_text) and the untrusted-text fence shared with the AI layer.
 
 The text is what a rep or manager sees when no AI rewrite matches the digest. Neutral voice (never "you" or
-"your"), so a manager can read a rep's brief as-is. Sentences, in order (SystemDesign §7, spec §5.3):
+"your"), so a manager can read a rep's brief as-is. v3 is a sales-first morning briefing; sentences, in priority
+order (the sales ones from digest['sales'], the day's snapshot):
+
+  F  follow-ups overdue / due today    "This morning: 4 follow-ups are overdue and 9 due today, starting with
+                                        Carework Construction LLC and Direct Call Roofing."
+                                        (team: "...; Jordan Lee is furthest behind with 4 overdue.")
+  G  interested / quoting, no touch    "3 interested or quoting leads have gone quiet (no touch in 7 days),
+     in 7 days                          including Alpha Roofing and Beta Exteriors."
+  N  the best uncalled new lead        "12 uncalled leads were found in the last 14 days; the best is Jersey
+                                        Roofing LLC (GAF Master Elite)." (none new: "... have an AI pitch ready")
+  M  stage changes, last 7 days        "In the last 7 days: 2 leads moved to quoting, 1 won (Acme Roofing) and
+                                        1 lost."
+  (team scope: F, M, G, N, so who is behind and the team's wins lead), then P, H and Q below, then at most one
+  weather sentence (W/S, else R), then D:
 
   W  an active alert with book leads   "Severe Thunderstorm Warning in Bergen County until 8 PM: 4 storm-
                                         restoration roofers there may need tarps and repair stock."
@@ -14,7 +27,8 @@ The text is what a rep or manager sees when no AI rewrite matches the digest. Ne
      H  plus at most one highlight     " Carework Construction LLC is now GAF Master Elite (was GAF Certified)."
   Q  pool.new > 0                      "7 new leads are waiting in the unallocated pool."
 
-At most 3 sentences and 400 characters: Q goes first, then D, then R, then the highlight, then P. Times are
+At most 3 sentences and 400 characters, dropped lowest priority first: D, R, W, Q, H, P, then the sales sentences
+from the last (rep: M, N, G; team: N, G, M); F is never dropped. Times are
 America/New_York. A quiet digest renders "". render_units() returns the sentences that survived, by code, so the AI
 rewrite is shown only what the text says.
 """
@@ -202,8 +216,95 @@ def _pool_sentence(digest: dict[str, Any]) -> str | None:
     return f"{n} new lead{_s(n)} {'is' if n == 1 else 'are'} waiting in the unallocated pool."
 
 
+# ------------------------------------------------------------------------------------------- sales (v3)
+def _names_list(leads: list[dict[str, Any]]) -> tuple[str, list[dict[str, str]]]:
+    """('A and B', [{id, name}]) of up to two named leads."""
+    named = [{"id": str(x.get("company_id")), "name": str(x.get("name"))} for x in leads[:2] if x.get("name")]
+    return " and ".join(fence_line(x["name"], NAME_CHARS) for x in named), named
+
+
+def _focus_sentence(digest: dict[str, Any]) -> tuple[str, list[dict[str, str]]] | None:
+    """F: follow-ups overdue / due today, the longest-waiting companies (team: the rep furthest behind)."""
+    f = (digest.get("sales") or {}).get("followups") or {}
+    overdue, today = int(f.get("overdue") or 0), int(f.get("today") or 0)
+    if not (overdue or today):
+        return None
+    if overdue and today:
+        counts = f"{overdue} follow-up{_s(overdue)} {'is' if overdue == 1 else 'are'} overdue and {today} due today"
+    elif overdue:
+        counts = f"{overdue} follow-up{_s(overdue)} {'is' if overdue == 1 else 'are'} overdue"
+    else:
+        counts = f"{today} follow-up{_s(today)} {'is' if today == 1 else 'are'} due today"
+    team = digest.get("scope") == "team"
+    head = f"This morning across the team: {counts}" if team else f"This morning: {counts}"
+    behind = f.get("behind") if team else None
+    if behind and behind.get("rep") and int(behind.get("overdue") or 0):
+        n = int(behind["overdue"])
+        return f"{head}; {fence_line(behind['rep'], NAME_CHARS)} is furthest behind with {n} overdue.", []
+    names, named = _names_list(f.get("waiting") or [])
+    if names:
+        return f"{head}, starting with {names}.", named
+    return f"{head}.", []
+
+
+def _quiet_sentence(digest: dict[str, Any]) -> tuple[str, list[dict[str, str]]] | None:
+    """G: interested / quoting leads with no touch in 7 days."""
+    q = (digest.get("sales") or {}).get("quiet") or {}
+    n = int(q.get("count") or 0)
+    if not n:
+        return None
+    leads = q.get("leads") or []
+    stages = {x.get("stage") for x in leads if x.get("stage")}
+    what = "interested or quoting" if n > len(leads) or len(stages) != 1 else next(iter(stages))
+    names, named = _names_list(leads)
+    verb = "has" if n == 1 else "have"
+    tail = (f", including {names}" if n > len(named) else f": {names}") if names else ""
+    return f"{n} {what} lead{_s(n)} {verb} gone quiet (no touch in 7 days){tail}.", named
+
+
+def _new_sentence(digest: dict[str, Any]) -> tuple[str, list[dict[str, str]]] | None:
+    """N: the best uncalled new lead (first seen in the last 14 days), else the best uncalled lead with an AI pitch."""
+    new = (digest.get("sales") or {}).get("new") or {}
+    n = int(new.get("count") or 0)
+    leads = [x for x in new.get("leads") or [] if x.get("name")]
+    if not n or not leads:
+        return None
+    top = leads[0]
+    name = fence_line(top["name"], NAME_CHARS)
+    best = f"{name} ({top['why']})" if top.get("why") else name
+    named = [{"id": str(top.get("company_id")), "name": str(top["name"])}]
+    if new.get("kind") == "new":
+        if n == 1:
+            return f"1 uncalled lead was found in the last 14 days: {best}.", named
+        return f"{n} uncalled leads were found in the last 14 days; the best is {best}.", named
+    if n == 1:
+        return f"1 uncalled lead has an AI pitch ready: {best}.", named
+    return f"{n} uncalled leads have an AI pitch ready; the best is {best}.", named
+
+
+def _moves_sentence(digest: dict[str, Any]) -> tuple[str, list[dict[str, str]]] | None:
+    """M: stage advances, wins and losses in the last 7 days."""
+    m = (digest.get("sales") or {}).get("moves") or {}
+    parts: list[str] = []
+    named: list[dict[str, str]] = []
+    for stage in ("quoting", "interested"):
+        if k := int(m.get(stage) or 0):
+            parts.append(f"{k} to {stage}" if parts else f"{k} lead{_s(k)} moved to {stage}")
+    if w := int(m.get("won") or 0):
+        names, named = _names_list(m.get("won_leads") or [])
+        parts.append((f"{w} won ({names})" if w == len(named) else f"{w} won (including {names})") if names
+                     else f"{w} won")
+    if lost := int(m.get("lost") or 0):
+        parts.append(f"{lost} lost")
+    if not parts:
+        return None
+    body = parts[0] if len(parts) == 1 else f"{', '.join(parts[:-1])} and {parts[-1]}"
+    return f"In the last 7 days: {body}.", named
+
+
 def render_units(digest: dict[str, Any]) -> list[tuple[str, str]]:
-    """The sentences the text keeps, as (code, sentence) in text order (W/S, R, D, P, H, Q); [] when quiet."""
+    """The sentences the text keeps, as (code, sentence) in text order (F, G, N, M, P, H, Q, W/S, R, D); [] when
+    quiet."""
     return _render(digest)[0]
 
 
@@ -220,30 +321,41 @@ def _render(digest: dict[str, Any]) -> tuple[list[tuple[str, str]], list[dict[st
     if digest.get("quiet"):
         return [], []
     now = parse_dt(digest.get("as_of")) or datetime.now(timezone.utc)
-    units: list[tuple[str, str]] = []  # (code, sentence)
-    named: dict[str, dict[str, str]] = {}
+    units: list[tuple[str, str]] = []  # (code, sentence), in priority order
+    named: dict[str, list[dict[str, str]]] = {}
+    team = digest.get("scope") == "team"
+    # A manager's morning: who is behind and the team's wins come before single leads (team: F, M, G, N).
+    sales = (("F", _focus_sentence), ("M", _moves_sentence), ("G", _quiet_sentence), ("N", _new_sentence)) if team \
+        else (("F", _focus_sentence), ("G", _quiet_sentence), ("N", _new_sentence), ("M", _moves_sentence))
+    for code, make in sales:
+        if found := make(digest):
+            units.append((code, found[0]))
+            named[code] = found[1]
+    if p := _poll_sentence(digest):
+        units.append(("P", p))
+        if h := _highlight_sentence(digest):
+            units.append(("H", h[0]))
+            named["H"] = [h[1]]
+    if q := _pool_sentence(digest):
+        units.append(("Q", q))
     if w := _weather_sentence(digest, now):
         units.append(("W", w))
     if r := _recent_storm_sentence(digest):
         units.append(("R", r))
     if d := int((digest.get("weather") or {}).get("weather_delays_total") or 0):
         units.append(("D", f"{d} new-construction lead{_s(d)} may see weather delays."))
-    if p := _poll_sentence(digest):
-        units.append(("P", p))
-        if h := _highlight_sentence(digest):
-            units.append(("H", h[0]))
-            named["H"] = h[1]
-    if q := _pool_sentence(digest):
-        units.append(("Q", q))
 
     def size(us: list[tuple[str, str]]) -> int:
         return len(" ".join(s for _, s in us))
 
-    for code in ("Q", "D", "R", "H", "P"):
+    # Weather is the lowest priority (and at most one weather sentence), then the pool, the poll, the moves...
+    if any(c == "W" for c, _ in units):
+        units = [u for u in units if u[0] != "R"]
+    for code in ("D", "R", "W", "Q", "H", "P", *(c for c, _ in reversed(sales[1:]))):
         if len(units) <= MAX_SENTENCES and size(units) <= MAX_CHARS:
             break
         units = [u for u in units if u[0] != code]
-    leads = [named[c] for c, _ in units if c in named]
+    leads = [x for c, _ in units for x in named.get(c, [])]
     return units, leads
 
 

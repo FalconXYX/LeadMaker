@@ -22,6 +22,8 @@ export interface BriefingRow {
   why: string;
   /** A second line: the follow-up's title or the lead's strongest selling point. */
   detail: string | null;
+  /** The first sentence of the lead's AI pitch, when the server sends it; else read from the lead's profile. */
+  aiPitch?: string | null;
 }
 
 export interface BriefingInput {

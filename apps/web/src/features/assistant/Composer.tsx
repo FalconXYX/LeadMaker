@@ -9,7 +9,7 @@ import { useAssistant } from './context';
 
 const MAX_LENGTH = 2000;
 
-/** pausedReason: the AI can't answer right now (quota, no key, offline); the box is disabled and says why. */
+/** pausedReason: the AI can't answer right now (unavailable, no key); the box is disabled and says why. */
 export function Composer({ inputRef, pausedReason = null }: { inputRef: RefObject<HTMLTextAreaElement | null>; pausedReason?: string | null }) {
   const { send, stop, busy, page, isOverlay } = useAssistant();
   const [draft, setDraft] = useState('');
@@ -55,7 +55,7 @@ export function Composer({ inputRef, pausedReason = null }: { inputRef: RefObjec
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}
           disabled={paused}
-          placeholder={paused ? 'AI answers are paused' : page.placeholder}
+          placeholder={paused ? 'AI answers aren’t available right now' : page.placeholder}
           aria-label="Message the assistant"
           aria-describedby={isOverlay ? undefined : 'lm-assistant-keys'}
           // The box shows focus (focus-within), so the field itself has no outline.

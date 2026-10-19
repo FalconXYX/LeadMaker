@@ -53,15 +53,16 @@ export function TeamTable({ reps, goalPerWeek, poolSize, isLoading, error, onRet
   return (
     <Section
       id="team"
-      title="Team"
+      title="Reps"
       description={`Weekly goal: ${formatNumber(goalPerWeek)} calls, emails and visits per rep`}
+      level={3}
       className={className}
       accent="blue"
       bodyClassName="px-0 pb-3"
       action={poolSize !== undefined && (
         <span className="text-muted">
-          <span className="font-semibold text-fg tabular-nums">{formatNumber(poolSize)}</span> unassigned in the pool ·{' '}
-          <MoreLink to="/allocation">Allocate</MoreLink>
+          <span className="font-semibold text-fg tabular-nums">{formatNumber(poolSize)}</span> unassigned leads ·{' '}
+          <MoreLink to="/allocation">Assign leads</MoreLink>
         </span>
       )}
     >
@@ -78,9 +79,9 @@ export function TeamTable({ reps, goalPerWeek, poolSize, isLoading, error, onRet
               <thead>
                 <tr className="border-b border-border text-left text-xs font-medium tracking-wide text-muted uppercase">
                   <th className="py-2.5 pr-3.5 pl-6 font-medium">Rep</th>
-                  <th className="px-3.5 py-2.5 text-right font-medium">Assigned</th>
-                  <th className="w-[26%] px-3.5 py-2.5 font-medium">Pipeline</th>
-                  <th className="w-[20%] px-3.5 py-2.5 font-medium">Activity vs goal</th>
+                  <th className="px-3.5 py-2.5 text-right font-medium">Leads</th>
+                  <th className="w-[26%] px-3.5 py-2.5 font-medium">Sales stages</th>
+                  <th className="w-[20%] px-3.5 py-2.5 font-medium">This week vs goal</th>
                   <th className="px-3.5 py-2.5 text-right font-medium">Overdue</th>
                   <th className="px-3.5 py-2.5 text-right font-medium">Won this month</th>
                   <th className="py-2.5 pr-6 pl-3.5"><span className="sr-only">Open</span></th>

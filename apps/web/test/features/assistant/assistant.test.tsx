@@ -6,7 +6,7 @@ import { Link, Outlet, RouterProvider, createMemoryRouter, useLocation } from 'r
 import type { SessionUser } from '@/api/types';
 import { AuthProvider } from '@/auth/AuthContext';
 import { sessionStore } from '@/auth/session';
-import { AssistantLauncher } from '@/features/assistant';
+import { AssistantLauncher, askAssistant } from '@/features/assistant';
 
 const rep: SessionUser = { id: '33333333-3333-4333-8333-333333333333', name: 'Sam Rivera', email: 'rep3@demo.local', role: 'rep' };
 const LEAD = 'c0ffee00-0000-4000-8000-000000000001';
@@ -149,6 +149,14 @@ describe('AssistantLauncher', () => {
     await t.user.keyboard('{Escape}');
     expect(screen.queryByRole('region', { name: 'AI Assistant' })).not.toBeInTheDocument();
     expect(t.launcher()).toHaveFocus();
+  });
+
+  it('askAssistant(text) from a page opens the panel and sends the question', async () => {
+    const t = setup();
+    act(() => askAssistant('Who should I call first today?'));
+    expect(await screen.findByRole('region', { name: 'AI Assistant' })).toBeInTheDocument();
+    await waitFor(() => expect(t.chats).toHaveLength(1));
+    expect(t.chats[0]!.messages).toEqual([{ role: 'user', content: 'Who should I call first today?' }]);
   });
 
   it('Enter sends, Shift+Enter adds a new line', async () => {
@@ -388,14 +396,22 @@ describe('AssistantLauncher with the AI service (Section 4)', () => {
     expect(t.statusCalls).toHaveLength(1);
   });
 
-  it('the status line shows when the daily quota resets', async () => {
+  it('when the AI can’t take requests the drawer says so neutrally: no quota, limit or reset time anywhere', async () => {
     const t = setup({ status: () => json({ ...STATUS_OK, available: false, reason: 'quota_exhausted', resetsAt: '2026-10-20T07:00:00Z' }) });
-    await t.openPanel();
-    await waitFor(() => expect(t.statusLine()).toHaveTextContent(/^Daily AI limit reached · back (today|tomorrow|[A-Z][a-z]+day) 3:00\s?AM ET$/));
+    const panel = await t.openPanel();
+    await waitFor(() => expect(t.statusLine()).toHaveTextContent('AI answers aren’t available right now'));
     // Nothing invites a question that would only fail (product review M2): one neutral line, the box closed.
-    expect(screen.getByTestId('assistant-paused')).toHaveTextContent(/AI answers are paused until .* 3:00\s?AM ET\. Filters and profiles work as usual\./);
+    expect(screen.getByTestId('assistant-paused')).toHaveTextContent('AI answers aren’t available right now. Filters and profiles work as usual.');
     expect(t.input()).toBeDisabled();
+    expect(t.input()).toHaveAttribute('placeholder', 'AI answers aren’t available right now');
     expect(screen.queryByRole('button', { name: /call first/i })).not.toBeInTheDocument();
+    // Everything the drawer renders, tooltips and placeholders included.
+    const rendered = [panel.textContent ?? '', ...[...panel.querySelectorAll('[placeholder],[title],[aria-label]')].flatMap((el) => (
+      ['placeholder', 'title', 'aria-label'].map((a) => el.getAttribute(a) ?? '')
+    ))].join(' \n ');
+    expect(rendered).not.toMatch(/quota/i);
+    expect(rendered).not.toMatch(/3:00/);
+    expect(rendered).not.toMatch(/daily limit|limit reached|paused until|resets/i);
   });
 
   it.each([
@@ -418,7 +434,9 @@ describe('AssistantLauncher with the AI service (Section 4)', () => {
     const panel = await t.openPanel();
     await waitFor(() => expect(t.statusCalls).toHaveLength(1));
     await t.user.type(t.input(), 'Summarize{Enter}');
-    const msg = await within(panel).findByText('The AI’s daily limit is used up. It resets at 3:00 AM ET.');
+    // The server's limit copy is replaced by the neutral line.
+    const msg = await within(panel).findByText('AI answers aren’t available right now. Filters and profiles work as usual.');
+    expect(panel).not.toHaveTextContent(/quota|daily limit|3:00|resets/i);
     const note = msg.closest('[data-tone]') as HTMLElement;
     expect(note).toHaveAttribute('data-tone', 'limit');
     expect(note).toHaveClass('bg-surface-2');
@@ -430,12 +448,12 @@ describe('AssistantLauncher with the AI service (Section 4)', () => {
 
   it.each([
     ['ai_not_configured', 'AI isn’t set up on this server yet, so the assistant can’t answer. Lists, filters and profiles work as usual.'],
-    ['user_daily_limit', 'You’ve reached today’s limit of 150 assistant questions. It resets at midnight ET.'],
-  ])('%s: no Try again', async (code, message) => {
+    ['user_daily_limit', 'You’ve reached today’s limit of 150 assistant questions. It resets at midnight ET.', 'AI answers aren’t available right now. Filters and profiles work as usual.'],
+  ])('%s: no Try again', async (code, message, shown = message) => {
     const t = setup({ status: () => json(STATUS_OK), chat: () => sse(ev('error', { message, code, retryable: false })) });
     const panel = await t.openPanel();
     await t.user.type(t.input(), 'hi{Enter}');
-    expect(await within(panel).findByText(message)).toBeInTheDocument();
+    expect(await within(panel).findByText(shown)).toBeInTheDocument();
     expect(within(panel).queryByRole('button', { name: 'Try again' })).toBeNull();
   });
 

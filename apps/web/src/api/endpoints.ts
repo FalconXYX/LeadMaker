@@ -5,7 +5,7 @@ import type {
   AllocationSuggestionsResponse, BulkTagAttachResult, BulkUnallocateResult, CompanyOverrideField, ConfigResponse,
   ContactCreated, ContactDeleted, ContactInput, ContactOverrideField, CustomFieldKeysResponse, CustomFieldSet,
   CustomTagCreated, CustomTagDeleted, CustomTagsResponse, CustomTagUpdated, DashboardScope, DevLoginResponse,
-  KpiResponse, LeadFacetsResponse, LeadFilter, LeadMapResponse, LeadMapScope, LeadProfile, LeadSearchResult,
+  InsightsRefreshResult, KpiResponse, LeadFacetsResponse, LeadFilter, LeadMapResponse, LeadMapScope, LeadProfile, LeadSearchResult,
   LeadTagAdded, LeadTagRemoved, MarkNotificationsRead, NoteCreated, NotificationPreferences, NotificationsPage,
   NotificationsReadResult, NotificationType, OverrideResult, RefreshResult, Role, SalesDashboard, SalesStage,
   SavedViewCreate, SavedViewDeleted, SavedViewsResponse, SavedViewUpdate, SavedViewWritten, SessionUser, SignalScope,
@@ -54,6 +54,9 @@ export const getAllocationSuggestions = (limit?: number, o?: Opts) =>
   api.get<AllocationSuggestionsResponse>('/api/allocations/suggestions', { ...o, query: { limit } });
 
 // ---- lead writes (crm-write) -------------------------------------------------
+/** Regenerate this lead's AI insight now (any viewer of the lead): 202 {jobId, requestedAt, merged}. */
+export const refreshLeadInsights = (leadId: string) =>
+  api.post<InsightsRefreshResult>(`/api/leads/${id(leadId)}/insights/refresh`, {});
 export const addNote = (leadId: string, text: string) =>
   api.post<NoteCreated>(`/api/leads/${id(leadId)}/notes`, { text });
 export const logActivity = (leadId: string, body: { type: ActivityKind; outcome?: string; note?: string }) =>

@@ -36,6 +36,8 @@ describe('upstreamFor', () => {
     ['GET', '/api/allocations/suggestions', 'query'],
     ['POST', '/api/leads/abc/notes', 'crm-write'],
     ['POST', '/api/leads/abc/state', 'crm-write'],
+    ['POST', '/api/leads/abc/insights/refresh', 'crm-write'],
+    ['GET', '/api/leads/abc/insights/refresh', 'query'],
     ['PUT', '/api/leads/abc/overrides/phone', 'crm-write'],
     ['DELETE', '/api/contacts/abc/overrides/email', 'crm-write'],
     ['POST', '/api/allocations/by-filter', 'crm-write'],

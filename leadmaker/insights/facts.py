@@ -6,7 +6,8 @@ and URLs: contact details are never sent to a model (D11), and data can never op
 
 Only stable facts go in. Weather and timing (regional_signals, timing badges, geography tags), volatile tags
 (recent_reviews, data_completeness, priority_drivers, gaf_recommended's rank), priority_score,
-updated_in_last_poll, distance and every timestamp except note and activity dates stay out, and review counts
+updated_in_last_poll, distance and every timestamp except note and activity dates (and the last-contacted date,
+which moves with logged activity) stay out, and review counts
 are bucketed ("400+ reviews"), so a new weather alert, a re-score or one more review never re-runs the model.
 One lead's facts and website excerpt are kept under 12,000 characters (fit_budget). `input_hash` covers the facts, the website excerpt, the prompt
 version, the model fingerprint and the output schema.
@@ -280,7 +281,7 @@ def load_bundles(conn, company_ids: Sequence[str]) -> dict[str, dict[str, Any]]:
         "id", "business_name", "city", "state", "postal_code", "county_fips", "tier", "certifications",
         "distinctions", "presidents_club_stars", "rating", "review_count", "in_business_since", "employees_range",
         "contractor_type", "description", "segment", "system_tags", "account_status", "sales_stage",
-        "custom_fields", "scraped_attributes",
+        "last_contacted_at", "custom_fields", "scraped_attributes",
     )]
     out: dict[str, dict[str, Any]] = {}
     ids = list(dict.fromkeys(company_ids))
@@ -471,6 +472,10 @@ def build_lead_facts(b: dict[str, Any]) -> LeadFacts:
 
     add("account_status", ACCOUNT_LABELS.get(str(c.get("account_status") or ""), c.get("account_status")))
     add("sales_stage", c.get("sales_stage"))
+    # The newest call / email / visit (companies.last_contacted_at, set by crm-write when one is logged): moves only
+    # with logged activity, so it adds no reruns of its own; absent (and the hash unchanged) for never-contacted leads.
+    if c.get("last_contacted_at") is not None:
+        add("last_contacted", et_date(c["last_contacted_at"]))
     fields = c.get("custom_fields") or {}
     for k in sorted(fields)[:MAX_CUSTOM_FIELDS]:
         v = fields[k]

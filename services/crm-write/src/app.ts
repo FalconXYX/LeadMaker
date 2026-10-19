@@ -8,6 +8,7 @@ import { errorHandler } from './http.ts';
 import { allocationRoutes } from './routes/allocations.ts';
 import { contactRoutes } from './routes/contacts.ts';
 import { customRoutes } from './routes/custom.ts';
+import { insightsRoutes } from './routes/insights.ts';
 import { leadRoutes } from './routes/leads.ts';
 import { overrideRoutes } from './routes/overrides.ts';
 import { preferenceRoutes } from './routes/preferences.ts';
@@ -50,7 +51,7 @@ export function createApp({ db, redis, config, log }: AppOptions): Express {
   const api = Router();
   api.use(
     leadRoutes(deps), overrideRoutes(deps), contactRoutes(deps), customRoutes(deps), allocationRoutes(deps), refreshRoutes(deps),
-    viewRoutes(deps), preferenceRoutes(deps), taskRoutes(deps),
+    viewRoutes(deps), preferenceRoutes(deps), taskRoutes(deps), insightsRoutes(deps),
   );
   // The gateway forwards /api/* unchanged; the bare paths are accepted too.
   app.use('/api', api);

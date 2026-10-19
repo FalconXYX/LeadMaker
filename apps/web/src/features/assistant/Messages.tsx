@@ -9,7 +9,7 @@ import { cn } from '@/lib/cn';
 import { useAssistant } from './context';
 import { Markdown } from './markdown';
 import type { Suggestion, SuggestionIcon } from './pageContext';
-import type { AssistantMessage, ChatMessage, UserMessage } from './state';
+import { replyErrorText, type AssistantMessage, type ChatMessage, type UserMessage } from './state';
 import { FilterCard, InvalidFilterCard, OpenLeadCard, Sources } from './ToolCards';
 
 export function MessageList({ messages }: { messages: ChatMessage[] }) {
@@ -81,7 +81,7 @@ function AssistantReply({ message }: { message: AssistantMessage }) {
 
 /**
  * Codes that are a limit or a setup state, not a failure: a neutral note (no red), since nothing broke. The server
- * marks the ones a retry can't fix with retryable:false (no key, the AI quota, the user's daily limit).
+ * marks the ones a retry can't fix with retryable:false (no key, no AI requests left for now).
  */
 const LIMIT_CODES = new Set(['ai_not_configured', 'ai_quota_exhausted', 'user_daily_limit', 'ai_rate_limited', 'rate_limited']);
 
@@ -89,7 +89,7 @@ function ReplyProblem({ message, onRetry }: { message: AssistantMessage; onRetry
   const cutOff = message.status === 'interrupted';
   const limit = !cutOff && !!message.errorCode && LIMIT_CODES.has(message.errorCode);
   const canRetry = cutOff || message.retryable !== false;
-  const text = cutOff ? 'The answer was cut off.' : message.error ?? 'The assistant couldn’t answer.';
+  const text = cutOff ? 'The answer was cut off.' : replyErrorText(message.errorCode, message.error) ?? 'The assistant couldn’t answer.';
   return (
     <div
       role={limit ? 'status' : 'alert'}

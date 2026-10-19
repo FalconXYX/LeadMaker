@@ -696,6 +696,23 @@ export interface StageChanged {
   stageChangedAt: string | null;
 }
 
+/**
+ * POST /api/leads/:id/insights/refresh (no body): regenerate this lead's AI insight now, from its current facts
+ * (tags, notes, activity, overrides, contacts, stage), even when they look unchanged. Any viewer of the lead may ask
+ * (404 otherwise). 202 with the queued job, or the open one it merged into (merged: true). The new insight has a
+ * generatedAt later than requestedAt and arrives as a lead.updated {fields: ['insights']} event. Errors:
+ * 409 'insights_unavailable' (a do-not-contact lead never gets one), 429 'try_again_later' (+ Retry-After).
+ */
+export interface InsightsRefreshResult {
+  jobId: number;
+  /** When the job was queued (server clock); compare with LeadInsight.generatedAt. */
+  requestedAt: string;
+  merged: boolean;
+}
+
+export const INSIGHTS_REFRESH_ERRORS = ['insights_unavailable', 'try_again_later'] as const;
+export type InsightsRefreshError = (typeof INSIGHTS_REFRESH_ERRORS)[number];
+
 /** POST /api/refresh {postal_code, radius_miles}: 202 queued, 200 merged into the open job for the same area. */
 export interface RefreshResult {
   merged: boolean;
@@ -987,7 +1004,38 @@ export interface SalesDashboard {
   segments: { segment: Segment; count: number }[];
   /** team only: one row per rep, by name. */
   reps?: RepDashboardRow[];
+  /**
+   * New leads worth a call (at most 5): leads the scope's rep may work (unallocated or their own; team:
+   * unallocated) that the rep never called, emailed or visited (team: nobody did) and that are not on today's call
+   * list. First those first seen in the last 14 days ('new'), then the highest priority ones with an
+   * AI insight ('top_match').
+   */
+  aiPicks: AiPick[];
+  /**
+   * The AI pitch (first sentence of the lead's insight pitch) for each lead on today's call list as the dashboard
+   * builds it (open follow-ups due by today, quiet interested / quoting leads, fresh and strategic new leads), keyed by
+   * lead id; leads without one are left out. A call-list row's aiPitch is callPitches[leadId] ?? null.
+   */
+  callPitches: Record<string, string>;
   generatedAt: string;
+}
+
+/** SalesDashboard.aiPicks: a lead LeadMaker found, ranked with its AI insight. */
+export interface AiPick {
+  id: string;
+  /** The effective business name (a rep's correction, else the scraped one). */
+  name: string;
+  city: string | null;
+  /** "Bergen County, NJ"; null outside the county table. */
+  county: string | null;
+  priorityScore: number | null;
+  /** First sentence of the insight's business summary. */
+  aiSummary: string | null;
+  /** First sentence of the insight's pitch (sales recommendation). */
+  aiPitch: string | null;
+  /** When the pipeline first found the lead (ISO). */
+  foundAt: string | null;
+  label: 'new' | 'top_match';
 }
 
 // ---- AI (Section 4: query read API for the assistant and the dashboard brief) ----------------------

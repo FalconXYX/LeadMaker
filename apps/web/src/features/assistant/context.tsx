@@ -14,12 +14,13 @@ import { leadsHref } from '@/lib/filterUrl';
 import {
   AssistantUnavailableError, getAssistantStatus, streamAssistantChat, type AssistantEvent, type AssistantStatusView,
 } from './api';
+import { ASK_EVENT, type AskDetail } from './ask';
 import { coerceFilter } from './filters';
 import { isLeadHref } from './markdown';
 import { usePageContext, type PageContext } from './pageContext';
 import { loadConversation, saveConversation } from './persistence';
 import {
-  buildHistory, emptyReply, newId, reducer, type AssistantMessage, type ChatMessage, type FilterPart, type ReplyError,
+  buildHistory, emptyReply, newId, reducer, replyErrorText, type AssistantMessage, type ChatMessage, type FilterPart, type ReplyError,
   type UserMessage,
 } from './state';
 
@@ -195,7 +196,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
         else if (ev.type === 'status') dispatch({ type: 'progress', id: reply.id, text: ev.text });
         else if (ev.type === 'citation') dispatch({ type: 'citation', id: reply.id, citation: { leadId: ev.leadId, field: ev.field, leadName: ev.leadName } });
         else if (ev.type === 'tool') handleTool(reply.id, ev);
-        else if (ev.type === 'error') finish('error', { message: ev.message, code: ev.code, retryable: ev.retryable });
+        else if (ev.type === 'error') finish('error', { message: replyErrorText(ev.code, ev.message), code: ev.code, retryable: ev.retryable });
         else if (ev.type === 'done') finish('done');
         if (finished) break;
       }
@@ -208,7 +209,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
         finish('unavailable');
       } else finish('error', requestError(err));
     } finally {
-      // The answer may have changed what the status line should say (quota used up, offline, back online, …).
+      // The answer may have changed what the status line should say (unavailable, offline, back online, …).
       const failed = ended.status !== 'done' && ended.status !== 'stopped';
       if (failed || statusRef.current?.available === false) void qc.invalidateQueries({ queryKey: qk.assistantStatus });
       if (abortRef.current === ctrl) {
@@ -270,6 +271,18 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
   const onNavigate = useCallback(() => {
     if (isOverlay) setOpenState(false);
   }, [isOverlay]);
+
+  // askAssistant(text) from a page (e.g. the dashboard's Ask AI bar): open the panel and send the question.
+  useEffect(() => {
+    const onAsk = (e: Event) => {
+      const text = (e as CustomEvent<AskDetail>).detail?.text;
+      if (typeof text !== 'string' || !text.trim()) return;
+      setOpen(true);
+      send(text);
+    };
+    window.addEventListener(ASK_EVENT, onAsk);
+    return () => window.removeEventListener(ASK_EVENT, onAsk);
+  }, [setOpen, send]);
 
   const value = useMemo<AssistantContextValue>(() => ({
     open, setOpen, messages, busy, connection, status, unread, page, announcement,

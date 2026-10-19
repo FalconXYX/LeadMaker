@@ -10,6 +10,7 @@ import { AssistantProvider, useAssistant } from './context';
 import { AssistantPanel, PANEL_ID } from './Panel';
 
 export { AssistantProvider, useAssistant } from './context';
+export { askAssistant } from './ask';
 
 export function AssistantLauncher() {
   const launcherRef = useRef<HTMLButtonElement>(null);

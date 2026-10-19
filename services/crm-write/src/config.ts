@@ -15,6 +15,8 @@ export type Config = {
   logLevel: string;
   /** Queue an insights job when an edit changes a lead's AI inputs (LEADMAKER_INSIGHTS_ON_EDIT=1). */
   insightsOnEdit: { enabled: boolean; delaySeconds: number };
+  /** Profile "Refresh" requests per user per rolling day (LEADMAKER_MANUAL_INSIGHTS_PER_USER_PER_DAY); <= 0 disables. */
+  manualInsightsPerUserPerDay: number;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -34,5 +36,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       enabled: env.LEADMAKER_INSIGHTS_ON_EDIT === '1',
       delaySeconds: intEnv(env, 'LEADMAKER_INSIGHTS_EDIT_DELAY_SECONDS', 60, 0),
     },
+    manualInsightsPerUserPerDay: intEnv(env, 'LEADMAKER_MANUAL_INSIGHTS_PER_USER_PER_DAY', 30, Number.MIN_SAFE_INTEGER),
   };
 }

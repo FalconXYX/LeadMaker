@@ -1,10 +1,10 @@
 // The sales reads the dashboard needs (GET /api/dashboard, /api/tasks through the shared endpoints), typed by the
 // shared contract. The dashboard body is normalised for rendering, so a partial or older body shows zeros, never a crash.
 import * as ep from '@/api/endpoints';
-import type { ActivityCounts, DashboardScope, SalesDashboard, SalesStage, Task, TaskDue, TaskStatus, UserRef } from '@/api/types';
+import type { ActivityCounts, AiPick, DashboardScope, SalesDashboard, SalesStage, Task, TaskDue, TaskStatus, UserRef } from '@/api/types';
 import { SALES_STAGES, isSalesStage as isStage } from '@/lib/labels';
 
-export type { DashboardScope, SalesStage, Task };
+export type { AiPick, DashboardScope, SalesStage, Task };
 
 export const DEFAULT_WEEKLY_GOAL = 25;
 
@@ -38,8 +38,13 @@ export interface DashboardData {
   topTags: TopTag[];
   segments: { segment: string; count: number }[];
   reps?: TeamRepRow[];
+  /** AI-ranked new leads worth a call (at most 5); empty when the server sends none. */
+  aiPicks: AiPick[];
+  /** The AI pitch (first sentence) per lead on today's call list, by lead id. */
+  callPitches: Record<string, string>;
   generatedAt: string;
 }
+
 
 type Json = Record<string, unknown>;
 const obj = (v: unknown): Json => (v && typeof v === 'object' && !Array.isArray(v) ? (v as Json) : {});
@@ -68,6 +73,24 @@ function stageCounts(v: unknown): Record<SalesStage, number> {
     for (const st of SALES_STAGES) out[st] = n(o[st]);
   }
   return out;
+}
+
+const strOrNull = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v : null);
+
+function aiPick(v: unknown): AiPick | null {
+  const o = obj(v);
+  if (!s(o.id) || !s(o.name)) return null;
+  return {
+    id: s(o.id),
+    name: s(o.name),
+    city: strOrNull(o.city),
+    county: strOrNull(o.county),
+    priorityScore: typeof o.priorityScore === 'number' && Number.isFinite(o.priorityScore) ? o.priorityScore : null,
+    aiSummary: strOrNull(o.aiSummary),
+    aiPitch: strOrNull(o.aiPitch),
+    foundAt: strOrNull(o.foundAt),
+    label: o.label === 'new' ? 'new' : 'top_match',
+  };
 }
 
 function repRow(v: unknown): TeamRepRow | null {
@@ -121,6 +144,8 @@ export function normalizeDashboard(raw: unknown, scope: DashboardScope): Dashboa
       .filter((t) => t.key && t.count > 0),
     segments: list(d.segments).map((r) => ({ segment: s(obj(r).segment), count: n(obj(r).count) })).filter((x) => x.segment),
     reps: Array.isArray(d.reps) ? d.reps.map(repRow).filter((r): r is TeamRepRow => !!r) : undefined,
+    aiPicks: list(d.aiPicks).map(aiPick).filter((x): x is AiPick => !!x).slice(0, 5),
+    callPitches: Object.fromEntries(Object.entries(obj(d.callPitches)).filter((e): e is [string, string] => typeof e[1] === 'string' && !!e[1].trim())),
     generatedAt: s(d.generatedAt) || new Date().toISOString(),
   };
 }

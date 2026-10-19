@@ -1,4 +1,5 @@
 // The latest touches in the book: the leads contacted most recently, each with its newest call, email, visit or note.
+// It sits at the foot of the column beside Today's calls, so it shows the last three with a "See all" link.
 import { History, Mail, MapPin, Phone, StickyNote } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
@@ -6,7 +7,7 @@ import type { ActivityEntry } from '@/api/types';
 import { EmptyState, Skeleton } from '@/components/ui';
 import { formatRelative, humanize } from '@/lib/format';
 import type { DashboardScope } from './api';
-import { CardError, MoreLink, Section, StagePill } from './parts';
+import { CardError, MoreLink, StagePill } from './parts';
 import type { RecentTouch } from './queries';
 import { salesLeadsHref } from './sales';
 
@@ -23,7 +24,7 @@ function actor(entry: ActivityEntry | null, viewerId: string): string | null {
   return entry.user.id === viewerId ? null : entry.user.name;
 }
 
-export function RecentActivityCard({
+export function RecentActivityList({
   scope, items, isLoading, error, onRetry, viewerId, now, className,
 }: {
   scope: DashboardScope;
@@ -36,16 +37,16 @@ export function RecentActivityCard({
   className?: string;
 }) {
   return (
-    <Section
-      title="Recent activity"
-      description={scope === 'team' ? 'The team’s latest calls, emails and visits' : 'The latest calls, emails and visits'}
-      className={className}
-      accent="teal"
-      action={<MoreLink to={salesLeadsHref(scope, { sort: { by: 'last_contacted', dir: 'desc' } })}>All</MoreLink>}
-    >
+    <section className={className} aria-labelledby="recent-activity-title">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h3 id="recent-activity-title" className="text-xs font-medium tracking-wide text-muted uppercase">
+          Recently contacted
+        </h3>
+        <MoreLink to={salesLeadsHref(scope, { sort: { by: 'last_contacted', dir: 'desc' } })}>See all</MoreLink>
+      </div>
       {isLoading ? (
-        <ul className="space-y-4" aria-hidden>
-          {Array.from({ length: 5 }, (_, i) => (
+        <ul className="space-y-3" aria-hidden>
+          {Array.from({ length: 3 }, (_, i) => (
             <li key={i} className="flex gap-3"><Skeleton className="size-8 rounded-full" /><div className="flex-1 space-y-1.5"><Skeleton className="h-3.5 w-3/4" /><Skeleton className="h-3 w-1/2" /></div></li>
           ))}
         </ul>
@@ -56,10 +57,10 @@ export function RecentActivityCard({
           compact
           icon={<History />}
           title="No activity yet"
-          description="Calls, emails and visits you log show up here. Start with a lead from today’s briefing."
+          description="Calls, emails and visits you log show up here. Start with a lead from today’s calls."
         />
       ) : (
-        <ol className="space-y-4">
+        <ol className="space-y-3">
           {items.map(({ lead, entry, isLoading: entryLoading }) => {
             const type = entry?.type ?? 'call';
             const who = actor(entry, viewerId);
@@ -89,6 +90,6 @@ export function RecentActivityCard({
           })}
         </ol>
       )}
-    </Section>
+    </section>
   );
 }

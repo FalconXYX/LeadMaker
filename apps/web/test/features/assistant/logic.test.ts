@@ -7,10 +7,12 @@ import { getAssistantStatus, toAssistantEvent, toAssistantStatus } from '@/featu
 import { requestError } from '@/features/assistant/context';
 import { coerceFilter, describeFilter } from '@/features/assistant/filters';
 import { isMatchSentence } from '@/features/assistant/Messages';
-import { pausedMessage, resetLabel, statusLine } from '@/features/assistant/Panel';
+import { pausedMessage, statusLine } from '@/features/assistant/Panel';
 import { pitchSuggestion } from '@/features/assistant/pageContext';
 import type { TimingBadge } from '@/api/types';
-import { HISTORY_LIMITS, buildHistory, emptyReply, reducer, type AssistantMessage, type ChatMessage } from '@/features/assistant/state';
+import {
+  HISTORY_LIMITS, UNAVAILABLE_MESSAGE, buildHistory, emptyReply, reducer, replyErrorText, type AssistantMessage, type ChatMessage,
+} from '@/features/assistant/state';
 import { matchCountLabel } from '@/features/assistant/ToolCards';
 import { NetworkError, NotFoundError, RateLimitedError, ApiError } from '@/api/errors';
 import { leadsHref } from '@/lib/filterUrl';
@@ -138,8 +140,8 @@ describe('assistant status', () => {
     expect(statusLine(false, 'unknown', s('ok'))).toBe('Lead Q&A and list filtering');
     expect(statusLine(false, 'unknown', null)).toBe('Lead Q&A and list filtering');
     expect(statusLine(false, 'unknown', s('not_configured'))).toBe('AI isn’t set up on this server');
-    expect(statusLine(false, 'unknown', s('quota_exhausted', '2026-10-20T07:00:00Z'))).toMatch(/^Daily AI limit reached · back \w+ 3:00\s?AM ET$/);
-    expect(statusLine(false, 'unknown', s('quota_exhausted'))).toBe('Daily AI limit reached');
+    expect(statusLine(false, 'unknown', s('quota_exhausted', '2026-10-20T07:00:00Z'))).toBe('AI answers aren’t available right now');
+    expect(statusLine(false, 'unknown', s('quota_exhausted'))).toBe('AI answers aren’t available right now');
     expect(statusLine(false, 'unknown', s('provider_down'))).toBe('AI temporarily unavailable');
     expect(statusLine(false, 'unknown', s('offline'))).toBe('Offline');
     expect(statusLine(false, 'unavailable', s('ok'))).toBe('Offline');
@@ -191,24 +193,38 @@ describe('matchCountLabel', () => {
   });
 });
 
-describe('quota and pause copy (product review M2, M7)', () => {
-  it('names the reset day and zone like the server does', () => {
-    const now = new Date('2026-10-19T09:00:00Z'); // 5 AM ET Monday
-    expect(resetLabel('2026-10-20T07:00:00Z', now)).toMatch(/^tomorrow 3:00\s?AM ET$/);
-    expect(resetLabel('2026-10-19T20:00:00Z', now)).toMatch(/^today 4:00\s?PM ET$/);
-    expect(resetLabel('2026-10-22T07:00:00Z', now)).toMatch(/^Thursday 3:00\s?AM ET$/);
-    expect(resetLabel(null, now)).toBeNull();
-    expect(resetLabel('soon', now)).toBeNull();
-  });
+describe('unavailable copy (no limits or reset times on screen)', () => {
+  const s = (reason: string, resetsAt: string | null = null) =>
+    ({ available: reason === 'ok', reason, resetsAt, provider: null, model: null }) as Parameters<typeof pausedMessage>[0];
 
-  it('pauses the composer only when a question can only fail', () => {
-    const s = (reason: string, resetsAt: string | null = null) =>
-      ({ available: reason === 'ok', reason, resetsAt, provider: null, model: null }) as Parameters<typeof pausedMessage>[0];
+  it('pauses the composer only when a question can only fail, with one neutral line', () => {
     expect(pausedMessage(s('quota_exhausted', '2026-10-20T07:00:00Z'), 'unknown', false))
-      .toMatch(/^AI answers are paused until \w+ 3:00\s?AM ET\. Filters and profiles work as usual\.$/);
+      .toBe('AI answers aren’t available right now. Filters and profiles work as usual.');
+    expect(pausedMessage(s('quota_exhausted'), 'unknown', false)).toBe(UNAVAILABLE_MESSAGE);
     expect(pausedMessage(s('not_configured'), 'unknown', false)).toBe('AI isn’t set up on this server. Filters and profiles work as usual.');
     for (const r of ['ok', 'provider_down', 'offline']) expect(pausedMessage(s(r), 'unknown', false)).toBeNull();
     expect(pausedMessage(s('quota_exhausted'), 'unknown', true)).toBeNull(); // an answer in flight
+  });
+
+  it('replaces the server’s limit copy for a failed reply, and keeps every other message', () => {
+    expect(replyErrorText('ai_quota_exhausted', 'The AI’s daily limit is used up. It resets tomorrow at 3:00 AM ET.')).toBe(UNAVAILABLE_MESSAGE);
+    expect(replyErrorText('user_daily_limit', 'You’ve reached today’s limit of 150 assistant questions. It resets at midnight ET.')).toBe(UNAVAILABLE_MESSAGE);
+    expect(replyErrorText('ai_provider_error', 'The AI service didn’t respond. Try again in a moment.')).toBe('The AI service didn’t respond. Try again in a moment.');
+    expect(replyErrorText(undefined, undefined)).toBeUndefined();
+  });
+
+  it('no status line or pause line names a quota, a daily limit or a reset time', () => {
+    const lines: string[] = [];
+    for (const reason of ['ok', 'not_configured', 'quota_exhausted', 'provider_down', 'offline']) {
+      for (const resetsAt of [null, '2026-10-20T07:00:00Z']) {
+        for (const conn of ['unknown', 'connected', 'unavailable'] as const) {
+          lines.push(statusLine(false, conn, s(reason, resetsAt)));
+          lines.push(pausedMessage(s(reason, resetsAt), conn, false) ?? '');
+        }
+      }
+    }
+    lines.push(UNAVAILABLE_MESSAGE, replyErrorText('ai_quota_exhausted', 'x')!, replyErrorText('user_daily_limit', 'x')!);
+    for (const line of lines) expect(line).not.toMatch(/quota|daily limit|limit reached|paused until|3:00|resets|tomorrow/i);
   });
 });
 

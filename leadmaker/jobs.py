@@ -55,6 +55,11 @@ log = logging.getLogger(__name__)
 JOB_KINDS = ("scrape", "enrich", "tag", "pipeline", "signals", "insights", "briefing")
 ACTIVE = ("queued", "running")
 DEFAULT_USER_JOBS_PER_HOUR = 20
+# A rep's "Refresh" on a profile (crm-write POST /api/leads/:id/insights/refresh): runs before everything else.
+MANUAL_INSIGHTS_PRIORITY = 10
+# A due job at or below this priority wakes an idle worker within LEADMAKER_WORKER_URGENT_POLL_SECONDS (default 1 s)
+# instead of the full --poll interval; refreshes (100) and AI follow-ups (150, 200) wait for the normal poll.
+URGENT_PRIORITY = 50
 
 
 class JobRateLimitError(Exception):
@@ -161,6 +166,14 @@ class JobQueue:
             return conn.execute(
                 select(jobs.c.id).where(jobs.c.dedupe_key == dedupe_key, jobs.c.status.in_(ACTIVE)).limit(1)
             ).scalar()
+
+    def has_urgent(self, max_priority: int = URGENT_PRIORITY) -> bool:
+        """A queued, due job at or below max_priority (e.g. a manual insights refresh) is waiting."""
+        with self.engine.connect() as conn:
+            return conn.execute(
+                select(jobs.c.id).where(jobs.c.status == "queued", jobs.c.priority <= max_priority,
+                                        jobs.c.run_after <= utcnow()).limit(1)
+            ).first() is not None
 
     def _check_rate(self, conn, requested_by: str, now: datetime) -> None:
         """Soft limit: two simultaneous requests by one user can both pass at limit-1."""
@@ -543,6 +556,32 @@ async def execute(settings: Settings, repo: Repository, kind: str, params: dict[
     return out
 
 
+def urgent_poll_seconds() -> float:
+    raw = (os.environ.get("LEADMAKER_WORKER_URGENT_POLL_SECONDS") or "").strip()
+    try:
+        return float(raw) if raw else 1.0
+    except ValueError:
+        return 1.0
+
+
+async def idle(q: JobQueue, poll_seconds: float, *, step: float | None = None, sleep=asyncio.sleep) -> None:
+    """Wait out an idle poll, but return as soon as an urgent job (has_urgent) is due, checked every `step` seconds
+    (urgent_poll_seconds; <= 0, or not shorter than the poll, sleeps the whole poll)."""
+    step = urgent_poll_seconds() if step is None else step
+    if step <= 0 or step >= poll_seconds:
+        await sleep(poll_seconds)
+        return
+    waited = 0.0
+    while waited < poll_seconds:
+        await sleep(min(step, poll_seconds - waited))
+        waited += step
+        try:
+            if q.has_urgent():
+                return
+        except Exception:  # a database hiccup: the next full poll reports it
+            log.warning("urgent-job check failed", exc_info=True)
+
+
 async def work(
     settings: Settings,
     repo: Repository,
@@ -568,7 +607,7 @@ async def work(
         if job is None:
             if once:
                 break
-            await asyncio.sleep(poll_seconds)
+            await idle(q, poll_seconds)
             continue
         log.info("job %s (%s) attempt %s: %s", job["id"], job["kind"], job["attempts"], job["params"])
         runs: list[int] = []

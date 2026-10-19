@@ -247,7 +247,7 @@ def template_insights(user: str) -> dict[str, Any]:
 
 def template_briefing(user: str) -> dict[str, Any]:
     m = _DIGEST_TEXT.search(user)
-    text = (m.group(1).strip() if m else "")[:320]
+    text = (m.group(1).strip() if m else "")[:400]  # briefing/v3's rewrite limit
     return {"text": text, "company_ids": []}
 
 

@@ -290,6 +290,16 @@ describe.skipIf(!hasInfra)('gateway (Postgres + Redis)', () => {
       expect(notifier.calls).toEqual([]);
     });
 
+    it("routes the profile's insights Refresh (no body) to crm-write with the caller's identity", async () => {
+      const auth = { Authorization: `Bearer ${await tokenFor(fixtures.rep1)}` };
+      const lead = fixtures.own.id;
+      await request(base).post(`/api/leads/${lead}/insights/refresh`).set(auth).expect(201);
+      expect(query.calls).toEqual([]);
+      expect(crm.calls.map((c) => `${c.method} ${c.url}`)).toEqual([`POST /api/leads/${lead}/insights/refresh`]);
+      expect(crm.calls[0].headers['x-user-id']).toBe(fixtures.rep1.id);
+      expect(crm.calls[0].headers['x-internal-token']).toBeTruthy();
+    });
+
     it('routes /api/notifications* to the notifier whatever the method, with the caller\'s identity', async () => {
       const auth = { Authorization: `Bearer ${await tokenFor(fixtures.rep1)}` };
       await request(base).get('/api/notifications?unread=1').set(auth).expect(201);

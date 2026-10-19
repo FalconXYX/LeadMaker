@@ -1,8 +1,9 @@
-// Weather as a small add-on: one line of alerts for the book's counties, details on demand.
+// Weather as one quiet line in the dashboard's AI briefing banner: the top alert for the book's counties (or the
+// storm history), with the full list of alerts and storm reports on demand.
 import { ChevronDown, CloudSun, TriangleAlert } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 import type { SignalsResponse } from '@/api/types';
-import { Card, Skeleton } from '@/components/ui';
+import { Skeleton } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { countyName } from '@/lib/counties';
 import { formatNumber } from '@/lib/format';
@@ -28,7 +29,7 @@ function alertLine(a: AlertGroup): string {
   return `${a.event} in ${places(a.counties)}${until ? ` ${until}` : ''}`;
 }
 
-export function WeatherCard({
+export function WeatherLine({
   signals, isLoading, error, who, now, className,
 }: { signals: SignalsResponse | undefined; isLoading: boolean; error: unknown; who: 'your' | 'the team’s'; now: number; className?: string }) {
   const [open, setOpen] = useState(false);
@@ -50,38 +51,35 @@ export function WeatherCard({
   const hasDetails = active.length > 0 || storms.length > 0;
 
   return (
-    <Card className={cn('px-4 py-4 sm:px-6 sm:py-5', className)}>
-      <div className="flex items-start gap-3.5">
-        <span className={cn('mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full [&_svg]:size-4', top ? 'bg-warning-soft text-warning' : 'bg-surface-2 text-muted')}>
-          {top ? <TriangleAlert aria-hidden /> : <CloudSun aria-hidden />}
+    <div className={cn('text-sm', className)} data-testid="weather-line">
+      <div className="flex items-start gap-2">
+        <span className={cn('mt-0.5 shrink-0 [&_svg]:size-4', top ? 'text-warning' : 'text-muted')}>
+          {top ? <TriangleAlert aria-label="Weather alert" /> : <CloudSun aria-label="Weather" />}
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium tracking-wide text-muted uppercase">Weather</p>
-          {headline === null ? (
-            <div className="mt-1 space-y-1.5"><Skeleton className="h-3.5 w-72 max-w-full" /><Skeleton className="h-3 w-48" /></div>
-          ) : (
-            <>
-              <p className="mt-0.5 text-sm font-medium text-fg">{headline}</p>
-              {sub && <p className="text-sm text-muted">{sub}</p>}
-              {!signals && !!error && <p className="text-xs text-muted">We’ll try again shortly.</p>}
-            </>
-          )}
-        </div>
-        {hasDetails && (
-          <button
-            type="button"
-            onClick={() => setOpen((o) => !o)}
-            aria-expanded={open}
-            aria-controls={panelId}
-            className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-accent hover:bg-surface-2"
-          >
-            {open ? 'Hide' : 'Details'}
-            <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} aria-hidden />
-          </button>
+        {headline === null ? (
+          <div className="min-w-0 flex-1 pt-0.5"><Skeleton className="h-3.5 w-72 max-w-full" /></div>
+        ) : (
+          <p className="min-w-0 flex-1 text-muted">
+            <span className={cn('font-medium', top ? 'text-fg' : 'text-muted')}>{headline}</span>
+            {sub && <> {sub}</>}
+            {!signals && !!error && <> We’ll try again shortly.</>}
+            {hasDetails && (
+              <button
+                type="button"
+                onClick={() => setOpen((o) => !o)}
+                aria-expanded={open}
+                aria-controls={panelId}
+                className="ml-1.5 inline-flex items-center gap-0.5 font-medium text-accent hover:underline"
+              >
+                {open ? 'Hide weather' : 'Weather details'}
+                <ChevronDown className={cn('size-3.5 transition-transform', open && 'rotate-180')} aria-hidden />
+              </button>
+            )}
+          </p>
         )}
       </div>
       {open && hasDetails && (
-        <div id={panelId} className="mt-4 grid gap-5 border-t border-border pt-4 md:grid-cols-2">
+        <div id={panelId} className="mt-3 grid gap-5 border-t border-accent/15 pt-3 pl-6 md:grid-cols-2">
           <div>
             <h3 className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">Active alerts</h3>
             {active.length ? (
@@ -110,6 +108,6 @@ export function WeatherCard({
           </div>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

@@ -7,7 +7,8 @@ const METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**
  * /api/assistant* goes to the assistant (GET, HEAD, POST only) and /api/notifications* to the notifier; otherwise
- * reads (GET, and POST /api/leads/search and /facets) go to the query service and every other write to crm-write.
+ * reads (GET, and POST /api/leads/search and /facets) go to the query service and every other write to crm-write
+ * (POST /api/leads/:id/insights/refresh, the profile's Refresh button, included).
  */
 export function upstreamFor(method: string, path: string): Upstream | null {
   if (!path.startsWith('/api/')) return null;

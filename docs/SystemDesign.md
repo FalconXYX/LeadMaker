@@ -8,68 +8,7 @@ A B2B lead intelligence platform for a single enterprise roofing distributor (si
 
 ## 2. System Architecture Diagram
 
-```mermaid
-flowchart TB
-    %% Nodes
-    Client["<b>CRM Web App (React / TS)</b><br/>Dashboard, Filterable Lists, Lead Profiles, Allocation, AI Chat"]
-    Gateway["<b>API Gateway & RBAC Auth</b><br/>Rep vs. Manager Scopes, Rate Limits"]
-
-    subgraph Services ["Backend Services (TypeScript)"]
-        CRM["<b>Core CRM Write Service</b><br/>Notes, Status, Overrides, Custom Tags, Allocations"]
-        Query["<b>Query & Filter Service</b><br/>LeadFilter Queries + Visibility Rule"]
-        Chat["<b>On-Demand AI Service</b><br/>Lead Q&A + UI Filter Tool Calling"]
-    end
-
-    subgraph Storage ["Data & Caching Layer (Read/Write Split)"]
-        Redis[("<b>Redis</b><br/>Hot Cache, Event Stream & Rate Limits")]
-        PrimaryDB[("<b>PostgreSQL Primary (Write DB)</b><br/>Scrapes, Insights, Rep Edits, Job Queue & Outbox")]
-        ReadDB[("<b>PostgreSQL Read Replicas</b><br/>Read-Only Store + Materialized Views")]
-    end
-
-    subgraph Pipeline ["Async Ingestion & AI Pipeline (Python)"]
-        Trigger["<b>Scheduler / On-Demand Trigger</b>"]
-        Queue["<b>Job Queue</b><br/>Postgres jobs table (SKIP LOCKED)"]
-        Scrapers["<b>Scraper & Enrichment Workers</b><br/>GAF Directory, Public Registries, BBB, Contractor Sites"]
-        Context["<b>Context Workers</b><br/>Weather/Storm APIs + Local News"]
-        Delta["<b>Delta Engine</b><br/>Content & Input Hash Checks"]
-        Tagger["<b>Rules Tagger</b><br/>System Tags, Segment, Priority Score"]
-        LLM["<b>Batch LLM Workers</b><br/>Extraction, Summaries & Pitches"]
-    end
-
-    %% Client & Gateway Connections
-    Client <-->|"HTTPS / SSE"| Gateway
-    Gateway --> CRM & Query & Chat
-
-    %% Service to Storage Connections (CQRS Split)
-    CRM -->|"Writes Only"| PrimaryDB
-    Chat -->|"Visibility-Scoped Reads"| Query
-    Query <-->|"Hot Reads"| Redis
-    Query -->|"Read-Only Queries"| ReadDB
-    Query -.->|"Read-Your-Writes (few s after own edit)"| PrimaryDB
-
-    %% DB Replication & Events
-    PrimaryDB -.->|"Async Replication"| ReadDB
-    PrimaryDB -->|"Outbox Relay"| Redis
-    Redis -.->|"Cache Invalidation & Live Updates"| Gateway
-
-    %% Pipeline Connections
-    Trigger --> Queue
-    Queue --> Scrapers & Context
-    Scrapers --> Delta
-    Delta -->|"Write Raw Data"| PrimaryDB
-    Delta --> Tagger
-    Tagger -->|"Write Tags & Scores"| PrimaryDB
-    Delta -->|"Only New/Changed Records"| LLM
-    LLM -->|"Write Insights"| PrimaryDB
-    Context -->|"County Signals (no LLM)"| PrimaryDB
-
-    %% Clean Black & White / Grayscale Styling
-    classDef default fill:#ffffff,stroke:#333333,stroke-width:1.5px,color:#000000;
-    classDef storage fill:#f4f4f4,stroke:#333333,stroke-width:1.5px,color:#000000;
-    class Redis,PrimaryDB,ReadDB storage;
-```
-
----
+--- <iframe src="https://mermaid.live/embed?theme=redux-dark-color&look=classic&mode=dark#pako:eNqlVtty2zYQ_ZUdeuKRp5TVTtMXxeMZ3WK7kW1ZVOppoz5AJESihggOAEpmk_x7FxdSpO32pfKDCXCxl7NnD_g1iEVCg2Gw5eIQZ0RqWI3XOeDv3Tu4w3fKrSac0Vx_WQcXm8vJ8hYe6QZGRQG9JSWxhgGsorOLwebyYiMHl1Oiso0gMgnhI-OaSrLhFOZMaRXCnJIEFlJsGae4HHEuYqKZyPH5BiYZ0evgTxf0imh6IJWLOlrc1BtNoCUtYK_O4ZbkJKUSolgUxukS7TDejmllnTl3qtykkhQZRFTuWUwVoOcxiZ9onhz3equqoFEsWaHPmkwsBMtbX7-QFCwIkmEcf7JJ6k5ok0OkiS7x__2eSskSszUplRY7WJG0U7jqhHkoqfQl20c49SC-CmSQ9K-MJcPkf4DfmGIbxpmuYFly2q0AwXWe7_P-lO4I1o2Yv-UXHk5H6O3zTR18JQSHCeGc5WnjFIF7Da4WEpthsJ0STTD9CYkzPAVzUqEjw5hk4KErMNEuykuaMPWlZ7O0z01a10JbVzSE2R7JiJEkJTsM0Gn3WcvZQrIdkdV07B0uhNKppNHDvH4FPZfJdHykLzafWBrd5IqlmSGtIdosYebxV7ExcJcUA9-XeiOeuzFNeW8FNPvGD2cxUS0Gk6R_n_PK4kYR8lssRjLC2d80wW7SQ6umt_BesIJiUyzgI1XlMaadUmWIhRliexuD3qLSmci7eK8kS3F0HC0iRDdB1kgc6CNFvInJ-SVTS-oONqA0hfnKFfwlNgq0VYBe9OlmAfP7yafZtJuFg1yqOg27wvRnuWRxtjPdfhTyCS2aAFejjzBlksaIWxXCotwgsghwijJjZiGE8XiMMydyLYkxgggb3Z0185I-17LmFq8CPVKiMyoHpkE7QBkyYzbH2eVwZ7vTcjilXBPnzj5iASlC3_iyMbCYU2xSUWq4RqXEsaTxU9cPSkTTFDPGyu8cOVopTWspiWhqIAoNqYU0o49CKLuzP5979RoTHWdm-arQ2bNFykpxVO5wPIyknCKB8EQLuRYL8ZJwNwOaeXE2oOY0dsLWujvgot-__LYOrlerRYT8iqLZOvhWn-oIPqClFdhTqCXQ3gvHoF6yQItGb1phoTd5WEa1uuRevMHFt_OuwMycid9IhLfDON7wqKR9e68kdoSVOWSzcgdcgnVtKFGNkVWvtpGzOU68F21na0SjY3x-tP5dlLLv8-5t6QEUkK0RZXHIAaMYCe1U0uA0HdeS4_XAKqfPqjlQB3Py0TrwMrXWCXvA6R-acFK9KNk-1o6tbCPl9yhrSZ3KnO0pfC5w7TBomNBk3yjXK0p5SbJEsbrTQIe6bDZrQTHUcXPtLJp9Y2RH1O27aW0xBC-VA5gL7A2SNMZ-Kn1OpE6p8WHGEzOw06j-y5HB0lACBWWAFEQBN2zDY45KOK3ugBnbdoD6hnqLyV7OnPlElLnRBZbmhCOLcmF8_StvJpySHMYcP44w_8fMxBrAlSSVQt3Di1tX9kPA2secKDWlW0jolpRcA37a8eHJ1v5CVGPxRIcnP9ufX_YPLNHZ8KfzX4rnMBZcyOHJj_b34YVP5cfb-3xv_v6PT0fMsCk6dPyu43wIwiDFz7VgqGVJw2BH5Y6YZfB1HeA1sENVHa4Didfkcz8h8qlvI62DcB1wIZ7sWxuIxevgO3orSP6HELvaoRRlmgXDLXYBV6Wl_5QRvMu9yfd_ACCrugg" width="100%" height="480" style="border:0" loading="lazy" title="Mermaid diagram" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
 
 ## 3. Requirements
 
@@ -91,12 +30,12 @@ flowchart TB
 
 ### Targets (sizing assumptions)
 
-| Area | Target |
-|---|---|
-| Scale | 2,000 reps + 200 managers; ~500 concurrent at peak (~200 requests/s) |
-| Latency (p95) | Lead list/filter ≤ 300 ms · lead profile ≤ 200 ms · dashboard KPIs ≤ 500 ms · natural-language filter ≤ 3 s |
-| Freshness | A rep's edit is visible to other users within 5 s · GAF re-polled weekly · enrichments refreshed every 30 days · weather alerts polled every 15 min |
-| Availability | 99.9% for the read API · daily backups with point-in-time recovery |
+| Area          | Target                                                                                                                                              |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scale         | 2,000 reps + 200 managers; ~500 concurrent at peak (~200 requests/s)                                                                                |
+| Latency (p95) | Lead list/filter ≤ 300 ms · lead profile ≤ 200 ms · dashboard KPIs ≤ 500 ms · natural-language filter ≤ 3 s                                         |
+| Freshness     | A rep's edit is visible to other users within 5 s · GAF re-polled weekly · enrichments refreshed every 30 days · weather alerts polled every 15 min |
+| Availability  | 99.9% for the read API · daily backups with point-in-time recovery                                                                                  |
 
 ---
 
@@ -133,10 +72,10 @@ flowchart TB
 
 ### Permissions
 
-| | Allocated to me | Unallocated | Allocated to another rep |
-|---|---|---|---|
-| **Rep** | View, notes, checked/serviced, activities, overrides, custom tags | View only (including notes) | No access |
-| **Manager** | Everything | Everything + allocate | Everything + reassign |
+|             | Allocated to me                                                   | Unallocated                 | Allocated to another rep |
+| ----------- | ----------------------------------------------------------------- | --------------------------- | ------------------------ |
+| **Rep**     | View, notes, checked/serviced, activities, overrides, custom tags | View only (including notes) | No access                |
+| **Manager** | Everything                                                        | Everything + allocate       | Everything + reassign    |
 
 - Notes, overrides, custom tags and activity history stay with the lead when it is reassigned.
 - Allocate and reassign write the `lead_allocations` history row and `companies.assigned_rep_id` in the same transaction, so the two never drift.
@@ -152,11 +91,20 @@ type LeadFilter = {
   tagsAll?: string[];
   tagsAny?: string[];
   customTags?: string[];
-  customFields?: { key: string; op: "eq" | "gte" | "lte" | "contains" | "exists"; value?: string | number | boolean }[];
+  customFields?: {
+    key: string;
+    op: "eq" | "gte" | "lte" | "contains" | "exists";
+    value?: string | number | boolean;
+  }[];
   certifications?: string[]; // source-namespaced, e.g. "gaf:master_elite", "gaf:certified_plus", "gaf:certified", "gaf:none"
   size?: ("small" | "medium" | "large")[];
   segment?: ("strategic" | "growth" | "emerging" | "long_tail")[];
-  accountStatus?: ("prospect" | "existing_customer" | "lapsed_customer" | "do_not_contact")[];
+  accountStatus?: (
+    | "prospect"
+    | "existing_customer"
+    | "lapsed_customer"
+    | "do_not_contact"
+  )[];
   materials?: string[];
   services?: string[];
   minRating?: number;
@@ -166,7 +114,16 @@ type LeadFilter = {
   unserviced?: "me" | "team";
   updatedSince?: string; // ISO date
   text?: string;
-  sort?: { by: "priority_score" | "distance" | "rating" | "review_count" | "years_in_business" | "last_change"; dir: "asc" | "desc" };
+  sort?: {
+    by:
+      | "priority_score"
+      | "distance"
+      | "rating"
+      | "review_count"
+      | "years_in_business"
+      | "last_change";
+    dir: "asc" | "desc";
+  };
   cursor?: string;
   limit?: number;
 };

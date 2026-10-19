@@ -80,8 +80,19 @@ export interface AssistantMessage {
   error?: string;
   /** The server's error code (ai_quota_exhausted, user_daily_limit, …) or the client's (rate_limited, …). */
   errorCode?: string;
-  /** false when trying again can't help (no AI key, the quota or a daily limit): no "Try again". */
+  /** false when trying again can't help (no AI key, no AI requests left for now): no "Try again". */
   retryable?: boolean;
+}
+
+/** The one line for every state where the AI can't answer for now: no reasons or reset times, and what still works. */
+export const UNAVAILABLE_MESSAGE = 'AI answers aren’t available right now. Filters and profiles work as usual.';
+
+/** Server codes whose own copy names a usage limit or a reset time; the drawer shows UNAVAILABLE_MESSAGE instead. */
+const UNAVAILABLE_CODES: ReadonlySet<string> = new Set(['ai_quota_exhausted', 'user_daily_limit']);
+
+/** What the drawer says for a failed reply (also for one saved in this browser before the copy changed). */
+export function replyErrorText(code: string | undefined, message: string | undefined): string | undefined {
+  return code && UNAVAILABLE_CODES.has(code) ? UNAVAILABLE_MESSAGE : message;
 }
 
 /** How a reply ended, when it failed. */

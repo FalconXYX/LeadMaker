@@ -1,7 +1,7 @@
-// Today's briefing: the call list, right under the header (beside Follow-ups on desktop). It opens on the top three
-// leads; "Show N more" opens the rest in place.
-import { ArrowRight, CalendarClock, CheckCircle2, ChevronDown, CloudLightning, NotebookPen, Phone } from 'lucide-react';
-import { useId, useState, type ReactNode } from 'react';
+// Today's calls: the call list under the "Today" heading (beside Follow-ups on desktop). It opens on the top three
+// leads; "Show N more" opens the rest in place. Each row says why to call and, when the lead has one, the AI pitch.
+import { ArrowRight, CalendarClock, CheckCircle2, ChevronDown, CloudLightning, NotebookPen, Phone, Sparkles } from 'lucide-react';
+import { useId, useState } from 'react';
 import { Link } from 'react-router';
 import { VersionConflictError } from '@/api/errors';
 import type { LeadProfile } from '@/api/types';
@@ -13,6 +13,7 @@ import type { DashboardScope } from './api';
 import {
   bestContact, cityOf, countKinds, formatPhone, stageOf, toTel, weatherChip, type BriefingKind, type BriefingRow,
 } from './callList';
+import { firstSentence } from './ai';
 import { CardError, MoreLink, Section, StagePill } from './parts';
 import { useLeadDetails, useRefreshAfterActivity, useRescheduleTask, useScheduleFollowUp } from './queries';
 import { salesLeadsHref } from './sales';
@@ -23,7 +24,7 @@ export const MAX_ROWS = 24;
 
 /**
  * The row layout follows the card's width (it sits in a column on desktop): stacked when narrow; from 40rem the
- * contractor and why-today sit side by side, with who to ask for and the actions under them.
+ * contractor and the reason to call sit side by side, with who to ask for and the actions under them.
  */
 const ROW_GRID = '@min-[40rem]:grid-cols-[minmax(0,1fr)_minmax(21.5rem,0.8fr)] @min-[40rem]:items-center';
 
@@ -64,13 +65,20 @@ export interface BriefingProps {
   onRetry: () => void;
   /** Team view: show whose lead each row is. */
   showOwner: boolean;
-  /** A short paragraph at the top of the card, above the call list (the territory brief). */
-  intro?: ReactNode;
+  /** SalesDashboard.callPitches: the AI pitch per lead id (else the lead profile's insight is used). */
+  pitches?: Readonly<Record<string, string>>;
+  /** Controlled "Show more" (the page lines up the column beside it only while collapsed). */
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   className?: string;
 }
 
-export function Briefing({ scope, rows, isLoading, isFetchingMore, error, partialError, onRetry, showOwner, intro, className }: BriefingProps) {
-  const [expanded, setExpanded] = useState(false);
+export function Briefing({
+  scope, rows, isLoading, isFetchingMore, error, partialError, onRetry, showOwner, pitches, expanded: expandedProp, onExpandedChange, className,
+}: BriefingProps) {
+  const [expandedState, setExpandedState] = useState(false);
+  const expanded = expandedProp ?? expandedState;
+  const setExpanded = (next: boolean) => { setExpandedState(next); onExpandedChange?.(next); };
   const [logFor, setLogFor] = useState<Pick<BriefingRow, 'leadId' | 'leadName' | 'task'> | null>(null);
   const refresh = useRefreshAfterActivity();
   const listId = useId();
@@ -91,14 +99,14 @@ export function Briefing({ scope, rows, isLoading, isFetchingMore, error, partia
   return (
     <Section
       id="briefing"
-      title="Today’s briefing"
+      title="Today’s calls"
       description={summary}
       className={className}
       accent="roof"
+      level={3}
       bodyClassName="@container px-0 pb-2"
       action={<MoreLink to="/tasks">All follow-ups</MoreLink>}
     >
-      {intro}
       {isLoading ? (
         <BriefingSkeleton />
       ) : error && !rows.length ? (
@@ -121,7 +129,7 @@ export function Briefing({ scope, rows, isLoading, isFetchingMore, error, partia
             {visible.map((row) => (
               <BriefingItem
                 key={row.key}
-                row={row}
+                row={pitches?.[row.leadId] ? { ...row, aiPitch: pitches[row.leadId] } : row}
                 profile={details.get(row.leadId)?.data}
                 profileLoading={!!details.get(row.leadId)?.isLoading}
                 showOwner={showOwner}
@@ -133,7 +141,7 @@ export function Briefing({ scope, rows, isLoading, isFetchingMore, error, partia
             <span className="text-muted">
               {isFetchingMore ? 'Checking for more leads to work…'
                 : partialError ? <>Some suggestions couldn’t load. <button type="button" className="font-medium text-accent hover:underline" onClick={onRetry}>Try again</button></>
-                : 'Ranked: overdue first, then due today, then warm deals and new leads.'}
+                : 'Overdue follow-ups first, then today’s, then warm deals and new leads.'}
             </span>
             {more > 0 && (
               <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -142,7 +150,7 @@ export function Briefing({ scope, rows, isLoading, isFetchingMore, error, partia
                   type="button"
                   aria-expanded={expanded}
                   aria-controls={listId}
-                  onClick={() => setExpanded((open) => !open)}
+                  onClick={() => setExpanded(!expanded)}
                   className="inline-flex min-h-8 items-center gap-1 rounded-md text-sm font-medium text-accent hover:underline"
                 >
                   {expanded ? 'Show less' : `Show ${more} more`}
@@ -177,6 +185,7 @@ function BriefingItem({
   const weather = weatherChip(profile, row.lead);
   const owner = row.task?.assignee?.name ?? row.lead?.assignedRep?.name ?? profile?.allocation.current?.rep.name ?? null;
   const factsLoading = profileLoading && !row.lead;
+  const pitch = row.aiPitch ?? firstSentence(profile?.insights?.salesRecommendation);
 
   return (
     <li className={cn('relative grid grid-cols-1 gap-x-4 gap-y-2.5 px-4 py-4 sm:py-4.5', ROW_GRID)}>
@@ -200,7 +209,7 @@ function BriefingItem({
         <StagePill stage={stage} className="@min-[40rem]:hidden" />
       </div>
       <div className="min-w-0">
-        <p className={cn('text-sm font-medium', row.kind === 'overdue' ? 'text-roof' : 'text-fg')}>{row.why}</p>
+        <p className={cn('text-sm font-medium', row.kind === 'overdue' ? 'text-roof' : 'text-fg')}><span className="sr-only">Reason to call: </span>{row.why}</p>
         {(row.detail || weather) && (
           <p className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
             {row.detail && <span className="min-w-0 truncate" title={row.detail}>{row.detail}</span>}
@@ -231,6 +240,13 @@ function BriefingItem({
         )}
       </div>
       <RowActions row={row} phone={contact.phone} contactName={contact.name} onLog={onLog} />
+      {pitch && (
+        <p className="flex min-w-0 items-start gap-1.5 text-sm text-muted @min-[40rem]:col-span-2" data-testid="ai-pitch">
+          <Sparkles className="mt-0.5 size-3.5 shrink-0 text-accent" aria-hidden />
+          <span className="sr-only">AI pitch: </span>
+          <span className="min-w-0 line-clamp-2" title={pitch}><span className="mr-1.5 text-[11px] font-semibold tracking-wide text-accent" aria-hidden>AI</span>{pitch}</span>
+        </p>
+      )}
     </li>
   );
 }

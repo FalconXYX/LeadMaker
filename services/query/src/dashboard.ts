@@ -5,6 +5,7 @@
 // The team's coverage and top tags read every allocated lead's tags and contacts and move only with pipeline runs,
 // contact edits and allocations, so they are kept apart for TEAM_SLOW_FRESH_SECONDS and refreshed in the background
 // once stale (stale-while-revalidate): a team dashboard never waits for them after the first.
+// The AI parts (today's call pitches, new-lead picks) come from dashboard-ai.ts and share the scope's entry.
 import {
   ACCOUNT_STATUSES, dayStartSql, monthStartSql, raw, SALES_STAGES, SALES_TIME_ZONE, salesScopeString, SEGMENTS, sql,
   weekStartSql, type AccountStatus, type ActivityCounts, type ParsedSalesScope, type RepDashboardRow, type SalesDashboard,
@@ -12,6 +13,7 @@ import {
 } from '@leadmaker/shared';
 import type { PrismaClient } from '@leadmaker/db';
 import type { Cache } from './cache.ts';
+import { readDashboardAi } from './dashboard-ai.ts';
 import { one, pick, type Db } from './db.ts';
 import { salesScope } from './tasks.ts';
 
@@ -295,12 +297,13 @@ export async function readDashboard(
 ): Promise<SalesDashboard> {
   const client = pick(db, primary);
   const rep = scopeRep(viewer, scope);
-  const [leads, followUps, activity, team, slowPart] = await Promise.all([
+  const [leads, followUps, activity, team, slowPart, ai] = await Promise.all([
     one<{ groups: LeadGroup[] }>(client, leadsQuery(rep)),
     one<{ overdue: number; today: number; week: number }>(client, followUpsQuery(rep)),
     one<{ this_week: ActivityCounts; last_week: ActivityCounts; daily: SalesDashboard['activity']['daily'] }>(client, activityQuery(rep)),
     rep ? undefined : one<{ reps: RepRow[] }>(client, repsQuery()),
     slow ? slow() : readSlow(client, rep),
+    readDashboardAi(client, viewer, scope, rep),
   ]);
   const groups = leads?.groups ?? [];
   const statuses = sum(groups, (g) => g.status);
@@ -331,6 +334,8 @@ export async function readDashboard(
     topTags: slowPart.topTags,
     segments: SEGMENTS.map((segment) => ({ segment, count: segments[segment] ?? 0 })),
     ...(reps ? { reps } : {}),
+    aiPicks: ai.aiPicks,
+    callPitches: ai.callPitches,
     generatedAt: new Date().toISOString(),
   };
 }

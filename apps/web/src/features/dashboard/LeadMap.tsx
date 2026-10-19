@@ -105,8 +105,8 @@ export function LeadMapCard({ leads, variant, isLoading, poolLoading, error, onR
   const summary = isLoading && !leads.length ? 'Loading leads…'
     : error && !leads.length ? 'Couldn’t load leads'
     : variant === 'manager'
-      ? `${formatNumber(points.length)} leads · ${formatNumber(mine)} allocated · ${formatNumber(poolCount)} in the pool`
-      : `${formatNumber(mine)} of ${whose} leads${poolCount ? ` + ${formatNumber(poolCount)} in the pool` : ''}`;
+      ? `${formatNumber(points.length)} leads · ${formatNumber(mine)} assigned · ${formatNumber(poolCount)} unassigned`
+      : `${formatNumber(mine)} of ${whose} leads${poolCount ? ` + ${formatNumber(poolCount)} unassigned` : ''}`;
 
   // Pool first, then by priority, so your own and the highest-priority markers draw on top.
   const ordered = useMemo(() => {
@@ -131,8 +131,8 @@ export function LeadMapCard({ leads, variant, isLoading, poolLoading, error, onR
         >
           <ChevronDown className={cn('size-4 shrink-0 text-muted transition-transform', !open && '-rotate-90')} aria-hidden />
           <span className="min-w-0">
-            <span className="block text-[15px] font-semibold text-fg group-hover:text-accent">Territory map</span>
-            <span className="block truncate text-sm text-muted">{open ? summary : `Hidden. Open it to see where ${whose} leads are.`}</span>
+            <span className="block text-[15px] font-semibold text-fg group-hover:text-accent">{open ? summary : 'Map hidden'}</span>
+            <span className="block truncate text-sm text-muted">{open ? 'Click a dot to see the lead' : `Open it to see where ${whose} leads are.`}</span>
           </span>
         </button>
         {open && (
@@ -145,7 +145,7 @@ export function LeadMapCard({ leads, variant, isLoading, poolLoading, error, onR
                 label="Colour markers by"
                 value={colorBy}
                 onChange={setColorBy}
-                options={[{ value: 'owner', label: 'By owner' }, { value: 'segment', label: 'By segment' }]}
+                options={[{ value: 'owner', label: 'By owner' }, { value: 'segment', label: 'By priority group' }]}
               />
             )}
             <Segmented
@@ -176,7 +176,7 @@ export function LeadMapCard({ leads, variant, isLoading, poolLoading, error, onR
               className="flex-1"
               icon={<MapPinOff />}
               title="No leads to map yet"
-              description={variant === 'rep' ? 'Leads your manager assigns to you will appear here. Switch on the pool to see unallocated leads.' : 'Leads appear here after the first pipeline run.'}
+              description={variant === 'rep' ? 'Leads your manager assigns to you will appear here. Switch on “Show unassigned leads” to see leads nobody owns yet.' : 'Leads appear here once LeadMaker has found some.'}
             />
           ) : view === 'map' ? (
             <div className="lm-dash-map absolute inset-0 isolate">
@@ -362,13 +362,13 @@ function LeadPopup({ lead, showOwner, pool }: { lead: MapLead; showOwner: boolea
         <p className="m-0! text-sm leading-snug font-semibold text-fg">{lead.name}</p>
         <p className="m-0! mt-0.5! text-xs text-muted">
           {placeOf(lead)}
-          {showOwner && <> · {lead.owner ? lead.owner.name : 'Unallocated'}</>}
+          {showOwner && <> · {lead.owner ? lead.owner.name : 'Unassigned'}</>}
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
         <Badge variant="neutral" tooltip="Priority score (0-100)">Priority {lead.priorityScore == null ? '—' : Math.round(lead.priorityScore)}</Badge>
         <SegmentBadge segment={lead.segment} />
-        {pool && <Badge variant="neutral">Unallocated</Badge>}
+        {pool && <Badge variant="neutral">Unassigned</Badge>}
       </div>
       {badge ? (
         <div className="rounded-lg bg-surface-2 p-2">
@@ -397,9 +397,9 @@ function LeadList({ leads, showOwner, variant, listHref }: { leads: readonly Map
           <THead>
             <tr>
               <TH className="w-full">Lead</TH>
-              <TH className="hidden sm:table-cell">Segment</TH>
+              <TH className="hidden sm:table-cell">Priority group</TH>
               <TH align="right">Priority</TH>
-              <TH className="hidden md:table-cell">Timing</TH>
+              <TH className="hidden md:table-cell">Good time to call</TH>
               {showOwner && <TH className="hidden lg:table-cell">Owner</TH>}
             </tr>
           </THead>
@@ -423,7 +423,7 @@ function LeadList({ leads, showOwner, variant, listHref }: { leads: readonly Map
                       : ring ? <Badge variant={`timing-${ring}`}>{TIMING_SEVERITY_LABELS[ring]}</Badge>
                       : <span className="text-xs text-subtle">—</span>}
                   </TD>
-                  {showOwner && <TD className="hidden whitespace-nowrap text-muted lg:table-cell">{l.owner?.name ?? 'Unallocated'}</TD>}
+                  {showOwner && <TD className="hidden whitespace-nowrap text-muted lg:table-cell">{l.owner?.name ?? 'Unassigned'}</TD>}
                 </TR>
               );
             })}
@@ -476,19 +476,19 @@ function Legend({
               {owners.map((o) => (
                 <span key={o.id} className={item}><Dot color={o.color} />{o.name}<span className="text-subtle tabular">{formatNumber(o.count)}</span></span>
               ))}
-              <span className={item}><Dot color={colors.subtle} />Unallocated<span className="text-subtle tabular">{formatNumber(poolCount)}</span></span>
+              <span className={item}><Dot color={colors.subtle} />Unassigned<span className="text-subtle tabular">{formatNumber(poolCount)}</span></span>
             </>
           )}
       </span>
       {variant === 'rep' && poolCount > 0 && (
-        <span className={item}><Dot color={colors.subtle} />Yours<Dot color={colors.subtle} hollow />Pool</span>
+        <span className={item}><Dot color={colors.subtle} />Yours<Dot color={colors.subtle} hollow />Unassigned</span>
       )}
       <Tooltip content="Marker size shows the priority score">
         <span className={item}>
           <Dot color={colors.subtle} size={6} /><Dot color={colors.subtle} size={12} />Priority
         </span>
       </Tooltip>
-      <Tooltip content="A ring marks a weather or seasonality timing signal: act now, soon, or watch">
+      <Tooltip content="A ring means weather or the season makes this a good time to call: act now, soon, or keep an eye on it">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className={item}><Dot color={colors.high} ring />{TIMING_SEVERITY_LABELS.high}</span>
           <span className={item}><Dot color={colors.medium} ring />{TIMING_SEVERITY_LABELS.medium}</span>

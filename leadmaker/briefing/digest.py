@@ -15,6 +15,18 @@ with SQLAlchemy Core, so it runs on SQLite (tests, local) and Postgres (the stac
            show a roof-damaging event in the last 30 days (the timing layer's recent_storm badge at medium,
            which it gives storm roofers only), so an ordinary week after a storm is not "quiet".
 
+  sales    (v3, the morning briefing) from the CRM tables, rep: the rep's leads, team: every allocated lead:
+           followups  open tasks overdue / due today and the 1-2 longest-waiting companies (team: the rep with
+                      the most overdue)
+           quiet      interested / quoting leads with no touch in 7 days (count, top 2 by priority)
+           new        uncalled 'new' leads first seen in the last 14 days, else uncalled leads with an AI insight
+                      (count, top 2 by priority, with a short why: the GAF tier)
+           moves      stage changes in the last 7 days (activity_logs stage_changed): advances to interested /
+                      quoting, wins (named) and losses
+           The sales part is a DAILY snapshot: the first computation of an America/New_York day is stored with the
+           brief and reused for the rest of that day (sales.day), so the hash and the AI rewrite change about once a
+           day per scope plus real changes (a poll, weather). The dashboard's Today section has the live counts.
+
 digest_hash is the sha256 of the canonical JSON without "as_of", so recomputing an unchanged digest keeps its
 hash and its cached AI rewrite. Volatile values are kept out on purpose: a storm-response reason is the
 badge's event label, not its "ended 2 days ago" phrase.
@@ -36,13 +48,14 @@ from sqlalchemy.engine import Connection
 
 from ..db import Repository
 from ..db.schema import (
-    audit_events, companies, enrichments, field_overrides, regional_signals, scrape_runs, users,
+    activity_logs, audit_events, companies, company_insights, enrichments, field_overrides, regional_signals,
+    scrape_runs, tasks, users,
 )
 from ..signals.timing import ALERT_LOOKBACK, alert_level, hazard_family
 from .config import BriefingConfig
-from .text import fence_line, iso, parse_dt, render
+from .text import ET, fence_line, iso, parse_dt, render
 
-DIGEST_VERSION = 2
+DIGEST_VERSION = 3
 TEAM = "team"
 REP_PREFIX = "rep:"
 _REP_SCOPE = re.compile(r"^rep:[0-9a-f-]{36}$")
@@ -62,6 +75,11 @@ TIER_RANK = {"master_elite": 3, "certified_plus": 2, "certified": 1, "none": 0}
 TIER_LABELS = {"master_elite": "GAF Master Elite", "certified_plus": "GAF Certified Plus",
                "certified": "GAF Certified", "none": "not GAF certified"}
 SEVERITY_RANK = {"high": 0, "medium": 1}
+QUIET_DAYS = 7  # an interested / quoting lead with no touch for this long has gone quiet (the call list's rule)
+NEW_DAYS = 14  # an uncalled lead first seen this recently is a new opportunity (the dashboard's aiPicks rule)
+MOVES_DAYS = 7
+MAX_SALES_NAMES = 2
+STAGE_RANK = {"new": 0, "contacted": 1, "interested": 2, "quoting": 3, "won": 4, "lost": 4}
 # FIPS -> "Bergen County, NJ" tables, first found wins: the copy inside the Python package (ships in the worker
 # image), then the shared one in a repo checkout.
 COUNTY_NAME_FILES = (
@@ -400,9 +418,161 @@ def _recent_storm_part(repo: Repository, conn: Connection, book, counties: dict[
             "county_count": len(per_county)}
 
 
+# ------------------------------------------------------------------------------------------------- sales
+def sales_day(now: datetime) -> str:
+    """The America/New_York date of `now` (the sales snapshot's key)."""
+    return now.astimezone(ET).date().isoformat()
+
+
+def _day_start(now: datetime, days: int = 0) -> datetime:
+    local = now.astimezone(ET)
+    start = datetime(local.year, local.month, local.day, tzinfo=ET) + timedelta(days=days)
+    return start.astimezone(timezone.utc)
+
+
+def _why(tier: str | None) -> str | None:
+    return TIER_LABELS.get(tier or "") if tier and tier != "none" else None
+
+
+def _followups(conn: Connection, kind: str, book, now: datetime) -> dict[str, Any]:
+    d0, d1 = _day_start(now), _day_start(now, 1)
+    open_tasks = and_(tasks.c.done_at.is_(None), tasks.c.due_at < d1, book)
+    rows = conn.execute(
+        select(tasks.c.company_id, tasks.c.due_at, companies.c.assigned_rep_id)
+        .select_from(tasks.join(companies, companies.c.id == tasks.c.company_id))
+        .where(open_tasks).order_by(tasks.c.due_at, tasks.c.company_id)
+    ).all()
+    overdue = [r for r in rows if parse_dt(r.due_at) < d0]
+    today = [r for r in rows if parse_dt(r.due_at) >= d0]
+    waiting: list[str] = []
+    for r in overdue or today:  # the longest-waiting companies first
+        cid = str(r.company_id)
+        if cid not in waiting:
+            waiting.append(cid)
+    waiting = waiting[:MAX_SALES_NAMES]
+    names = _names(conn, waiting)
+    out: dict[str, Any] = {
+        "overdue": len(overdue), "today": len(today),
+        "waiting": [{"company_id": c, "name": names[c]} for c in waiting if names.get(c)],
+    }
+    if kind == TEAM:  # who is furthest behind
+        per_rep: dict[str, int] = {}
+        for r in overdue:
+            if r.assigned_rep_id is not None:
+                per_rep[str(r.assigned_rep_id)] = per_rep.get(str(r.assigned_rep_id), 0) + 1
+        out["behind"] = None
+        if per_rep:
+            rep_names = {str(r.id): fence_line(r.name, NAME_CHARS) for r in conn.execute(
+                select(users.c.id, users.c.name).where(users.c.id.in_(sorted(per_rep))))}
+            top = sorted(per_rep, key=lambda r: (-per_rep[r], rep_names.get(r, ""), r))[0]
+            if rep_names.get(top):
+                out["behind"] = {"rep": rep_names[top], "overdue": per_rep[top]}
+    return out
+
+
+def _ranked_leads(conn: Connection, where, limit: int = MAX_SALES_NAMES) -> tuple[int, list[dict[str, Any]]]:
+    """(count, the top `limit` by priority then newest) of the book leads matching `where`."""
+    count = conn.execute(select(func.count()).select_from(companies).where(where)).scalar() or 0
+    top = conn.execute(
+        select(companies.c.id, companies.c.tier, companies.c.sales_stage).where(where)
+        .order_by(companies.c.priority_score.desc().nulls_last(), companies.c.first_seen_at.desc(), companies.c.id)
+        .limit(limit)
+    ).all()
+    names = _names(conn, [str(r.id) for r in top])
+    return int(count), [{"company_id": str(r.id), "name": names[str(r.id)], "why": _why(r.tier),
+                         "stage": r.sales_stage} for r in top if names.get(str(r.id))]
+
+
+def _moves(conn: Connection, book, now: datetime) -> dict[str, Any]:
+    """Each book lead's latest stage change in the last MOVES_DAYS days: advances to interested / quoting, wins
+    (named, top 2 by priority) and losses."""
+    since = _day_start(now, -MOVES_DAYS)
+    latest: dict[str, tuple[str, str]] = {}
+    for r in conn.execute(
+        select(activity_logs.c.company_id, activity_logs.c.field_diff)
+        .select_from(activity_logs.join(companies, companies.c.id == activity_logs.c.company_id))
+        .where(activity_logs.c.action_type == "stage_changed", activity_logs.c.created_at >= since, book)
+        .order_by(activity_logs.c.created_at, activity_logs.c.id)
+    ):
+        diff = r.field_diff if isinstance(r.field_diff, dict) else {}
+        stage = diff.get("sales_stage")
+        if isinstance(stage, list) and len(stage) == 2:
+            latest[str(r.company_id)] = (str(stage[0] or "new"), str(stage[1] or ""))
+    counts = {"interested": 0, "quoting": 0, "won": 0, "lost": 0}
+    won: list[str] = []
+    for cid, (old, new) in latest.items():
+        if new in ("won", "lost"):
+            counts[new] += 1
+            if new == "won":
+                won.append(cid)
+        elif new in counts and STAGE_RANK.get(new, 0) > STAGE_RANK.get(old, 0):
+            counts[new] += 1
+    prio = {str(r.id): (float(r.priority_score) if r.priority_score is not None else -1.0)
+            for r in conn.execute(select(companies.c.id, companies.c.priority_score).where(companies.c.id.in_(won)))} \
+        if won else {}
+    names = _names(conn, won)
+    won.sort(key=lambda c: (-prio.get(c, -1.0), (names.get(c) or "").lower(), c))
+    return {**counts, "won_leads": [{"company_id": c, "name": names[c]} for c in won[:MAX_SALES_NAMES]
+                                    if names.get(c)]}
+
+
+def _sales_part(conn: Connection, kind: str, book, now: datetime) -> dict[str, Any]:
+    quiet_since = _day_start(now, -QUIET_DAYS)
+    # The dashboard call list's rule (callList.ts buildBriefing), so the brief and the page agree: a lead with a
+    # follow-up already planned is handled by that follow-up, and a do-not-contact lead is never chased.
+    planned = select(tasks.c.id).where(tasks.c.company_id == companies.c.id, tasks.c.done_at.is_(None)).exists()
+    quiet_n, quiet = _ranked_leads(conn, and_(book, companies.c.sales_stage.in_(["interested", "quoting"]),
+                                              or_(companies.c.last_contacted_at.is_(None),
+                                                  companies.c.last_contacted_at < quiet_since),
+                                              ~planned,
+                                              or_(companies.c.account_status.is_(None),
+                                                  companies.c.account_status != "do_not_contact")))
+    uncalled = and_(book, companies.c.sales_stage == "new", companies.c.last_contacted_at.is_(None),
+                    companies.c.account_status.not_in(["do_not_contact", "existing_customer"]))
+    new_n, new = _ranked_leads(conn, and_(uncalled, companies.c.first_seen_at >= now - timedelta(days=NEW_DAYS)))
+    new_kind = "new"
+    if not new_n:
+        has_insight = select(company_insights.c.id).where(company_insights.c.company_id == companies.c.id,
+                                                          company_insights.c.status == "ok").exists()
+        new_n, new = _ranked_leads(conn, and_(uncalled, has_insight))
+        new_kind = "top"
+    return {
+        "day": sales_day(now),
+        "followups": _followups(conn, kind, book, now),
+        "quiet": {"count": quiet_n, "leads": quiet},
+        "new": {"kind": new_kind, "count": new_n, "leads": new},
+        "moves": _moves(conn, book, now),
+    }
+
+
+def _stored_sales(repo: Repository, scope: str, now: datetime) -> dict[str, Any] | None:
+    """Today's (America/New_York) sales snapshot from the stored brief, when there is one."""
+    from . import store  # local import: store imports nothing from here, but keep the module graph flat
+
+    try:
+        row = store.get_brief(repo, scope)
+    except Exception:  # no territory_briefs table (an old scratch DB): compute fresh
+        return None
+    digest = (row or {}).get("digest")
+    if not isinstance(digest, dict) or digest.get("v") != DIGEST_VERSION:
+        return None
+    sales = digest.get("sales")
+    return sales if isinstance(sales, dict) and sales.get("day") == sales_day(now) else None
+
+
+def has_sales_news(sales: dict[str, Any] | None) -> bool:
+    s = sales or {}
+    f, m = s.get("followups") or {}, s.get("moves") or {}
+    return bool(f.get("overdue") or f.get("today") or (s.get("quiet") or {}).get("count")
+                or (s.get("new") or {}).get("count")
+                or any(m.get(k) for k in ("interested", "quoting", "won", "lost")))
+
+
 # ------------------------------------------------------------------------------------------------ digest
-def compute_digest(repo: Repository, scope: str, now: datetime, *, config: BriefingConfig | None = None) -> dict:
-    """The deterministic digest for one scope (spec §5.2), including its rendered text's named companies."""
+def compute_digest(repo: Repository, scope: str, now: datetime, *, config: BriefingConfig | None = None,
+                   snapshot: bool = True) -> dict:
+    """The deterministic digest for one scope (spec §5.2), including its rendered text's named companies.
+    snapshot=True reuses today's stored sales snapshot (module docstring); False always reads the CRM tables."""
     config = config or BriefingConfig.from_env()
     now = (now if now.tzinfo else now.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
     kind, rep_id = parse_scope(scope)
@@ -418,13 +588,14 @@ def compute_digest(repo: Repository, scope: str, now: datetime, *, config: Brief
                      and poll["finished_at"] >= now - timedelta(days=config.poll_window_days))
         poll_part, pool_new = _poll_part(conn, book, poll, fresh)
         weather = _weather_part(repo, conn, book, counties, now)
+        sales = (_stored_sales(repo, scope, now) if snapshot else None) or _sales_part(conn, kind, book, now)
     digest: dict[str, Any] = {
         "v": DIGEST_VERSION, "scope": scope, "as_of": iso(now), "book": {"leads": int(size)},
-        "poll": poll_part, "pool": {"new": pool_new}, "weather": weather, "leads": [],
+        "sales": sales, "poll": poll_part, "pool": {"new": pool_new}, "weather": weather, "leads": [],
     }
     changes = poll_part["new"] + poll_part["changed"] + poll_part["delisted"]
     digest["quiet"] = not (changes or weather["alerts"] or weather["storm_response_total"] or pool_new
-                           or (weather.get("recent_storm") or {}).get("leads"))
+                           or (weather.get("recent_storm") or {}).get("leads") or has_sales_news(sales))
     digest["leads"] = render(digest)[1]
     return digest
 
@@ -437,8 +608,18 @@ def digest_company_ids(digest: dict[str, Any]) -> set[str]:
     """Every company id the digest mentions (what an AI rewrite may cite)."""
     ids = {str(h.get("company_id")) for h in (digest.get("poll") or {}).get("highlights") or []}
     ids |= {str(s.get("company_id")) for s in (digest.get("weather") or {}).get("storm_response") or []}
+    ids |= {str(x.get("company_id")) for _, x in sales_leads(digest)}
     ids |= {str(l.get("id")) for l in digest.get("leads") or []}
     return {i for i in ids if i and i != "None"}
+
+
+def sales_leads(digest: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
+    """[(role, lead)] of every company the sales part names: followup, quiet, new, won."""
+    s = digest.get("sales") or {}
+    return ([("followup", x) for x in (s.get("followups") or {}).get("waiting") or []]
+            + [("quiet", x) for x in (s.get("quiet") or {}).get("leads") or []]
+            + [("new", x) for x in (s.get("new") or {}).get("leads") or []]
+            + [("won", x) for x in (s.get("moves") or {}).get("won_leads") or []])
 
 
 def valid_scope(scope: str) -> bool:

@@ -1,5 +1,5 @@
 // Small building blocks shared by the dashboard cards.
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Card, ErrorState, Skeleton } from '@/components/ui';
@@ -40,7 +40,7 @@ const SECTION_ACCENT = {
 export type SectionAccent = keyof typeof SECTION_ACCENT;
 
 export function Section({
-  title, description, action, children, className, bodyClassName, id, accent,
+  title, description, action, children, className, bodyClassName, id, accent, level = 2,
 }: {
   title: ReactNode;
   description?: ReactNode;
@@ -50,19 +50,45 @@ export function Section({
   bodyClassName?: string;
   id?: string;
   accent?: SectionAccent;
+  /** h2 on its own; h3 when the card sits under a page SectionHeading. */
+  level?: 2 | 3;
 }) {
   const headingId = id ? `${id}-title` : undefined;
+  const H = level === 3 ? 'h3' : 'h2';
   return (
     <Card className={cn('flex min-w-0 flex-col', accent && SECTION_ACCENT[accent], className)} aria-labelledby={headingId} role={id ? 'region' : undefined}>
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5 px-4 pt-4 sm:px-6 sm:pt-5">
         <div className="min-w-0">
-          <h2 id={headingId} className="text-[15px] leading-tight font-semibold text-fg">{title}</h2>
+          <H id={headingId} className="text-[15px] leading-tight font-semibold text-fg">{title}</H>
           {description && <p className="mt-1.5 text-sm text-muted">{description}</p>}
         </div>
         {action && <div className="flex shrink-0 items-center gap-2.5 text-sm">{action}</div>}
       </div>
       <div className={cn('flex-1 px-4 pt-3.5 pb-5 sm:px-6 sm:pt-4 sm:pb-6', bodyClassName)}>{children}</div>
     </Card>
+  );
+}
+
+/** The dashboard's one AI marker: a sparkle and a small "AI", in the accent colour. */
+export function AiMark({ className, label = 'AI' }: { className?: string; label?: string }) {
+  return (
+    <span className={cn('inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold tracking-wide text-accent', className)}>
+      <Sparkles className="size-3.5" aria-hidden />
+      {label}
+    </span>
+  );
+}
+
+/** A page-level section heading outside any card: a title and one plain line under it. */
+export function SectionHeading({ id, title, subtitle, action, className }: { id?: string; title: ReactNode; subtitle?: ReactNode; action?: ReactNode; className?: string }) {
+  return (
+    <div className={cn('mb-3.5 flex flex-wrap items-end justify-between gap-x-4 gap-y-1 lg:mb-4', className)}>
+      <div className="min-w-0">
+        <h2 id={id} className="text-lg leading-tight font-semibold tracking-tight text-fg">{title}</h2>
+        {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
+      </div>
+      {action && <div className="flex shrink-0 items-center gap-2.5 text-sm">{action}</div>}
+    </div>
   );
 }
 

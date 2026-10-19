@@ -422,7 +422,10 @@ describe('LeadProfilePage', () => {
   it('a new AI insight appears quietly: no toast, no highlight', async () => {
     const { qc, setProfile } = setup(makeProfile());
     await screen.findByRole('region', { name: 'Next steps' });
-    expect(screen.queryByRole('region', { name: 'AI insights' })).toBeNull();
+    // No insight yet: the card offers Generate and nothing else.
+    const empty = await screen.findByRole('region', { name: 'AI insights' });
+    expect(within(empty).getByRole('button', { name: 'Generate' })).toBeInTheDocument();
+    expect(within(empty).queryByText(INSIGHT.businessSummary)).toBeNull();
 
     setProfile(makeProfile({ insights: INSIGHT }));
     act(() => liveEvents.emit({
@@ -724,11 +727,162 @@ describe('LeadProfilePage sales', () => {
     expect(next.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it('hides AI insights when there is no summary or pitch', async () => {
-    setup(makeProfile({ insights: { ...INSIGHT, businessSummary: ' ', salesRecommendation: '' } }));
-    await screen.findByRole('region', { name: 'Next steps' });
-    expect(screen.queryByRole('region', { name: 'AI insights' })).toBeNull();
-    expect(screen.queryByText('AI insights')).toBeNull();
+  it('offers Generate when there is no insight, or one with no summary or pitch', async () => {
+    const { unmount } = setup(makeProfile({ insights: { ...INSIGHT, businessSummary: ' ', salesRecommendation: '' } }));
+    const region = await screen.findByRole('region', { name: 'AI insights' });
+    const ins = within(region);
+    expect(ins.getByRole('button', { name: 'Generate' })).toBeInTheDocument();
+    expect(ins.queryByRole('button', { name: 'Refresh' })).toBeNull();
+    expect(ins.queryByRole('button', { name: 'AI insights' })).toBeNull(); // nothing to collapse
+    expect(region).toHaveTextContent('No AI insights for this lead yet.');
+    expect(ins.queryByText('Talking points')).toBeNull();
+    unmount();
+    setup(makeProfile({ insights: null }));
+    expect(within(await screen.findByRole('region', { name: 'AI insights' })).getByRole('button', { name: 'Generate' })).toBeInTheDocument();
+  });
+
+  describe('Refresh', () => {
+    const REFRESH = `/api/leads/${LEAD_ID}/insights/refresh`;
+    const accepted = (requestedAt = new Date().toISOString()) => json({ jobId: 41, requestedAt, merged: false }, 202);
+    const fresh = (over: Partial<NonNullable<LeadProfile['insights']>> = {}) => ({
+      ...INSIGHT,
+      businessSummary: 'Homestead Roofing is adding a second crew and is tagged Bulk buyer.',
+      generatedAt: new Date(Date.now() + 1000).toISOString(),
+      ...over,
+    });
+
+    it('regenerates in place: Updating… with the text dimmed, then the new text and Updated; the card stays open', async () => {
+      const user = userEvent.setup();
+      const { calls, setProfile } = setup(makeProfile({ insights: INSIGHT }), {
+        handler: (c) => (c.method === 'POST' && c.path === REFRESH ? accepted() : undefined),
+      });
+      const region = await screen.findByRole('region', { name: 'AI insights' });
+      const ins = within(region);
+      const toggle = ins.getByRole('button', { name: 'AI insights' });
+      const body = document.getElementById(toggle.getAttribute('aria-controls')!)!;
+      const button = ins.getByRole('button', { name: 'Refresh' });
+      expect(button).toHaveAttribute('data-phase', 'idle');
+
+      await user.click(button);
+      // Its own click target: the card does not collapse.
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      expect(body).toBeVisible();
+      expect(button).toHaveTextContent('Updating…');
+      expect(button).toHaveAttribute('aria-disabled', 'true');
+      expect(button.querySelector('svg')).toHaveClass('animate-spin');
+      // The old text stays, dimmed, until the new insight is in.
+      expect(ins.getByText(INSIGHT.businessSummary)).toBeVisible();
+      expect(body).toHaveClass('opacity-60');
+      expect(region).toHaveAttribute('aria-busy', 'true');
+      await waitFor(() => expect(calls.filter((c) => c.path === REFRESH)).toHaveLength(1));
+      await user.click(button); // ignored while waiting
+      expect(calls.filter((c) => c.path === REFRESH)).toHaveLength(1);
+      expect(calls.find((c) => c.path === REFRESH)!.method).toBe('POST');
+
+      // The job writes a newer insight; the 3 s poll (or the live event) brings it in.
+      const before = calls.filter((c) => c.method === 'GET' && c.path === `/api/leads/${LEAD_ID}`).length;
+      setProfile(makeProfile({ insights: fresh() }));
+      expect(await ins.findByText(fresh().businessSummary, {}, { timeout: 4500 })).toBeVisible();
+      expect(calls.filter((c) => c.method === 'GET' && c.path === `/api/leads/${LEAD_ID}`).length).toBeGreaterThan(before);
+      expect(button).toHaveTextContent('Updated');
+      expect(button).not.toHaveAttribute('aria-disabled');
+      expect(body).not.toHaveClass('opacity-60');
+      expect(region).not.toHaveAttribute('aria-busy');
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.queryByText(/^Updated by/)).toBeNull(); // no toast for it
+      // Then it reads Refresh again.
+      await waitFor(() => expect(button).toHaveTextContent('Refresh'), { timeout: 3500 });
+      expect(button).toHaveAttribute('data-phase', 'idle');
+    }, 15_000);
+
+    it('a refused request (429) shows one neutral line, even on a collapsed card, and Refresh can be tried again', async () => {
+      const user = userEvent.setup();
+      let n = 0;
+      const { calls } = setup(makeProfile({ insights: INSIGHT }), {
+        handler: (c) => {
+          if (c.method !== 'POST' || c.path !== REFRESH) return undefined;
+          return ++n === 1
+            ? new Response(JSON.stringify({ error: 'rate_limited', retryAfterMs: 60_000 }), { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '60' } })
+            : json({ error: 'internal_error' }, 500);
+        },
+      });
+      const region = await screen.findByRole('region', { name: 'AI insights' });
+      const ins = within(region);
+      const toggle = ins.getByRole('button', { name: 'AI insights' });
+      await user.click(toggle);
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+      await user.click(ins.getByRole('button', { name: 'Refresh' }));
+      expect(await ins.findByRole('alert')).toHaveTextContent('Couldn’t refresh right now. Try again in a moment.');
+      expect(toggle).toHaveAttribute('aria-expanded', 'false'); // still collapsed
+      expect(region).not.toHaveTextContent(/quota|limit|3:00|resets|too many/i);
+      expect(screen.queryByText(/Too many requests/)).toBeNull(); // no toast either
+      const again = ins.getByRole('button', { name: 'Refresh' });
+      expect(again).toHaveAttribute('data-phase', 'error');
+
+      await user.click(again);
+      await waitFor(() => expect(calls.filter((c) => c.path === REFRESH)).toHaveLength(2));
+      expect(await ins.findByRole('alert')).toHaveTextContent('Couldn’t refresh right now. Try again in a moment.');
+    });
+
+    it('gives up after 90 s without a newer insight, with the same line', async () => {
+      const { calls } = setup(makeProfile({ insights: INSIGHT }), {
+        handler: (c) => (c.method === 'POST' && c.path === REFRESH ? accepted() : undefined),
+      });
+      const ins = within(await screen.findByRole('region', { name: 'AI insights' }));
+      vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
+      try {
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+        await user.click(ins.getByRole('button', { name: 'Refresh' }));
+        await waitFor(() => expect(calls.filter((c) => c.path === REFRESH)).toHaveLength(1));
+        await act(() => vi.advanceTimersByTimeAsync(60_000));
+        expect(ins.getByRole('button', { name: 'Updating…' })).toBeInTheDocument();
+        expect(ins.queryByRole('alert')).toBeNull();
+        await act(() => vi.advanceTimersByTimeAsync(31_000));
+        expect(ins.getByRole('alert')).toHaveTextContent('Couldn’t refresh right now. Try again in a moment.');
+        expect(ins.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
+        expect(ins.getByText(INSIGHT.businessSummary)).toBeVisible(); // the old text stays
+        // Polling stopped with it.
+        const polls = calls.filter((c) => c.method === 'GET' && c.path === `/api/leads/${LEAD_ID}`).length;
+        await act(() => vi.advanceTimersByTimeAsync(10_000));
+        expect(calls.filter((c) => c.method === 'GET' && c.path === `/api/leads/${LEAD_ID}`).length).toBe(polls);
+      } finally {
+        vi.useRealTimers();
+      }
+    }, 15_000);
+
+    it('a do-not-contact lead gets no Refresh or Generate (the worker never sends it to the model)', async () => {
+      const dnc = (insights: LeadProfile['insights']) => {
+        const p = makeProfile({ insights });
+        return { ...p, details: { ...p.details, accountStatus: 'do_not_contact' as const } };
+      };
+      const { unmount } = setup(dnc(INSIGHT));
+      const ins = within(await screen.findByRole('region', { name: 'AI insights' }));
+      expect(ins.getByText(INSIGHT.businessSummary)).toBeVisible();
+      expect(ins.queryByRole('button', { name: 'Refresh' })).toBeNull();
+      unmount();
+      setup(dnc(null));
+      await screen.findByRole('region', { name: 'Next steps' });
+      expect(screen.queryByRole('region', { name: 'AI insights' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Generate' })).toBeNull();
+    });
+
+    it('Generate on a lead without an insight: Generating…, then the card fills in and offers Refresh', async () => {
+      const user = userEvent.setup();
+      const { calls, setProfile } = setup(makeProfile(), {
+        handler: (c) => (c.method === 'POST' && c.path === REFRESH ? accepted() : undefined),
+      });
+      const region = await screen.findByRole('region', { name: 'AI insights' });
+      const ins = within(region);
+      await user.click(ins.getByRole('button', { name: 'Generate' }));
+      expect(ins.getByRole('button', { name: 'Generating…' })).toHaveAttribute('aria-disabled', 'true');
+      await waitFor(() => expect(calls.filter((c) => c.path === REFRESH)).toHaveLength(1));
+      setProfile(makeProfile({ insights: fresh() }));
+      const filled = within(await screen.findByRole('region', { name: 'AI insights' }));
+      expect(await filled.findByText(fresh().businessSummary, {}, { timeout: 4500 })).toBeVisible();
+      expect(filled.getByRole('button', { name: 'AI insights' })).toHaveAttribute('aria-expanded', 'true');
+      expect(filled.getByRole('heading', { name: 'Talking points' })).toBeInTheDocument();
+    }, 10_000);
   });
 
   it('renders an older insight body (one-sentence pitch, no talking points or facts) without crashing', async () => {
