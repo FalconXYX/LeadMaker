@@ -34,6 +34,47 @@ def slug(text: str) -> str:
     return s or 'section'
 
 
+LIST_ITEM = re.compile(r'^( *)([-*+]|\d+[.)])\s+')
+
+
+def normalize_lists(text: str) -> str:
+    """Python-Markdown wants 4-space nesting and a blank line before a list. The docs nest by 2-3 spaces and start
+    lists right under a paragraph, so re-indent each list level (and its continuation lines) to 4 spaces."""
+    out, stack, fence, prev_blank = [], [], False, True
+    for line in text.split('\n'):
+        if line.lstrip().startswith('```'):
+            fence = not fence
+            out.append(line)
+            continue
+        if fence:
+            out.append(line)
+            continue
+        m = LIST_ITEM.match(line)
+        if m:
+            n = len(m.group(1))
+            if not stack:
+                if out and out[-1].strip():
+                    out.append('')
+                stack = [n]
+            else:
+                while stack and n < stack[-1]:
+                    stack.pop()
+                if not stack or n > stack[-1]:
+                    stack.append(n)
+            out.append(' ' * 4 * (len(stack) - 1) + line[n:])
+        elif not line.strip():
+            out.append(line)
+        elif stack and line.startswith(' '):
+            n = len(line) - len(line.lstrip(' '))
+            out.append(' ' * 4 * sum(1 for s in stack if s < n) + line.lstrip(' '))
+        else:
+            if prev_blank:
+                stack = []
+            out.append(line)
+        prev_blank = not line.strip()
+    return '\n'.join(out)
+
+
 def convert(doc_id: str, text: str):
     diagrams = []
 
@@ -44,7 +85,7 @@ def convert(doc_id: str, text: str):
     text = IFRAME.sub(lambda m: stash(decode_pako(m.group(1))), text)
     text = FENCE.sub(lambda m: stash(m.group(1)), text)
 
-    body = markdown.markdown(text, extensions=['tables', 'fenced_code', 'sane_lists'])
+    body = markdown.markdown(normalize_lists(text), extensions=['tables', 'fenced_code', 'sane_lists'])
 
     for i, code in enumerate(diagrams):
         block = f'<div class="diagram"><pre class="mermaid">{html.escape(code)}</pre></div>'

@@ -308,7 +308,7 @@ Every variable is optional. `docker compose` reads `.env` for substitution, and 
 | `ASSISTANT_PROVIDER_TIMEOUT_MS`, `ASSISTANT_REQUEST_TIMEOUT_MS`, `ASSISTANT_TIMEOUT_MS`, `ASSISTANT_GEMINI_THINKING_LEVEL` | Assistant timeouts (compose: 70 s per model call, 80 s per request; the gateway's limit 90 s) and the Gemini thinking level (empty = `low`). |
 | `LEADMAKER_DATABASE_URL` | The pipeline's database on the host, in SQLAlchemy form (`postgresql+psycopg://leadmaker:leadmaker@localhost:55432/leadmaker`). The services' `postgres://` `DATABASE_URL` is ignored by the pipeline. |
 | `DATABASE_URL`, `DATABASE_REPLICA_URL`, `REDIS_URL` | Node services and Prisma on the host; the query service reads from the replica when set. |
-| `POSTGRES_HOST_PORT`, `REDIS_HOST_PORT`, `GATEWAY_HOST_PORT`, `WEB_HOST_PORT` | Host ports (55432, 56379, 8080, 3000). |
+| `POSTGRES_HOST_PORT`, `REPLICA_HOST_PORT`, `REDIS_HOST_PORT`, `GATEWAY_HOST_PORT`, `WEB_HOST_PORT` | Host ports (55432, 55433, 56379, 8080, 3000). |
 | `GATEWAY_BIND`, `WEB_BIND` | Host interface (127.0.0.1). `0.0.0.0` shares the app on your LAN, and with demo mode on, anyone who can reach it can sign in. |
 | `DEMO_MODE`, `JWT_SECRET`, `JWT_TTL`, `INTERNAL_TOKEN` | Demo sign-in (`POST /auth/dev-login`; never enable it in production), token signing, and the service-to-service token. Use long random values outside local demos. |
 | `VITE_DEMO_MODE`, `VITE_DEFAULT_DEMO_USER`, `VITE_TILE_URL`, `VITE_TILE_ATTRIBUTION` | Web build: demo mode (on), who it signs in as (`rep1@demo.local`), and the map tiles. |
@@ -341,13 +341,13 @@ Every variable is optional. `docker compose` reads `.env` for substitution, and 
 - **Out of disk during a build.** Build the images one at a time, then start the stack without rebuilding:
 
   ```bash
-  for s in gateway query crm-write relay notifier assistant worker web; do docker compose --profile app build "$s"; done
+  for s in import gateway query crm-write relay notifier assistant worker web; do docker compose --profile app build "$s"; done
   SKIP_BUILD=1 npm run stack:up
   ```
 
   `docker system df` shows where the space went. `docker builder prune` frees the build cache, but it also clears caches other projects use, so run it at your own discretion.
 - **Services unhealthy after Docker Desktop restarts.** Postgres and Redis have no restart policy, so start them, then the rest: `docker compose up -d postgres redis && SKIP_BUILD=1 npm run stack:up`.
-- **Port already in use.** Set `WEB_HOST_PORT`, `GATEWAY_HOST_PORT`, `POSTGRES_HOST_PORT` or `REDIS_HOST_PORT` in `.env`. If you move Postgres or Redis, update `DATABASE_URL`, `LEADMAKER_DATABASE_URL` and `REDIS_URL` too. The test scripts assume 55432 and 56379.
+- **Port already in use.** Set `WEB_HOST_PORT`, `GATEWAY_HOST_PORT`, `POSTGRES_HOST_PORT`, `REPLICA_HOST_PORT` or `REDIS_HOST_PORT` in `.env`. If you move Postgres or Redis, update `DATABASE_URL`, `LEADMAKER_DATABASE_URL` and `REDIS_URL` too. The test scripts assume 55432 and 56379.
 - **Import refuses `data/leadmaker.db` because its `-wal` has frames.** Stop whatever has the file open, then run `sqlite3 data/leadmaker.db 'PRAGMA wal_checkpoint(TRUNCATE)'`.
 - **The app is empty.** The snapshot loads only into an empty database (`docker compose logs restore` says why it skipped), and if `data/leadmaker.db` is also missing, the import is skipped. Retrieve leads with `docker compose exec worker leadmaker jobs enqueue pipeline --zip 10013 --radius 25`, then run `npm run db:seed` to allocate them to the demo reps.
 - **The AI shows as offline.** There is no provider key in `.env`, or the day's quota is spent. `docker compose logs assistant worker` says which.
@@ -374,5 +374,4 @@ scripts/           stack, database and seed scripts; Dockerfiles; the perf harne
 tests/             pipeline tests (pytest) and the end-to-end stack suite
 data/              the scraped SQLite source, caches and eval reports (git-ignored)
 docs/              design notes
-research/          source and domain research
 ```

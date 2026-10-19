@@ -237,12 +237,14 @@ td:first-child { font-weight: 500; }
 <h3 id="requirements-storage-database-choices">Storage &amp; Database Choices</h3>
 <ul>
 <li><strong>PostgreSQL + JSONB:</strong> Use Postgres for relational integrity while leveraging <code>JSONB</code> columns for flexible, document-style data (allowing reps to add custom information slots dynamically without schema migrations; rep-created custom tags live in their own relational tables).</li>
-<li><strong>Microservices:</strong> Expose data and business logic through decoupled services, each owning one area:</li>
+<li><strong>Microservices:</strong> Expose data and business logic through decoupled services, each owning one area:<ul>
 <li><strong>API Gateway &amp; Auth:</strong> authentication, rep vs. manager roles, and per-user rate limits.</li>
 <li><strong>Core CRM Write Service:</strong> rep notes, checked/serviced status, manual overrides, custom tags, and lead allocations.</li>
 <li><strong>Query &amp; Filter Service:</strong> lead lists, filters, and profiles through the cache and read replicas, applying the visibility rule.</li>
 <li><strong>On-Demand AI Service:</strong> lead Q&amp;A and natural-language filtering.</li>
 <li><strong>Ingestion &amp; AI Pipeline:</strong> the Python workers for scraping, enrichment, tagging, and batch AI insights.</li>
+</ul>
+</li>
 <li><strong>Event Bus:</strong> Services communicate through events (e.g., "pipeline updated lead", "rep edited field"), which also drive cache invalidation and dashboard updates.</li>
 <li><strong>Languages:</strong> User-facing services are written in TypeScript; the ingestion pipeline is written in Python.</li>
 </ul>
@@ -292,13 +294,17 @@ td:first-child { font-weight: 500; }
 </ul>
 <h3 id="requirements-generated-outputs-insights-scoring-recommendations">Generated Outputs (Insights, Scoring, Recommendations)</h3>
 <ul>
-<li><strong>Pre-Generated (Pipeline Phase):</strong></li>
+<li><strong>Pre-Generated (Pipeline Phase):</strong><ul>
 <li><strong>Structured Extraction &amp; Tagging:</strong> Parses unstructured website text to identify target decision-makers, roof material specialties, and custom user-requested fields.</li>
 <li><strong>Lead Summaries &amp; Pitch Recommendations:</strong> Generates a concise business overview and a recommended sales angle (e.g., pitching bulk shingles to a high-volume GAF Master Elite roofer, or emergency tarps/repair stock to a storm-restoration contractor); weather timing comes from the separate weather timing layer.</li>
 <li><strong>Territory Briefing:</strong> Summarizes major changes from the latest data poll and weather-driven opportunities for the rep's dashboard.</li>
-<li><strong>On-Demand (Interactive Chatbot Phase):</strong></li>
+</ul>
+</li>
+<li><strong>On-Demand (Interactive Chatbot Phase):</strong><ul>
 <li><strong>Lead Q&amp;A:</strong> Answers specific rep questions about an individual contractor using their stored profile, scraped text, and team notes as context.</li>
 <li><strong>Natural Language Filtering (Tool Calling):</strong> Translates conversational requests (e.g., <em>"Show me Master Elite contractors doing metal roofs near 10013 that I haven't checked yet"</em>) into structured filter state updates that directly control the UI list view.</li>
+</ul>
+</li>
 </ul>
 <h3 id="requirements-execution-cost-scale-strategy">Execution &amp; Cost/Scale Strategy</h3>
 <ul>
@@ -416,20 +422,24 @@ td:first-child { font-weight: 500; }
 <hr />
 <h2 id="system-4-data-pipeline-ingestion-tagging">4. Data Pipeline (Ingestion &amp; Tagging)</h2>
 <ol>
-<li><strong>Triggers:</strong> Runs on a recurring schedule (cron) or on-demand when a rep/manager requests a territory refresh (or searches a new area) or adds a new custom extraction field. Duplicate requests for the same area are merged into one job, and requests are rate-limited per user. Jobs go through a database-backed job queue (Postgres with <code>SKIP LOCKED</code> claiming; today's offline pipeline also runs it on SQLite until the Postgres move) with retries and backoff, a dead-letter state and duplicate-job rejection. Per-host rate limits are enforced in each worker's HTTP client; in production they are shared across workers through a Redis token bucket.</li>
+<li><strong>Triggers:</strong> Runs on a recurring schedule (cron) or on-demand when a rep/manager requests a territory refresh (or searches a new area) or adds a new custom extraction field. Duplicate requests for the same area are merged into one job, and requests are rate-limited per user. Jobs go through a database-backed job queue (Postgres with <code>SKIP LOCKED</code> claiming) with retries and backoff, a dead-letter state and duplicate-job rejection. Per-host rate limits are enforced in each worker's HTTP client; in production they are shared across workers through a Redis token bucket.</li>
 <li><strong>Scrapers:</strong> Pulls base attributes from the GAF directory, enriches from public registries (NY corporations, NYC contractor licences, USDOT/FMCSA), finds decision-makers through Better Business Bureau profiles (owner/manager names and titles), and crawls contractor websites for material specialties (metal, shingle, flat/TPO), work types (new construction vs. storm repair), and target contacts. Hunter.io email discovery is parked for later.</li>
 <li><strong>Environmental Signals:</strong> Pulls regional weather forecasts/storm alerts and local roofing news per county. These feed a separate, cheap timing layer and never trigger per-lead LLM calls (see §7).</li>
-<li><strong>Delta Check:</strong> Within each source's refresh window (GAF profiles 7 days, enrichments 30 days), a stored result is reused unless its <code>input_hash</code> changed; after the window it is refreshed, and errors are always retried. <code>content_hash</code> flags which GAF listings changed, for change tracking and the audit log. LLM insights re-run only when their <code>input_hash</code> changes. A run that reads fewer results than expected is marked partial and doesn't mark leads as delisted or changed. All pipeline outputs write strictly to the <strong>Primary Write DB</strong>.
-   - When a material field changes, the Delta Engine sets <code>last_material_change_at</code>. At the end of a complete run, it sets <code>updated_in_last_poll</code> for the leads that run covered (true if new or changed).
-   - When a company is first created, its <code>county_fips</code> is set from its location (PostGIS point-in-polygon against Census county boundaries).</li>
+<li><strong>Delta Check:</strong> Within each source's refresh window (GAF profiles 7 days, enrichments 30 days), a stored result is reused unless its <code>input_hash</code> changed; after the window it is refreshed, and errors are always retried. <code>content_hash</code> flags which GAF listings changed, for change tracking and the audit log. LLM insights re-run only when their <code>input_hash</code> changes. A run that reads fewer results than expected is marked partial and doesn't mark leads as delisted or changed. All pipeline outputs write strictly to the <strong>Primary Write DB</strong>.<ul>
+<li>When a material field changes, the Delta Engine sets <code>last_material_change_at</code>. At the end of a complete run, it sets <code>updated_in_last_poll</code> for the leads that run covered (true if new or changed).</li>
+<li>When a company is first created, its <code>county_fips</code> is set from its location (PostGIS point-in-polygon against Census county boundaries).</li>
+</ul>
+</li>
 <li><strong>Tagging:</strong> A deterministic rules engine turns raw fields into system tags (each with a reason and source), a segment (strategic / growth / emerging / long tail) and a 0–100 priority score.</li>
 </ol>
 <hr />
 <h2 id="system-5-backend-database-architecture">5. Backend &amp; Database Architecture</h2>
 <ul>
-<li><strong>CQRS / Read-Write Split:</strong></li>
+<li><strong>CQRS / Read-Write Split:</strong><ul>
 <li><strong>PostgreSQL Primary (Write Store):</strong> Handles all pipeline ingestion writes, LLM insight writes, and rep mutations (notes, status changes, manual overrides, allocations).</li>
 <li><strong>PostgreSQL Read Replicas (Read-Only Store):</strong> Asynchronously replicates from the Primary DB (materialized views are refreshed on the Primary and replicate like any table). All dashboard loads, territory filtering, and chatbot context lookups hit the Read Replicas to isolate read traffic from write load. After a write, that user's reads go to the Primary for a few seconds so their own edit never seems to disappear.</li>
+</ul>
+</li>
 <li><strong>PostgreSQL + JSONB + PostGIS:</strong> Stores core relational data alongside <code>JSONB</code> columns for scraped attributes, system tags and custom data slots (system tags and custom data slots GIN-indexed), so new fields need no schema migrations. <code>PostGIS</code> handles radius searches. Geographic partitioning is deferred until data volumes require it.</li>
 <li><strong>Redis:</strong> Caches hot lead profiles, common filter queries and KPI counters, and holds per-user rate-limit counters. Entries are invalidated by events whenever the pipeline or a rep changes a lead. Rep-specific cache keys include the user ID so one rep's results are never served to another.</li>
 <li><strong>Event Bus:</strong> Every write inserts an event into an <code>outbox_events</code> table in the same transaction; a relay publishes it to Redis Streams. Services subscribe to the events they need (e.g., the AI service consumes <code>lead.updated</code>), and the same events drive cache invalidation and live UI updates. Consumers are idempotent. Production can swap in Kafka or SNS+SQS.</li>
@@ -701,37 +711,45 @@ CREATE UNIQUE INDEX ON team_dashboard_kpis (assigned_rep_id);  -- required for C
 <hr />
 <h2 id="system-7-ai-engine">7. AI Engine</h2>
 <ul>
-<li><strong>Batch Pre-Generation (Pipeline):</strong></li>
+<li><strong>Batch Pre-Generation (Pipeline):</strong><ul>
 <li>Extracts structured tags and custom slot values from unstructured website text (custom slots are experimental and will be dropped if extraction quality is poor). LLM-extracted slot values are stored under <code>scraped_attributes</code>; a rep's correction goes through <code>field_overrides</code>.</li>
 <li>Generates a business summary and sales pitch from the stored company facts, rep notes and custom fields. These are regenerated only when <code>input_hash</code> (those inputs + prompt version + model) changes.</li>
-<li><strong>Weather Timing Layer (separate and cheap):</strong></li>
+</ul>
+</li>
+<li><strong>Weather Timing Layer (separate and cheap):</strong><ul>
 <li>Per county, rules combine active alerts and storm history with each lead's specialties into a timing badge and a one-line reason (e.g., pitching emergency repair stock to storm-restoration roofers before a storm, while flagging weather delays for new-build contractors).</li>
 <li>Computed on a schedule per county and joined at read time, so weather changes never regenerate summaries.</li>
+</ul>
+</li>
 <li><strong>Model Providers:</strong> One model interface over multiple providers (e.g., Anthropic Claude, Google Gemini), selected by configuration and API key, so the batch pipeline and the assistant can switch models without code changes.</li>
-<li><strong>On-Demand Assistant (UI):</strong></li>
+<li><strong>On-Demand Assistant (UI):</strong><ul>
 <li><strong>Profile Q&amp;A:</strong> Answers rep questions by reading only the active lead's profile and notes through the Query service, which rejects leads the user can't view.</li>
 <li><strong>UI Filter Control:</strong> Uses LLM tool calling (<code>applyListFilters</code>) to convert natural language requests into a <code>LeadFilter</code>. The Query service applies the user's visibility rule, so the assistant can never show leads the user can't see.</li>
+</ul>
+</li>
 </ul>
 <hr />
 <h2 id="system-8-deployment">8. Deployment</h2>
 <ul>
 <li><strong>Production:</strong> Built to be hosted. Every service and worker is a container; Postgres (primary + replicas) and Redis are managed services; secrets live in a secrets manager.</li>
 <li><strong>Security (production):</strong> Single sign-on via OIDC, with Postgres row-level security as defence in depth behind the visibility rule.</li>
-<li><strong>Local:</strong> <code>docker compose up</code> runs Postgres, Redis, the services, the web app and the pipeline worker, seeded from <code>data/leadmaker.db</code>.</li>
-<li><strong>Prototype swaps (approved):</strong> BBB profile scraping (production: BBB API); Google Places keyless map link (production: Places API key); a single Postgres primary (production: primary + replicas + PgBouncer); Gemini API free tier for all AI features (production: Anthropic Claude, Haiku 5.5 for batch work, via the same model interface). Any other paid-to-free swap needs approval.</li>
+<li><strong>Local:</strong> <code>npm run stack:up</code> (or <code>docker compose --profile app up</code>) runs Postgres with a read replica, Redis, the services, the web app and the pipeline worker, loaded from the demo snapshot in <code>db/snapshot/</code> (or from <code>data/leadmaker.db</code> when there is no snapshot).</li>
+<li><strong>Prototype swaps (approved):</strong> BBB profile scraping (production: BBB API); Google Places API on its free monthly quota, with a keyless map link when no key is set; one Postgres primary and one local read replica (production: primary + more replicas + PgBouncer); Gemini API free tier for all AI features (production: Anthropic Claude, Haiku 5.5 for batch work, via the same model interface). Any other paid-to-free swap needs approval.</li>
 </ul>
 <hr />
 <h2 id="system-9-open-questions">9. Open Questions</h2>
 <ul>
 <li>Which local news source to use.</li>
 </ul></article><article class="doc" id="performance" data-label="Performance"><div class="doc-meta">docs/Performance.md</div><h1 id="performance-performance-and-numbers">Performance and numbers</h1>
-<p><strong>Highlights</strong>
-- At 100k leads and about 200 req/s, search p95 dropped from about 9.6 s to 199-301 ms after tuning (target 300 ms).
-- 2,885 automated tests pass, including 43 end-to-end scenarios on a stack built from empty volumes.
-- The AI eval set (102 cases) passes offline, and 24 of 25 live cases pass on Gemini 3.5 Flash-Lite.
-- Assistant answers take 1.4-2.9 s, down from 12-47 s before the model switch.</p>
+<p><strong>Highlights</strong></p>
+<ul>
+<li>At 100k leads and about 200 req/s, search p95 dropped from about 9.6 s to 199-301 ms after tuning (target 300 ms).</li>
+<li>2,836 automated tests pass, including 43 end-to-end scenarios on a stack built from empty volumes.</li>
+<li>The AI eval set (102 cases) passes offline, and 24 of 25 live cases pass on Gemini 3.5 Flash-Lite.</li>
+<li>Assistant answers take 1.4-2.9 s, down from 12-47 s before the model switch.</li>
+</ul>
 <h2 id="performance-load-test-at-100k-leads">Load test at 100k leads</h2>
-<p>The tests ran on one laptop in Docker: 8 vCPUs, default Postgres memory settings, and a single Postgres primary. The read replica was added later and isn't in these numbers. <code>scripts/perf/synth.mjs</code> fills a separate database with 100,000 synthetic companies and 2,200 users. <code>scripts/perf/matrix.sh</code> then runs 500 virtual users with a 2.5 s think time, about 200 req/s, which is the design load. Values are p95 in milliseconds. The raw runs are in <code>scripts/perf/results/</code>.</p>
+<p>The tests ran on one laptop in Docker: 8 vCPUs, default Postgres memory settings, and a single Postgres primary. The read replica was added later and isn't in these numbers. <code>scripts/perf/synth.mjs</code> fills a separate database with 100,000 synthetic companies and 2,200 users. <code>scripts/perf/matrix.sh</code> then runs 500 virtual users with a 2.5 s think time, about 200 req/s, which is the design load. Values are p95 in milliseconds. The run summary and query plans are in <code>scripts/perf/results/</code>.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -773,10 +791,12 @@ CREATE UNIQUE INDEX ON team_dashboard_kpis (assigned_rep_id);  -- required for C
 </tr>
 </tbody>
 </table></div>
-<p>Three changes did most of the work:
-- <strong>Indexed generated columns</strong> for tags and founding year. Single-user search queries went from up to 1,074 ms to at most 34 ms.
-- <strong>A search limiter.</strong> 8 searches run at once, up to 32 more wait at most 1 s, and anything beyond that gets a fast "try again" instead of piling up.
-- <strong>List caches invalidated only for the scopes a write touches.</strong></p>
+<p>Three changes did most of the work:</p>
+<ul>
+<li><strong>Indexed generated columns</strong> for tags and founding year. Single-user search queries went from up to 1,074 ms to at most 34 ms.</li>
+<li><strong>A search limiter.</strong> 8 searches run at once, up to 32 more wait at most 1 s, and anything beyond that gets a fast "try again" instead of piling up.</li>
+<li><strong>List caches invalidated only for the scopes a write touches.</strong></li>
+</ul>
 <p>Runs vary on a shared laptop, and write-heavy runs sit right at the 300 ms target. One known slow spot remains: a manager's facet counts across all 100k leads take about 8 s and time out. The 424-lead demo isn't affected.</p>
 <h2 id="performance-tests-ai-and-data">Tests, AI and data</h2>
 <div class="table-wrap"><table>
@@ -789,7 +809,7 @@ CREATE UNIQUE INDEX ON team_dashboard_kpis (assigned_rep_id);  -- required for C
 <tbody>
 <tr>
 <td>Automated tests</td>
-<td>2,885 passed, 0 failed: services, pipeline, web, evals and 43 end-to-end scenarios</td>
+<td>2,836 passed, 0 failed: services, pipeline, web, evals and 43 end-to-end scenarios</td>
 </tr>
 <tr>
 <td>AI evals, offline (fake model)</td>
@@ -813,7 +833,7 @@ CREATE UNIQUE INDEX ON team_dashboard_kpis (assigned_rep_id);  -- required for C
 </tr>
 <tr>
 <td>Demo data</td>
-<td>424 leads, 419 with AI insights, 119 weather and news signals, 2.8 MB database snapshot</td>
+<td>424 leads, 418 with AI insights, 119 weather and news signals, 3 MB database snapshot</td>
 </tr>
 </tbody>
 </table></div>

@@ -64,7 +64,7 @@ Final run on 2026-10-18: 631 TypeScript tests, 890 offline + 15 Postgres Python 
 | Refresh → tags + county | Built | A rep's refresh also tags the new leads and assigns counties (ZIP-based) in the same job |
 | In-app notifications | Built | Notifier service: allocated, reassigned, source changed, manager note, refresh done, new leads in the pool, storm alerts; merged repeats, preferences, live over SSE |
 | Push and email notifications | Designed | Needs the web app's service worker and an email provider |
-| Performance at 100k leads (synthetic) | Built | 500 users read-only: search p95 199–240 ms, profile 68 ms, KPIs 72 ms at 200 req/s (all targets met). With 5% writes: search p95 260–301 ms (target 300; 2 of 3 runs pass on a loaded laptop), profile 173 ms. Harness and results in `scripts/perf/` |
+| Performance at 100k leads (synthetic) | Built | 500 users read-only: search p95 199–301 ms, profile 82–109 ms, KPIs 82–120 ms at about 200 req/s. With 5% writes: search p95 260–326 ms (target 300; at the limit on a loaded laptop), profile 99–141 ms. Details in `docs/Performance.md`. Harness and results in `scripts/perf/` |
 | Search pools, admission control, timeouts | Built | Separate search pool with a concurrency limit and 2 s statement timeout, so profiles and KPIs stay fast under search load |
 | Read replica | Built | A local streaming hot standby (`postgres-replica`); the query service reads from it and routes a user's reads to the primary for 5 s after their own write |
 | More replicas, PgBouncer | Designed | Statement timeouts become per-role settings behind PgBouncer |
@@ -72,7 +72,7 @@ Final run on 2026-10-18: 631 TypeScript tests, 890 offline + 15 Postgres Python 
 | Saved views and per-user UI preferences | Built | `/api/views` (managers can share a view with the team) and `/api/preferences` with optimistic locking |
 | Bulk endpoints and limits | Built | Bulk tag attach, bulk unassign, tag rename/delete, facet counts, map points; limits served by `/api/config` |
 | Geographic partitioning | Later | |
-| SQLite DB in the repo as the demo seed | Later | `data/`, `research/` and `tests/` stay out of git until they settle down |
+| SQLite DB in the repo as the demo seed | Later | `data/` and `research/` stay out of git; the demo ships as a Postgres snapshot in `db/snapshot/` |
 
 ## Section 3: Frontend
 

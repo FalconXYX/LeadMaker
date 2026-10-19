@@ -2,13 +2,13 @@
 
 **Highlights**
 - At 100k leads and about 200 req/s, search p95 dropped from about 9.6 s to 199-301 ms after tuning (target 300 ms).
-- 2,885 automated tests pass, including 43 end-to-end scenarios on a stack built from empty volumes.
+- 2,836 automated tests pass, including 43 end-to-end scenarios on a stack built from empty volumes.
 - The AI eval set (102 cases) passes offline, and 24 of 25 live cases pass on Gemini 3.5 Flash-Lite.
 - Assistant answers take 1.4-2.9 s, down from 12-47 s before the model switch.
 
 ## Load test at 100k leads
 
-The tests ran on one laptop in Docker: 8 vCPUs, default Postgres memory settings, and a single Postgres primary. The read replica was added later and isn't in these numbers. `scripts/perf/synth.mjs` fills a separate database with 100,000 synthetic companies and 2,200 users. `scripts/perf/matrix.sh` then runs 500 virtual users with a 2.5 s think time, about 200 req/s, which is the design load. Values are p95 in milliseconds. The raw runs are in `scripts/perf/results/`.
+The tests ran on one laptop in Docker: 8 vCPUs, default Postgres memory settings, and a single Postgres primary. The read replica was added later and isn't in these numbers. `scripts/perf/synth.mjs` fills a separate database with 100,000 synthetic companies and 2,200 users. `scripts/perf/matrix.sh` then runs 500 virtual users with a 2.5 s think time, about 200 req/s, which is the design load. Values are p95 in milliseconds. The run summary and query plans are in `scripts/perf/results/`.
 
 | Run | Search | Profile | KPIs | req/s |
 |---|---|---|---|---|
@@ -28,12 +28,12 @@ Runs vary on a shared laptop, and write-heavy runs sit right at the 300 ms targe
 
 | Area | Result |
 |---|---|
-| Automated tests | 2,885 passed, 0 failed: services, pipeline, web, evals and 43 end-to-end scenarios |
+| Automated tests | 2,836 passed, 0 failed: services, pipeline, web, evals and 43 end-to-end scenarios |
 | AI evals, offline (fake model) | 102 of 102: filters 53/53, lead Q&A 29/29, insights 20/20 |
 | AI evals, live (Gemini 3.5 Flash-Lite) | 24 of 25 (filters 8/8, Q&A 6/6, insights 10/11) |
 | Assistant response time | 1.4-2.9 s |
 | Per-lead AI Refresh | 3.5-23 s from click to updated text |
 | AI guardrails | Unsupported "distributor promise" claims fell from 42% of insights to 12% after the guard was added; the remainder are backed by rep notes |
-| Demo data | 424 leads, 419 with AI insights, 119 weather and news signals, 2.8 MB database snapshot |
+| Demo data | 424 leads, 418 with AI insights, 119 weather and news signals, 3 MB database snapshot |
 
 All numbers are local measurements: one laptop, shared CPU, and short 30-60 s load runs. AI calls use Gemini's free tier, so the batch insights for all leads are spread across nightly runs rather than generated at once.
