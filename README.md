@@ -112,7 +112,7 @@ leadmaker tag --zip 30301 --radius 15                    #   pass the area you s
 leadmaker signals                                        # county weather alerts, storm history, local news
 ```
 
-**Without the CLI**: any signed-in user can queue a scrape of an area through the API, limited to 20 a user per hour. The web app has no screen for this yet.
+**Without the CLI**: any signed-in user can queue a scrape of an area through the API, limited to 20 a user per hour. In the web app, the manager's **Admin** page does the same: add an area under lead sourcing, then press **Run now**.
 
 ```bash
 TOKEN=$(curl -s localhost:8080/auth/dev-login -H 'content-type: application/json' -d '{"email":"manager@demo.local"}' \

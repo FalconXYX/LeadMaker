@@ -2,7 +2,7 @@
 
 ## 1. Overview & Initial Approach
 
-Upon seeing the challenge, I understood it as a customer relationship management (CRM) tool for generating leads for a roofing supply distribution business, which meant there would be four sections involved: the data scraping and collection, the storing, processing, and retrieval of the data, the front-end user layer, and then the AI layer.
+When I saw the challenge, I understood it as a customer relationship management (CRM) tool for generating leads for a roofing supply distribution business, which meant there would be four sections involved: the data scraping and collection, the storing, processing, and retrieval of the data, the front-end user layer, and then the AI layer.
 
 I started by creating the initial requirements in `docs/OpeningRequirements.MD`, and as I started asking questions and doing some research, I refined that into `docs/SystemDesign.md`.
 
@@ -10,7 +10,7 @@ I started by creating the initial requirements in `docs/OpeningRequirements.MD`,
 
 ### Data Scraping & Collection
 
-My opening requirements led me to a system that scrapes data off of GAF and combines it with other sources. Rather than running a live scrape every time a user searches a location, I chose to make it run primarily on a schedule (with an option for on-demand runs) and only update what has changed rather than redoing everything from scratch. If new parameters are added, only the things that rely on those parameters get updated, which saves a lot of compute and avoids rate limits.
+My opening requirements led me to a system that scrapes data off of GAF and combines it with other sources.I chose to make it run primarily on a schedule (with an option for on-demand runs) and only update what has changed rather than redoing everything from scratch. If new parameters are added, only the things that rely on those parameters get updated, which saves a lot of compute and avoids rate limits.
 
 Because GAF only gives basic info like certifications and ratings, I also chose to pull from contractor websites, Google Maps, the Better Business Bureau, and weather data sources. Depending on how big a company is, we want different contacts: for a smaller shop we just want the boss or owner, while for a bigger company we want an office or purchasing manager. Adding weather data also accounts for demand fluctuations. If there is a big storm, new-build roofing companies might be in a lull, whereas emergency and repair roofing companies will be booming and needing to order supplies beforehand.
 
@@ -24,7 +24,7 @@ I then created a series of TypeScript services to read, write, and filter the da
 
 ### Front-End User Layer
 
-I built a React frontend for the user to interface with the platform. I have previously worked with CRMs peripherally, so I knew generally how they worked. After doing a bit of research, I chose to emulate the layout and workflow of existing CRMs because that is what sales reps are already used to, so it integrates into their workflow much better.
+I built a React frontend for the user to interface with the platform. I have previously worked with CRMs peripherally, so I knew generally how they worked. After doing a bit of research, I chose to emulate the layout and workflow of existing CRMs because that is what sales reps are already used to, so it integrates into their workflow more cleanly.
 
 It includes role-based views where a manager can see every lead and the whole team's activity, while an individual rep sees the leads allocated to them plus the unallocated pool, and can only edit their own. Reps start on a dashboard with an AI briefing of their territory, today's calls with a suggested pitch for each, their follow-ups (as a list or a calendar), new leads worth a call, and where their pipeline stands, with the lead map and local weather further down. In the list and profile views, I also made sure reps can create and toggle their own custom tags because they will eventually understand their business needs better than any developer, and I didn't want to overwhelm them with a million default tags.
 
