@@ -1,0 +1,67 @@
+{
+  "company_id": "22222222-2222-4222-8222-000000000009",
+  "business_name": "Tri-County Roofing Inc",
+  "facts": [
+    {
+      "id": "F1",
+      "key": "business_name",
+      "text": "business_name: Tri-County Roofing Inc"
+    },
+    {
+      "id": "F2",
+      "key": "location",
+      "text": "location: Union, NJ 07083 (Union County)"
+    },
+    {
+      "id": "F3",
+      "key": "gaf_tier",
+      "text": "gaf_tier: GAF Certified"
+    },
+    {
+      "id": "F4",
+      "key": "rating",
+      "text": "rating: 4.4 stars from 61 reviews"
+    },
+    {
+      "id": "F5",
+      "key": "in_business_since",
+      "text": "in_business_since: 2006"
+    },
+    {
+      "id": "F6",
+      "key": "employees",
+      "text": "employees: 20-49"
+    },
+    {
+      "id": "F7",
+      "key": "size",
+      "text": "size: medium"
+    },
+    {
+      "id": "F8",
+      "key": "services",
+      "text": "services: Roof replacement"
+    },
+    {
+      "id": "F9",
+      "key": "target_contact",
+      "text": "target_contact: Owner — Dana Whitfield"
+    },
+    {
+      "id": "F10",
+      "key": "contact",
+      "text": "contact: Dana Whitfield, Owner"
+    },
+    {
+      "id": "F11",
+      "key": "contact",
+      "text": "contact: Omar Haddad, Purchasing Manager"
+    },
+    {
+      "id": "F12",
+      "key": "account_status",
+      "text": "account_status: existing customer"
+    }
+  ],
+  "website_excerpt": ""
+}

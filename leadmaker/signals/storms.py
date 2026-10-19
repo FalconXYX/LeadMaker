@@ -17,7 +17,12 @@ Kept: wind >= 50 kt (58 mph) or reported damage, hail, tornadoes, tropical syste
 floods (flash / river / coastal) and winter storms (snow, blizzard, ice). NY/NJ is a
 wind market (research: 3 hail vs 265 wind events in 24 months), so wind dominates.
 LSRs are point reports (often several per storm), so they are collapsed to one event
-per county, day and kind; zone-based NCEI events are de-duplicated the same way.
+per county, day and kind; zone-based NCEI events are de-duplicated the same way. A
+collapsed LSR event keeps `report_count`, its first/last report time (`first_valid`,
+`valid`, UTC) and the latest report's type and place, plus `gust_mph` (strongest measured
+gust) and `structure` (a remark mentions a roof / home / house / structure) for timing.
+IEM keeps a corrected LSR next to its correction ("Corrects previous tstm wnd dmg ... from
+1 ENE Park Ridge"); only the correction is counted (the original is matched by place, day and remark).
 
 Binary downloads (the .csv.gz files) need `Response.content`; until leadmaker/http.py
 exposes it, already-cached NCEI files are used and missing years are reported in
@@ -42,6 +47,7 @@ from ..db import Repository
 from ..http import HttpClient, Response
 from . import store
 from .counties import USPS_TO_FIPS, CountyIndex, cache_dir
+from .timing import ALERT_LOOKBACK, LSR_CONFIRM, ROOF_DAMAGE_HAZARDS, alert_level, hazard_family
 
 log = logging.getLogger(__name__)
 
@@ -81,6 +87,10 @@ LSR_KIND = {
     "SNOW/ICE DMG": "winter", "BLIZZARD": "winter", "ICE STORM": "winter",
 }
 LSR_MEASURED_WIND = {"TSTM WND GST", "NON-TSTM WND GST", "HIGH SUST WINDS"}  # need >= 58 mph
+KT_TO_MPH = 1.15078
+STRUCTURE_RE = re.compile(r"\b(?:roofs?|homes?|houses?|structures?)\b", re.I)
+CORRECTION_RE = re.compile(r"\s*corrects\s+previous\b[^.]*\.?\s*", re.I)  # "Corrects previous ... from X."
+REMARK_KEY = 24  # letters/digits of a remark that identify a report among the same place's reports that day
 KINDS = ("wind", "hail", "tornado", "tropical", "flood", "winter")
 MONTHS = {"ja": 1, "fe": 2, "mr": 3, "ap": 4, "my": 5, "jn": 6, "jl": 7, "au": 8, "se": 9, "oc": 10,
           "no": 11, "de": 12}
@@ -249,6 +259,10 @@ def parse_ncei(lines: Any, counties: set[str], zones: ZoneMap | None, start: dat
                 "damage_usd": round(money(r.get("DAMAGE_PROPERTY")) / max(len(hit), 1)),
                 "narrative": " ".join((r.get("EVENT_NARRATIVE") or r.get("EPISODE_NARRATIVE") or "").split())[:200],
                 "source": "ncei", "event_id": r.get("EVENT_ID"), "zone_based": r.get("CZ_TYPE") != "C",
+                "report_count": 1,
+                "gust_mph": round(mag * KT_TO_MPH) if kind == "wind" and mag and r.get("MAGNITUDE_TYPE") in ("MG", "MS")
+                else None,  # measured (not estimated) gust / sustained wind, knots
+                "structure": bool(STRUCTURE_RE.search(r.get("EVENT_NARRATIVE") or "")),
             })
     return events, coverage
 
@@ -266,18 +280,71 @@ def _lsr_date(valid: str | None) -> str | None:
     return dt.astimezone(LSR_TZ).date().isoformat()
 
 
-def parse_lsr(features: list[dict[str, Any]], counties: set[str], index: CountyIndex, start: date) -> list[dict]:
-    """IEM LSR GeoJSON features -> roof-relevant events (unit-aware wind threshold)."""
-    out = []
+def _lsr_utc(valid: str | None) -> str | None:
+    """IEM `valid` -> 'YYYY-MM-DDTHH:MM:SSZ' (UTC), or None."""
+    try:
+        dt = datetime.fromisoformat((valid or "").replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    dt = dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _lsr_place(p: dict[str, Any]) -> tuple[str, str, str, str | None]:
+    return ((p.get("st") or p.get("state") or "").upper(), (p.get("county") or "").lower(),
+            (p.get("city") or "").lower(), _lsr_date(p.get("valid")))
+
+
+def _remark_key(text: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", text.lower())[:REMARK_KEY]
+
+
+def drop_corrected(features: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Drop LSRs that a later 'Corrects previous ...' report replaced.
+
+    The correction may change the type (TSTM -> NON-TSTM WND DMG, TSTM WND DMG -> TORNADO) or the time,
+    so candidates are the same state, county, city and local date; among them the original is the one
+    whose remark starts like the correction's after its "Corrects previous ... ." sentence (Rye Brook on
+    2026-07-21 has a corrected report plus two other distinct reports, one a tornado). When no remark
+    matches (rewritten text) every same-place report that day is dropped, so nothing is double counted.
+    """
+    def props(f: dict[str, Any]) -> dict[str, Any]:
+        return f.get("properties") or {}
+
+    fixes: dict[tuple[str, str, str, str | None], list[str]] = defaultdict(list)
     for f in features:
+        remark = props(f).get("remark") or ""
+        if m := CORRECTION_RE.match(remark):
+            fixes[_lsr_place(props(f))].append(_remark_key(remark[m.end():]))
+    if not fixes:
+        return list(features)
+    originals: dict[tuple[str, str, str, str | None], list[int]] = defaultdict(list)
+    for i, f in enumerate(features):
+        place = _lsr_place(props(f))
+        if place in fixes and not CORRECTION_RE.match(props(f).get("remark") or ""):
+            originals[place].append(i)
+    dropped: set[int] = set()
+    for place, bodies in fixes.items():
+        for body in bodies:
+            same = [i for i in originals[place] if body and (k := _remark_key(props(features[i]).get("remark") or ""))
+                    and k[: len(body)] == body[: len(k)]]
+            dropped.update(same or originals[place])
+    return [f for i, f in enumerate(features) if i not in dropped]
+
+
+def parse_lsr(features: list[dict[str, Any]], counties: set[str], index: CountyIndex, start: date) -> list[dict]:
+    """IEM LSR GeoJSON features -> roof-relevant reports (unit-aware wind threshold), corrections applied."""
+    out = []
+    for f in drop_corrected(features):
         p = f.get("properties") or {}
         typ = p.get("typetext") or ""
         kind = LSR_KIND.get(typ)
         if kind is None:
             continue
         mag = _float(p.get("magnitude"))
+        mph = None
         if typ in LSR_MEASURED_WIND:
-            mph = mag * 1.15078 if (p.get("unit") or "").upper() in ("KTS", "KNOTS", "KT") else mag
+            mph = mag * KT_TO_MPH if (p.get("unit") or "").upper() in ("KTS", "KNOTS", "KT") else mag
             if mph < WIND_MIN_MPH:
                 continue
         d = _lsr_date(p.get("valid"))
@@ -286,36 +353,61 @@ def parse_lsr(features: list[dict[str, Any]], counties: set[str], index: CountyI
         fips = index.fips_for_name(p.get("st") or p.get("state"), p.get("county"))
         if fips not in counties:
             continue
+        valid = _lsr_utc(p.get("valid"))
         out.append({
             "county_fips": fips, "date": d, "kind": kind, "event_type": typ, "magnitude": mag or None,
             "unit": (p.get("unit") or "").lower() or None, "location": p.get("city"),
             "damage_usd": 0, "narrative": " ".join((p.get("remark") or "").split())[:200],
             "source": "lsr", "event_id": p.get("product_id"), "zone_based": False,
+            "valid": valid, "first_valid": valid, "report_count": 1,
+            "gust_mph": round(mph) if mph else None, "structure": bool(STRUCTURE_RE.search(p.get("remark") or "")),
         })
     return out
 
 
+def _merge_lsr(kept: dict[str, Any], e: dict[str, Any]) -> None:
+    """Fold LSR `e` into the collapsed event `kept`: counts and extremes add up, the latest report names it."""
+    kept["report_count"] = (kept.get("report_count") or 1) + (e.get("report_count") or 1)
+    kept["structure"] = bool(kept.get("structure") or e.get("structure"))
+    gusts = [g for g in (kept.get("gust_mph"), e.get("gust_mph")) if g]
+    kept["gust_mph"] = max(gusts) if gusts else None
+    if (e.get("magnitude") or 0) > (kept.get("magnitude") or 0):
+        kept["magnitude"], kept["unit"] = e["magnitude"], e.get("unit")
+    firsts = [t for t in (kept.get("first_valid"), e.get("first_valid")) if t]
+    kept["first_valid"] = min(firsts) if firsts else None
+    if (e.get("valid") or "") > (kept.get("valid") or ""):
+        kept.update({k: e.get(k) for k in ("valid", "event_type", "location", "narrative", "event_id")})
+
+
 def dedupe(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """One event per (county, day, kind) for zone-based NCEI rows and LSRs; county NCEI rows stay distinct."""
-    seen: set[Any] = set()
+    """One event per (county, day, kind) for zone-based NCEI rows and LSRs; county NCEI rows stay distinct.
+
+    Collapsed LSRs keep how many reports they stand for and the latest one (see _merge_lsr).
+    """
+    seen: dict[Any, dict[str, Any]] = {}
     out = []
     for e in sorted(events, key=lambda e: (e["date"], -(e.get("damage_usd") or 0), -(e.get("magnitude") or 0))):
         key = (e["county_fips"], e["date"], e["kind"]) if (e["zone_based"] or e["source"] == "lsr") \
             else (e["county_fips"], e["event_id"])
-        if key not in seen:
-            seen.add(key)
-            out.append(e)
+        kept = seen.get(key)
+        if kept is None:
+            seen[key] = dict(e)
+            out.append(seen[key])
+        elif e["source"] == "lsr" and kept["source"] == "lsr":
+            _merge_lsr(kept, e)
     return out
 
 
 def summarise(events: list[dict[str, Any]], county: str, as_of: date, coverage: dict[str, Any]) -> dict[str, Any]:
-    ev = sorted((e for e in events if e["county_fips"] == county), key=lambda e: e["date"], reverse=True)
+    ev = sorted((e for e in events if e["county_fips"] == county), key=lambda e: (e["date"], e.get("valid") or ""),
+                reverse=True)
     start12 = (as_of - timedelta(days=365)).isoformat()
     counts = Counter(e["kind"] for e in ev)
 
     def brief(e: dict[str, Any]) -> dict[str, Any]:
         return {k: e.get(k) for k in ("date", "kind", "event_type", "magnitude", "unit", "location",
-                                      "damage_usd", "narrative", "source")}
+                                      "damage_usd", "narrative", "source", "report_count", "valid",
+                                      "first_valid", "gust_mph", "structure")}
 
     notable = max((e for e in ev if e["kind"] != "winter"),
                   key=lambda e: (e.get("damage_usd") or 0, e.get("magnitude") or 0), default=None)
@@ -344,19 +436,36 @@ async def fetch_lsr(http: HttpClient, offices: list[str], start: date, end: date
     return resp.json().get("features") or []
 
 
-def is_stale(repo: Repository, county_fips: list[str], now: datetime) -> bool:
-    """A county summary is missing, older than REFRESH_DAYS, or was built while the LSR fetch failed.
+def _unconfirmed_warning(alerts: list[dict[str, Any]], built: datetime, now: datetime) -> bool:
+    """A roof-damaging warning whose confirmation window (end + LSR_CONFIRM) was still open when the summary
+    was built: storm reports for it may have arrived since (timing needs them to call a warning high)."""
+    for a in alerts:
+        event = (a.get("payload") or {}).get("event")
+        if alert_level(event) != "warning" or hazard_family(event) not in ROOF_DAMAGE_HAZARDS:
+            continue
+        end = a.get("valid_to") or now
+        if now - end <= ALERT_LOOKBACK and end + LSR_CONFIRM > built:
+            return True
+    return False
 
-    LSRs are the only source after NCEI's ~3-month lag (all of `recent_storm`), so a failed
-    fetch is retried on the next run instead of waiting a month.
+
+def is_stale(repo: Repository, county_fips: list[str], now: datetime) -> bool:
+    """A county summary is missing, older than REFRESH_DAYS, was built while the LSR fetch failed, or
+    predates the storm reports for a recent warning in the county.
+
+    LSRs are the only source after NCEI's ~3-month lag (all of `recent_storm`, and the ground truth that
+    makes a warning's storm_response high), so a failed fetch is retried on the next run instead of
+    waiting a month, and a warning triggers one more fetch once its reports are in.
     """
-    rows = store.signals_for_counties(repo, county_fips, kinds=[KIND])
+    rows = store.signals_for_counties(repo, county_fips, kinds=[KIND, "active_alert"])
     cutoff = now - timedelta(days=REFRESH_DAYS)
     for c in county_fips:
         row = next((r for r in rows.get(c, []) if r["source"] == SOURCE and r["external_id"] == EXTERNAL_ID), None)
         if row is None or row["fetched_at"] is None or row["fetched_at"] < cutoff:
             return True
         if ((row.get("payload") or {}).get("coverage") or {}).get("lsr_error"):
+            return True
+        if _unconfirmed_warning([r for r in rows.get(c, []) if r["kind"] == "active_alert"], row["fetched_at"], now):
             return True
     return False
 

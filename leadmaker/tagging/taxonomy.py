@@ -99,10 +99,28 @@ CONTACT_ROLE_PATTERNS = {
     # "Account Manager" is a sales title; only accounts payable/receivable/accounting is office work.
     "office": r"\boffice\b|admin|bookkeep|controller|accounts? (?:payable|receivable)|accounts manager|accounting"
               r"|\bcfo\b|chief financial",
-    "operations": r"operations|\bops\b|\bcoo\b|chief operating|general manager|production manager",
+    # BBB lists people it has no title for as "Business management" (and some as a bare "Manager"): a
+    # manager of the business, so an operations-level decision-maker (a named owner still wins).
+    "operations": r"operations|\bops\b|\bcoo\b|chief operating|general manager|production manager"
+                  r"|business management|^\s*management\s*$|^\s*manager\s*$",
     "project_manager": r"project (?:manager|coordinator)|estimator|superintendent|foreman|site manager|field manager",
     "sales": r"sales|marketing|business development|account (?:manager|executive)",
 }
+# Titles that are a source's generic note rather than a stated job title. On a tie (same confidence
+# tier and role, confidence within EXPLICIT_TITLE_BONUS) a stated title wins ("President" on BBB over
+# "Company officer (FMCSA MCS-150)" at the same 0.89); a 0.6 website "Founder" (often template filler
+# such as "Jane Doe") does not beat a 0.89 registry officer. An owner-role title only counts as stated
+# when it names the top job (a bare "Vice President" does not).
+EXPLICIT_TITLE_BONUS = 0.05
+GENERIC_TITLE_PATTERN = r"company officer|service-of-process|registered agent|business management|^\s*management\s*$"
+STATED_OWNER_TITLE_PATTERN = (r"owner|founder|(?<!vice )(?<!vice-)\bpresident\b|\bceo\b|chief executive|chairman|principal"
+                              r"|\bpartner\b|managing (?:member|partner|director)|proprietor")
+# A generic management listing (BBB "Business management", "Manager") is usable when no owner is named, but never
+# outranks a named owner, at any size: it ranks right after the owner role.
+GENERIC_MANAGEMENT_PATTERN = r"business management|^\s*management\s*$|^\s*manager\s*$"
+# Two contact rows are one person when their names are this similar (and the first names agree), or
+# share first + last name ("William A. Alas Valdez" / "William Alexander Alas Valdez").
+SAME_PERSON_SIMILARITY = 0.9
 CONTACT_ROLE_LABELS = {
     "owner": "Owner", "purchasing": "Purchasing manager", "office": "Office manager",
     "operations": "Operations manager", "project_manager": "Project manager", "sales": "Sales", "other": "Other contact",

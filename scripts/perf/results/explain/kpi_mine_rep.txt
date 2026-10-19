@@ -1,0 +1,37 @@
+-- kpi:mine:rep
+-- filter: null
+-- params: ["0bef1328-0977-42cc-8555-dfce097bffdc","0bef1328-0977-42cc-8555-dfce097bffdc"]
+
+    SELECT count(*)::int AS allocated,
+      (count(*) FILTER (WHERE s.checked_at IS NULL OR s.checked_at < c.last_material_change_at))::int AS unchecked,
+      (count(*) FILTER (WHERE s.serviced_at IS NULL))::int AS unserviced,
+      (count(*) FILTER (WHERE c.updated_in_last_poll))::int AS updated_in_last_poll
+    FROM companies c LEFT JOIN lead_rep_state s ON s.company_id = c.id AND s.user_id = $1::uuid
+    WHERE c.assigned_rep_id = $2::uuid
+
+Aggregate  (cost=228.50..228.52 rows=1 width=16) (actual time=0.025..0.025 rows=1 loops=1)
+  Buffers: shared hit=15
+  ->  Hash Left Join  (cost=92.80..228.06 rows=35 width=25) (actual time=0.009..0.022 rows=35 loops=1)
+        Hash Cond: (c.id = s.company_id)
+        Buffers: shared hit=15
+        ->  Bitmap Heap Scan on companies c  (cost=4.69..139.86 rows=35 width=25) (actual time=0.003..0.006 rows=35 loops=1)
+              Recheck Cond: (assigned_rep_id = '0bef1328-0977-42cc-8555-dfce097bffdc'::uuid)
+              Heap Blocks: exact=7
+              Buffers: shared hit=10
+              ->  Bitmap Index Scan on companies_assigned_rep_priority_idx  (cost=0.00..4.68 rows=35 width=0) (actual time=0.002..0.002 rows=35 loops=1)
+                    Index Cond: (assigned_rep_id = '0bef1328-0977-42cc-8555-dfce097bffdc'::uuid)
+                    Buffers: shared hit=3
+        ->  Hash  (cost=87.80..87.80 rows=25 width=32) (actual time=0.005..0.006 rows=19 loops=1)
+              Buckets: 1024  Batches: 1  Memory Usage: 10kB
+              Buffers: shared hit=5
+              ->  Bitmap Heap Scan on lead_rep_state s  (cost=4.48..87.80 rows=25 width=32) (actual time=0.002..0.004 rows=19 loops=1)
+                    Recheck Cond: (user_id = '0bef1328-0977-42cc-8555-dfce097bffdc'::uuid)
+                    Heap Blocks: exact=3
+                    Buffers: shared hit=5
+                    ->  Bitmap Index Scan on lead_rep_state_user_idx  (cost=0.00..4.48 rows=25 width=0) (actual time=0.001..0.001 rows=19 loops=1)
+                          Index Cond: (user_id = '0bef1328-0977-42cc-8555-dfce097bffdc'::uuid)
+                          Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=16
+Planning Time: 0.044 ms
+Execution Time: 0.034 ms

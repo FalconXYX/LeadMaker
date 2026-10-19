@@ -18,9 +18,10 @@ without new infrastructure: jobs live in the same database, so any number of
   * stale:   jobs locked by a crashed worker are re-queued after a timeout (or
              marked dead once they have used all attempts, so a job that kills
              its worker cannot loop forever).
-  * limits:  on-demand jobs carry requested_by; each requester may create at most
-             LEADMAKER_USER_JOBS_PER_HOUR (default 20) per rolling hour. Requests
-             merged into an already-open job are free.
+  * limits:  on-demand jobs carry requested_by (a users.id uuid); each requester may
+             create at most LEADMAKER_USER_JOBS_PER_HOUR (default 20) per rolling hour.
+             Requests merged into an already-open job are free. The CRM Write Service
+             enqueues refreshes into the same table with the same dedupe key and limit.
 
 Production path: swap this table for SQS/Cloud Tasks (or Celery/Temporal) --
 job kinds and params stay the same. Per-host rate limits are enforced inside
@@ -35,6 +36,9 @@ import asyncio
 import logging
 import os
 import socket
+import uuid
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -44,11 +48,11 @@ from sqlalchemy.exc import IntegrityError
 from .config import Settings
 from .db import Repository
 from .db.repository import as_utc, utcnow
-from .db.schema import jobs, schedules
+from .db.schema import jobs, schedules, users
 
 log = logging.getLogger(__name__)
 
-JOB_KINDS = ("scrape", "enrich", "tag", "pipeline", "signals")
+JOB_KINDS = ("scrape", "enrich", "tag", "pipeline", "signals", "insights", "briefing")
 ACTIVE = ("queued", "running")
 DEFAULT_USER_JOBS_PER_HOUR = 20
 
@@ -70,7 +74,25 @@ def _user_jobs_per_hour() -> int:
 
 
 def area_dedupe_key(kind: str, params: dict[str, Any]) -> str:
-    return f"{kind}:{params.get('postal_code', '*')}:{params.get('radius_miles', '*')}:{params.get('sources') or '*'}"
+    """`{kind}:{postal_code}:{radius}:{sources}` with the radius as %g (25, not 25.0) and sources sorted and
+    comma-joined, so the CLI, schedules and the CRM Write Service build the same key for the same area."""
+    radius = params.get("radius_miles")
+    try:
+        radius = f"{float(radius):g}"
+    except (TypeError, ValueError):
+        radius = "*" if radius is None else str(radius)
+    sources = params.get("sources") or "*"
+    if isinstance(sources, (list, tuple)):
+        sources = ",".join(sorted(str(s) for s in sources)) or "*"
+    return f"{kind}:{params.get('postal_code', '*')}:{radius}:{sources}"
+
+
+def user_id(value: str) -> str:
+    """A requester id must be a users.id (uuid); returns it in canonical form."""
+    try:
+        return str(uuid.UUID(str(value)))
+    except ValueError:
+        raise ValueError(f"requested_by must be a user id (uuid), got {value!r}") from None
 
 
 class JobQueue:
@@ -102,6 +124,8 @@ class JobQueue:
         """
         if kind not in JOB_KINDS:
             raise ValueError(f"unknown job kind {kind!r}; expected one of {JOB_KINDS}")
+        if requested_by:
+            requested_by = user_id(requested_by)
         dedupe_key = dedupe_key or area_dedupe_key(kind, params)
         now = utcnow()
         try:
@@ -112,6 +136,8 @@ class JobQueue:
                 if dup is not None:
                     return None
                 if requested_by:
+                    if conn.execute(select(users.c.id).where(users.c.id == requested_by)).first() is None:
+                        raise ValueError(f"requested_by {requested_by} is not a known user")
                     self._check_rate(conn, requested_by, now)
                 res = conn.execute(
                     jobs.insert().values(
@@ -181,10 +207,13 @@ class JobQueue:
                 )
             )
 
-    def fail(self, job_id: int, error: str) -> str:
-        """Re-queue with backoff, or mark dead after max_attempts. Returns the new status."""
+    def fail(self, job_id: int, error: str, run_ids: Sequence[int] = ()) -> str:
+        """Re-queue with backoff, or mark dead after max_attempts. Returns the new status. `run_ids`: the runs
+        the failed attempt started, for the dead-job event (job_dead_event)."""
         with self.engine.begin() as conn:
-            row = conn.execute(select(jobs.c.attempts, jobs.c.max_attempts).where(jobs.c.id == job_id)).first()
+            row = conn.execute(
+                select(jobs.c.attempts, jobs.c.max_attempts, jobs.c.kind, jobs.c.requested_by).where(jobs.c.id == job_id)
+            ).first()
             if row is None:
                 return "missing"
             if row.attempts >= row.max_attempts:
@@ -195,6 +224,8 @@ class JobQueue:
             conn.execute(
                 update(jobs).where(jobs.c.id == job_id).values(status=status, error=error[:4000], locked_by=None, **values)
             )
+            if status == "dead":
+                job_dead_event(conn, job_id, row.kind, row.requested_by, run_ids)
             return status
 
     def requeue_stale(self, older_than: timedelta = timedelta(hours=2)) -> int:
@@ -206,7 +237,7 @@ class JobQueue:
         cutoff = utcnow() - older_than
         with self.engine.connect() as conn:
             stale = conn.execute(
-                select(jobs.c.id, jobs.c.attempts, jobs.c.max_attempts)
+                select(jobs.c.id, jobs.c.attempts, jobs.c.max_attempts, jobs.c.kind, jobs.c.requested_by)
                 .where(jobs.c.status == "running", jobs.c.locked_at < cutoff)
             ).all()
         requeued = 0
@@ -214,10 +245,12 @@ class JobQueue:
             guard = and_(jobs.c.id == row.id, jobs.c.status == "running", jobs.c.locked_at < cutoff)
             if row.attempts >= row.max_attempts:
                 with self.engine.begin() as conn:
-                    conn.execute(update(jobs).where(guard).values(
+                    died = conn.execute(update(jobs).where(guard).values(
                         status="dead", locked_by=None, finished_at=utcnow(),
                         error=f"worker lock expired after {row.attempts} attempts",
-                    ))
+                    )).rowcount
+                    if died:
+                        job_dead_event(conn, row.id, row.kind, row.requested_by)
                 log.warning("job %s dead: worker lock expired on its last attempt", row.id)
             elif self._reopen(row.id, guard, locked_by=None, error="re-queued: worker lock expired"):
                 requeued += 1
@@ -313,17 +346,168 @@ class JobQueue:
             ).rowcount
         if not won:
             return None  # another worker claimed this slot
-        job_id = self.enqueue(s["kind"], s["params"], schedule_id=s["id"], dedupe_key=f"schedule:{s['id']}")
+        job_id = self.enqueue(s["kind"], s["params"], schedule_id=s["id"],
+                              dedupe_key=area_dedupe_key(s["kind"], s["params"]))
         if job_id:
             with self.engine.begin() as conn:
                 conn.execute(update(schedules).where(schedules.c.id == s["id"]).values(last_enqueued_at=now))
         return job_id
 
 
+def job_dead_event(conn, job_id: int, kind: str, requested_by: Any, run_ids: Sequence[int] = ()) -> None:
+    """In the transaction that marks a requester's job dead: a pipeline.run_completed of kind 'job' with status
+    'failed' (no run of its own; no company ids) and the job fields, so the notifier tells the requester their
+    refresh failed. Scheduled and CLI jobs (no requester) emit nothing."""
+    if not requested_by:
+        return
+    Repository._emit(conn, "pipeline.run_completed", {
+        "run_id": None, "kind": "job", "status": "failed", "complete": False, "changed_companies": 0,
+        "company_ids": [], "company_ids_truncated": False, "job_id": job_id, "job_kind": kind, "job_status": "dead",
+        "requested_by": str(requested_by), "job_run_ids": list(run_ids),
+    })
+
+
 # ---------------------------------------------------------------------- worker
+@contextmanager
+def job_events(repo: Repository, job: dict[str, Any]) -> Iterator[list[int]]:
+    """Stamps every pipeline.run_completed the job's runs emit with job_id, job_kind, requested_by and
+    job_run_ids (the job's earlier runs), so the notifier can tell the requester when their refresh is done.
+    Yields the list of the runs started so far."""
+    stamp = {"job_id": job["id"], "job_kind": job["kind"],
+             "requested_by": str(job["requested_by"]) if job.get("requested_by") else None}
+    runs: list[int] = []
+
+    def emit(conn, event_type: str, payload: dict[str, Any], company_id: str | None = None) -> None:
+        if event_type == "pipeline.run_completed":
+            payload = {**payload, **stamp, "job_run_ids": list(runs)}
+            runs.append(payload["run_id"])
+        Repository._emit(conn, event_type, payload, company_id)
+
+    repo._emit = emit  # Repository.finish_run emits through self._emit
+    try:
+        yield runs
+    finally:
+        del repo._emit
+
+
+# --------------------------------------------------------------------- Section 4: AI follow-ups and schedules
+INSIGHTS_FOLLOW_UP_PRIORITY = 200  # after refreshes (100) and the briefing (150): lower runs first
+BRIEFING_FOLLOW_UP_PRIORITY = 150
+INSIGHTS_MAX_ATTEMPTS = 2  # an auth failure dead-letters after two tries
+# name -> (kind, params, every_hours); created at worker start only with LEADMAKER_AI_SCHEDULES=1 (off by default,
+# so a running stack never spends LLM quota unattended).
+AI_SCHEDULES = {
+    "insights-stale": ("insights", {"stale": True}, 0.25),
+    "briefing": ("briefing", {}, 1.0),
+}
+
+
+def _env_on(name: str, default: bool) -> bool:
+    raw = (os.environ.get(name) or "").strip().lower()
+    if not raw:
+        return default
+    return raw not in ("0", "false", "no", "off")
+
+
+def llm_configured(settings: Settings) -> bool:
+    """A usable LLM provider is configured (a key, or the fake where it is allowed)."""
+    from .insights.run import provider_ready
+
+    try:
+        return provider_ready(settings)[0] is not None
+    except Exception:  # a broken provider setting must not fail the job that asks
+        log.exception("could not check the LLM provider")
+        return False
+
+
+def briefing_on_refresh(repo: Repository, settings: Settings, llm: bool | None = None) -> bool:
+    """Whether refreshes queue the territory briefing. LEADMAKER_BRIEFING_ON_REFRESH=1 / 0 forces it; unset
+    ("auto") means on once the feature is in use: an LLM is configured, or territory_briefs already has a row
+    (from `leadmaker briefing`, the opt-in schedule or an earlier chain). So a bare pipeline (Section 1 runs,
+    offline tests) queues nothing extra, and a stack that shows briefs keeps them current."""
+    raw = (os.environ.get("LEADMAKER_BRIEFING_ON_REFRESH") or "auto").strip().lower()
+    if raw in ("0", "false", "no", "off"):
+        return False
+    if raw in ("1", "true", "yes", "on"):
+        return True
+    if llm if llm is not None else llm_configured(settings):
+        return True
+    from .db.schema import territory_briefs
+
+    with repo.engine.connect() as conn:
+        return conn.execute(select(territory_briefs.c.scope).limit(1)).first() is not None
+
+
+def enqueue_ai_follow_ups(repo: Repository, settings: Settings, area: dict[str, Any] | None,
+                          *, insights: bool = True) -> dict[str, Any]:
+    """After a refresh (scrape, tag, pipeline): queue `insights` for the area it touched (or `{"stale": true}`
+    without one), only when a provider is configured and LEADMAKER_INSIGHTS_ON_REFRESH is not 0, and the
+    deterministic `briefing` (see briefing_on_refresh). Dedupe keys merge repeats into the open job. Enqueue
+    failures are logged and never fail the calling job.
+    Returns {"insights": job id | None (merged) | "skipped" | "error", "briefing": the same}."""
+    q = JobQueue(repo)
+    out: dict[str, Any] = {}
+    llm: bool | None = None
+    if insights:
+        try:
+            llm = llm_configured(settings)
+            if not _env_on("LEADMAKER_INSIGHTS_ON_REFRESH", True) or not llm:
+                out["insights"] = "skipped"
+            else:
+                area = area or {}
+                params: dict[str, Any] = (
+                    {"postal_code": area["postal_code"], "radius_miles": area["radius_miles"]}
+                    if area.get("postal_code") and area.get("radius_miles") else {"stale": True})
+                out["insights"] = q.enqueue("insights", params, priority=INSIGHTS_FOLLOW_UP_PRIORITY,
+                                            max_attempts=INSIGHTS_MAX_ATTEMPTS)
+        except Exception:
+            log.exception("could not enqueue the insights follow-up")
+            out["insights"] = "error"
+    try:
+        if briefing_on_refresh(repo, settings, llm):
+            out["briefing"] = q.enqueue("briefing", {}, priority=BRIEFING_FOLLOW_UP_PRIORITY)
+        else:
+            out["briefing"] = "skipped"
+    except Exception:
+        log.exception("could not enqueue the briefing follow-up")
+        out["briefing"] = "error"
+    return out
+
+
+def ensure_ai_schedules(q: JobQueue) -> dict[str, int]:
+    """Create the AI schedules (AI_SCHEDULES) when missing or different. An existing identical schedule is left
+    alone, so a restart neither re-fires it nor re-enables one an operator disabled. Returns {name: id}."""
+    have = {s["name"]: s for s in q.list_schedules()}
+    out: dict[str, int] = {}
+    for name, (kind, params, every) in AI_SCHEDULES.items():
+        s = have.get(name)
+        if s is not None and s["kind"] == kind and (s["params"] or {}) == params and float(s["every_hours"]) == every:
+            out[name] = int(s["id"])
+            continue
+        out[name] = q.add_schedule(name, kind, params, every)
+    return out
+
+
 async def execute(settings: Settings, repo: Repository, kind: str, params: dict[str, Any]) -> dict[str, Any]:
+    """Run one job. A scrape (also inside 'pipeline') is followed by county assignment and tagging for the
+    area it read, so refreshed and new leads come with county_fips, tags, segment and priority. Scrape, tag and
+    pipeline then queue the AI follow-ups (insights for the area, the territory briefing); signals queues the
+    briefing."""
+    if kind == "insights":
+        from .insights import InsightsOptions, run_insights
+
+        return {"insights": await run_insights(settings, repo, InsightsOptions.from_params(params))}
+    if kind == "briefing":
+        from .briefing import run_briefing
+
+        rewrite = params.get("rewrite")
+        return {"briefing": await run_briefing(settings, repo, scopes=params.get("scopes"),
+                                               rewrite=None if rewrite is None else bool(rewrite),
+                                               force=bool(params.get("force")))}
+
     from .pipeline.enrich import EnrichOptions, run_enrich
     from .pipeline.scrape import ScrapeOptions, run_scrape
+    from .pipeline.signals import run_counties
     from .pipeline.tag import run_tagging
 
     area = {k: params[k] for k in ("postal_code", "radius_miles") if k in params}
@@ -331,6 +515,8 @@ async def execute(settings: Settings, repo: Repository, kind: str, params: dict[
     if kind in ("scrape", "pipeline"):
         scrape_keys = ScrapeOptions.__dataclass_fields__.keys()
         rep = await run_scrape(settings, repo, ScrapeOptions(**{k: v for k, v in params.items() if k in scrape_keys}))
+        if rep.area is not None:  # the area as read (ScrapeOptions defaults included), as its search hits store it
+            area = {"postal_code": rep.area.postal_code, "radius_miles": rep.area.radius_miles}
         out["scrape"] = {"run_id": rep.run_id, "status": rep.status, "upsert": rep.stats.get("upsert"),
                          "profiles": rep.stats.get("profiles"), "delisted": rep.stats.get("delisted"),
                          "completeness": rep.stats.get("completeness")}
@@ -338,13 +524,22 @@ async def execute(settings: Settings, repo: Repository, kind: str, params: dict[
         enrich_keys = EnrichOptions.__dataclass_fields__.keys()
         rep = await run_enrich(settings, repo, EnrichOptions(**{k: v for k, v in params.items() if k in enrich_keys}))
         out["enrich"] = {"run_id": rep.run_id, "status": rep.status, "by_source": rep.stats.get("by_source")}
-    if kind in ("tag", "pipeline"):
+    if kind in ("scrape", "pipeline"):
+        ids = repo.area_company_ids(area["postal_code"], area["radius_miles"]) if len(area) == 2 else None
+        try:
+            out["counties"] = await run_counties(settings, repo, ids)
+        except Exception as e:  # the scrape landed; the next refresh or signals run assigns the county
+            log.exception("county assignment after %s failed", kind)
+            out["counties"] = {"error": f"{type(e).__name__}: {e}"[:500]}
+    if kind in ("scrape", "tag", "pipeline"):
         out["tag"] = run_tagging(repo, area.get("postal_code"), area.get("radius_miles"))
+        out["follow_up"] = enqueue_ai_follow_ups(repo, settings, area)
     if kind == "signals":
         from .pipeline.signals import run_signals
 
         out["signals"] = await run_signals(settings, repo, force_storms=bool(params.get("force_storms")),
                                            news=params.get("news", True))
+        out["follow_up"] = enqueue_ai_follow_ups(repo, settings, None, insights=False)
     return out
 
 
@@ -360,6 +555,11 @@ async def work(
     """Run jobs until stopped (or until the queue is empty with once=True). Returns jobs processed."""
     q = JobQueue(repo)
     worker_id = worker_id or f"{socket.gethostname()}:{os.getpid()}"
+    if _env_on("LEADMAKER_AI_SCHEDULES", False):
+        try:
+            log.info("AI schedules: %s", ensure_ai_schedules(q))
+        except Exception:
+            log.exception("could not create the AI schedules")
     processed = 0
     while max_jobs is None or processed < max_jobs:
         q.enqueue_due_schedules()
@@ -371,12 +571,14 @@ async def work(
             await asyncio.sleep(poll_seconds)
             continue
         log.info("job %s (%s) attempt %s: %s", job["id"], job["kind"], job["attempts"], job["params"])
+        runs: list[int] = []
         try:
-            result = await execute(settings, repo, job["kind"], job["params"] or {})
+            with job_events(repo, job) as runs:
+                result = await execute(settings, repo, job["kind"], job["params"] or {})
             q.complete(job["id"], result)
             log.info("job %s succeeded", job["id"])
         except Exception as e:
-            status = q.fail(job["id"], f"{type(e).__name__}: {e}")
+            status = q.fail(job["id"], f"{type(e).__name__}: {e}", run_ids=runs)
             log.exception("job %s failed -> %s", job["id"], status)
         processed += 1
     return processed

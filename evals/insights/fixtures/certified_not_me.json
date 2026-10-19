@@ -1,0 +1,52 @@
+{
+  "company_id": "22222222-2222-4222-8222-000000000008",
+  "business_name": "Garden State Roof Pros",
+  "facts": [
+    {
+      "id": "F1",
+      "key": "business_name",
+      "text": "business_name: Garden State Roof Pros"
+    },
+    {
+      "id": "F2",
+      "key": "location",
+      "text": "location: Clifton, NJ 07011 (Passaic County)"
+    },
+    {
+      "id": "F3",
+      "key": "gaf_tier",
+      "text": "gaf_tier: GAF Certified"
+    },
+    {
+      "id": "F4",
+      "key": "certification",
+      "text": "certification: GAF Certified™ - Certification"
+    },
+    {
+      "id": "F5",
+      "key": "rating",
+      "text": "rating: 4.4 stars from 41 reviews"
+    },
+    {
+      "id": "F6",
+      "key": "in_business_since",
+      "text": "in_business_since: 2020"
+    },
+    {
+      "id": "F7",
+      "key": "size",
+      "text": "size: small"
+    },
+    {
+      "id": "F8",
+      "key": "services",
+      "text": "services: Roof replacement, Roof repair"
+    },
+    {
+      "id": "F9",
+      "key": "materials",
+      "text": "materials: Shingle roofing"
+    }
+  ],
+  "website_excerpt": "Residential roof repair and replacement in Passaic County. Licensed and insured."
+}

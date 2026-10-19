@@ -2,9 +2,10 @@
 
 Layers, in order:
   1. leadmaker.tagging.tag_lead  -- built-in structured + derived tags, segment, priority
-  2. CRM account status          -- existing / lapsed / do-not-contact / prospect (leadmaker.accounts)
+  2. CRM account status          -- existing / lapsed / do-not-contact / prospect (leadmaker.accounts),
+                                    also written to companies.account_status
   3. user-defined rules          -- JSON rules file (leadmaker.custom_tags), may boost priority
-Later layers win on tag-key collisions. Every change is written to the audit log.
+Later layers win on tag-key collisions. Every change is written to the audit log and the outbox.
 """
 
 from __future__ import annotations
@@ -14,9 +15,10 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from ..accounts import account_status, account_tags, accounts_by_gaf_id
+from ..accounts import account_status, account_tags, accounts_by_company_id
 from ..custom_tags import apply_rules, load_rules
 from ..db import Repository
+from ..db.repository import company_label
 from ..tagging import tag_lead
 
 log = logging.getLogger(__name__)
@@ -38,14 +40,14 @@ def run_tagging(
         "tag", {"postal_code": postal_code, "radius_miles": radius_miles, "custom_rules": len(rules)}
     )
     leads = repo.lead_records(postal_code, radius_miles)
-    accts = accounts_by_gaf_id(repo)
+    accts = accounts_by_company_id(repo)
     segments: Counter = Counter()
     statuses: Counter = Counter()
     custom_hits = 0
     failed = 0
     for lead in leads:
         try:
-            acct = accts.get(lead["gaf_id"])
+            acct = accts.get(lead["company_id"])
             lead["account"] = acct
             out = tag_lead(lead)
             tags = _merge(out["tags"], account_tags(acct))
@@ -60,9 +62,9 @@ def run_tagging(
                 priority = 0.0
         except Exception as e:  # a bad record must not block the rest
             failed += 1
-            log.warning("tagging failed for %s: %s", lead.get("gaf_id"), e)
+            log.warning("tagging failed for %s: %s", company_label(lead), e)
             continue
-        repo.save_tags(lead["gaf_id"], tags, out.get("segment"), priority, run_id=run_id)
+        repo.save_tags(lead["company_id"], tags, out.get("segment"), priority, run_id=run_id, account_status=status)
         segments[out.get("segment")] += 1
         statuses[status] += 1
     stats = {

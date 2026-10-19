@@ -1,0 +1,42 @@
+{
+  "company_id": "22222222-2222-4222-8222-000000000010",
+  "business_name": "Northfield Roofing",
+  "facts": [
+    {
+      "id": "F1",
+      "key": "business_name",
+      "text": "business_name: Northfield Roofing"
+    },
+    {
+      "id": "F2",
+      "key": "location",
+      "text": "location: Livingston, NJ 07039 (Essex County)"
+    },
+    {
+      "id": "F3",
+      "key": "gaf_tier",
+      "text": "gaf_tier: GAF Certified"
+    },
+    {
+      "id": "F4",
+      "key": "rating",
+      "text": "rating: 4.3 stars from 29 reviews"
+    },
+    {
+      "id": "F5",
+      "key": "size",
+      "text": "size: small"
+    },
+    {
+      "id": "F6",
+      "key": "services",
+      "text": "services: Roof replacement, Roof repair"
+    },
+    {
+      "id": "F7",
+      "key": "target_contact",
+      "text": "target_contact: Owner"
+    }
+  ],
+  "website_excerpt": ""
+}

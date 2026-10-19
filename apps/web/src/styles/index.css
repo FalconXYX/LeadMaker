@@ -1,0 +1,223 @@
+@import 'tailwindcss';
+@import './theme.css';
+@import 'leaflet/dist/leaflet.css';
+
+/* Dark is opt-in only (data-theme="dark" on <html>); the OS colour scheme never switches the app. */
+@custom-variant dark (&:where(:root[data-theme='dark'] *));
+
+@theme inline {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --text-xs: 0.78125rem;
+  --text-xs--line-height: 1.15rem;
+  --text-sm: 0.90625rem;
+  --text-sm--line-height: 1.4rem;
+
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-surface-3: var(--c-surface-3);
+  --color-hover: var(--c-hover);
+  --color-table-head: var(--c-table-head);
+  --color-border: var(--c-border);
+  --color-border-strong: var(--c-border-strong);
+  --color-divider: var(--c-divider);
+  --color-fg: var(--c-text);
+  --color-muted: var(--c-muted);
+  --color-subtle: var(--c-subtle);
+
+  /* bg-accent / border-accent / ring-accent are the saturated primary fill; text-accent is the readable link shade. */
+  --color-accent: var(--c-accent);
+  --text-color-accent: var(--c-accent-text);
+  --color-accent-text: var(--c-accent-text);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-accent-fg: var(--c-accent-fg);
+  --color-focus: var(--c-focus);
+  --color-knob: var(--c-knob);
+
+  /* Brand cool-sky for chart fills and highlights. */
+  --color-sky: var(--c-sky);
+  --color-sky-soft: var(--c-sky-soft);
+
+  /* Roof-tile secondary: bg-roof is the fill (white text-roof-fg on it); text-roof is the readable shade. */
+  --color-roof: var(--c-roof);
+  --text-color-roof: var(--c-roof-text);
+  --color-roof-text: var(--c-roof-text);
+  --color-roof-hover: var(--c-roof-hover);
+  --color-roof-soft: var(--c-roof-soft);
+  --color-roof-fg: var(--c-roof-fg);
+
+  --color-topbar: var(--c-topbar);
+  --color-topbar-fg: var(--c-topbar-fg);
+  --color-topbar-muted: var(--c-topbar-muted);
+  --color-topbar-hover: var(--c-topbar-hover);
+  --color-topbar-field: var(--c-topbar-field);
+  --color-topbar-border: var(--c-topbar-border);
+
+  /* Status: text-*, border-* use the readable shade; bg-* (dots, bars, badges) uses the fill. */
+  --color-success: var(--c-success);
+  --background-color-success: var(--c-success-fill);
+  --color-success-soft: var(--c-success-soft);
+  --color-warning: var(--c-warning);
+  --background-color-warning: var(--c-warning-fill);
+  --color-warning-soft: var(--c-warning-soft);
+  --color-danger: var(--c-danger);
+  --background-color-danger: var(--c-danger-fill);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-danger-fg: var(--c-danger-fg);
+  --color-info: var(--c-info);
+  --background-color-info: var(--c-info-fill);
+  --color-info-soft: var(--c-info-soft);
+
+  --color-stage-new: var(--c-stage-new);
+  --color-stage-new-soft: var(--c-stage-new-soft);
+  --color-stage-contacted: var(--c-stage-contacted);
+  --color-stage-contacted-soft: var(--c-stage-contacted-soft);
+  --color-stage-interested: var(--c-stage-interested);
+  --color-stage-interested-soft: var(--c-stage-interested-soft);
+  --color-stage-quoting: var(--c-stage-quoting);
+  --color-stage-quoting-soft: var(--c-stage-quoting-soft);
+  --color-stage-won: var(--c-stage-won);
+  --color-stage-won-soft: var(--c-stage-won-soft);
+  --color-stage-lost: var(--c-stage-lost);
+  --color-stage-lost-soft: var(--c-stage-lost-soft);
+  /* Brighter stage fills for bars (bg-stage-*-fill); bg-stage-* stays the solid that takes white text. */
+  --color-stage-new-fill: var(--c-stage-new-fill);
+  --color-stage-contacted-fill: var(--c-stage-contacted-fill);
+  --color-stage-interested-fill: var(--c-stage-interested-fill);
+  --color-stage-quoting-fill: var(--c-stage-quoting-fill);
+  --color-stage-won-fill: var(--c-stage-won-fill);
+  --color-stage-lost-fill: var(--c-stage-lost-fill);
+
+  /* Segments: text-seg-* is the readable shade; bg-seg-* (meter bars, dots) is the brighter fill. */
+  --color-seg-strategic: var(--c-seg-strategic);
+  --background-color-seg-strategic: var(--c-seg-strategic-fill);
+  --color-seg-strategic-soft: var(--c-seg-strategic-soft);
+  --color-seg-growth: var(--c-seg-growth);
+  --background-color-seg-growth: var(--c-seg-growth-fill);
+  --color-seg-growth-soft: var(--c-seg-growth-soft);
+  --color-seg-emerging: var(--c-seg-emerging);
+  --background-color-seg-emerging: var(--c-seg-emerging-fill);
+  --color-seg-emerging-soft: var(--c-seg-emerging-soft);
+  --color-seg-long-tail: var(--c-seg-long-tail);
+  --background-color-seg-long-tail: var(--c-seg-long-tail-fill);
+  --color-seg-long-tail-soft: var(--c-seg-long-tail-soft);
+
+  --color-timing-high: var(--c-timing-high);
+  --color-timing-high-soft: var(--c-timing-high-soft);
+  --color-timing-medium: var(--c-timing-medium);
+  --color-timing-medium-soft: var(--c-timing-medium-soft);
+  --color-timing-low: var(--c-timing-low);
+  --color-timing-low-soft: var(--c-timing-low-soft);
+  --color-timing-info: var(--c-timing-info);
+  --color-timing-info-soft: var(--c-timing-info-soft);
+
+  --color-chart-1: var(--c-chart-1);
+  --color-chart-2: var(--c-chart-2);
+  --color-chart-3: var(--c-chart-3);
+  --color-chart-4: var(--c-chart-4);
+  --color-chart-5: var(--c-chart-5);
+  --color-chart-6: var(--c-chart-6);
+  --color-chart-7: var(--c-chart-7);
+  --color-chart-8: var(--c-chart-8);
+  --color-chart-track: var(--c-chart-track);
+
+  --color-overlay: var(--c-overlay);
+  --color-tooltip: var(--c-tooltip);
+  --color-tooltip-fg: var(--c-tooltip-fg);
+  --color-tooltip-border: var(--c-tooltip-border);
+  --shadow-sm: var(--c-shadow-sm);
+  --shadow-md: var(--c-shadow-md);
+  --shadow-lg: var(--c-shadow-lg);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-bg text-fg font-sans antialiased;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  :focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--c-selection);
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Controls from other features placed on the gunmetal top bar (the notification bell) read the bar's
+     colours through the usual tokens; their popovers are portalled out and keep the page theme. */
+  .lm-topbar-scope {
+    --c-text: var(--c-topbar-fg);
+    --c-muted: var(--c-topbar-muted);
+    --c-surface-2: var(--c-topbar-hover);
+    --c-surface: var(--c-topbar);
+  }
+}
+
+/* Every Leaflet map (BaseMap): its own stacking context (Leaflet's panes and controls use z-index 400-1000,
+   which would otherwise paint over popovers and menus), themed chrome, and dark tiles in dark mode. */
+.lm-map {
+  isolation: isolate;
+}
+.lm-map .leaflet-container {
+  font: inherit;
+  background: var(--c-surface-2);
+}
+.lm-map .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--c-surface) 85%, transparent);
+  color: var(--c-muted);
+}
+.lm-map .leaflet-control-attribution a {
+  color: var(--c-muted);
+}
+.lm-map .leaflet-bar a {
+  background: var(--c-surface);
+  color: var(--c-text);
+  border-color: var(--c-border);
+}
+.lm-map .leaflet-tooltip {
+  background: var(--c-tooltip);
+  color: var(--c-tooltip-fg);
+  border-color: var(--c-tooltip-border);
+  box-shadow: var(--c-shadow-md);
+}
+.lm-map .leaflet-tooltip-top::before {
+  border-top-color: var(--c-tooltip);
+}
+:root[data-theme='dark'] .lm-map .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.6);
+}
+
+@keyframes lm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lm-slide-in-right {
+  from { transform: translateX(16px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes lm-slide-in-left {
+  from { transform: translateX(-16px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes lm-pop-in {
+  from { transform: translateY(6px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -6,8 +6,50 @@ production deployments override via env (DATABASE_URL, API keys, rate limits).
 
 from __future__ import annotations
 
+import logging
 import os
+import sys
+from pathlib import Path
 from dataclasses import dataclass, field
+
+
+def _load_dotenv() -> None:
+    """Fill os.environ from the repo's .env (or $LEADMAKER_ENV_FILE) without overriding real env vars.
+
+    Skipped under pytest so the test suite never picks up a developer's keys.
+    """
+    if "pytest" in sys.modules:
+        return
+    path = Path(os.environ.get("LEADMAKER_ENV_FILE") or Path(__file__).resolve().parents[1] / ".env")
+    if not path.is_file():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        value = value.split(" #", 1)[0].strip().strip("'\"")
+        if key.strip() and value and key.strip() not in os.environ:
+            os.environ[key.strip()] = value
+
+
+_load_dotenv()
+
+
+def _database_url() -> str:
+    """SQLAlchemy URL: $LEADMAKER_DATABASE_URL, else $DATABASE_URL if it is in SQLAlchemy form.
+
+    The Node services share .env and use DATABASE_URL in Prisma form (postgres://...), which
+    SQLAlchemy cannot load, so that form is ignored here rather than breaking every command.
+    """
+    url = os.environ.get("LEADMAKER_DATABASE_URL") or os.environ.get("DATABASE_URL") or ""
+    if url.startswith(("sqlite", "postgresql+")):
+        return url
+    if url:
+        logging.getLogger(__name__).warning(
+            "ignoring DATABASE_URL %r (not a SQLAlchemy URL); set LEADMAKER_DATABASE_URL for the pipeline",
+            url.split("@")[-1])
+    return "sqlite:///data/leadmaker.db"
 
 
 def _env_float(name: str, default: float) -> float:
@@ -26,17 +68,19 @@ def _env_opt_int(name: str) -> int | None:
 
 
 # LLM providers (leadmaker.llm). Model ids verified on the vendors' model pages, Oct 2026:
-# gemini-3.8-flash is the newest stable Flash model with a free tier (demo); claude-haiku-5-5 is the
-# production batch model. openai_compat (e.g. a local Ollama) has no sensible default: set LEADMAKER_LLM_MODEL.
-LLM_PROVIDERS = ("gemini", "anthropic", "openai_compat")
-DEFAULT_LLM_MODELS = {"gemini": "gemini-3.8-flash", "anthropic": "claude-haiku-5-5", "openai_compat": ""}
+# gemini-3.5-flash-lite is the demo's batch model (the worker's work is all batch: insights, briefs, website
+# extraction): its free-tier daily quota is much larger than gemini-3.8-flash's (20 requests a day per project,
+# measured 2026-10-19), which the assistant keeps as a fallback. claude-haiku-5-5 is the production batch model. openai_compat (e.g. a local Ollama) has no sensible default: set LEADMAKER_LLM_MODEL.
+# "fake" is the deterministic test provider (leadmaker.llm.providers.fake): only when named explicitly, and only
+# usable under pytest or with LEADMAKER_ALLOW_FAKE_LLM=1; "auto" never picks it.
+LLM_PROVIDERS = ("gemini", "anthropic", "openai_compat", "fake")
+DEFAULT_LLM_MODELS = {"gemini": "gemini-3.5-flash-lite", "anthropic": "claude-haiku-5-5", "openai_compat": "",
+                      "fake": "fake-1"}
 
 
 @dataclass(frozen=True)
 class Settings:
-    database_url: str = field(
-        default_factory=lambda: os.environ.get("DATABASE_URL", "sqlite:///data/leadmaker.db")
-    )
+    database_url: str = field(default_factory=lambda: _database_url())
 
     # Optional API keys -- enrichers that need them are skipped when absent.
     google_maps_api_key: str | None = field(

@@ -1,8 +1,10 @@
-"""Import the distributor's customer list (CRM export) and match it to GAF contractors.
+"""Import the distributor's customer list (CRM export) and match it to companies.
 
-This is what turns a lead list into account planning: each contractor becomes an
+This is what turns a lead list into account planning: each company becomes an
 existing customer, a lapsed customer, or a net-new prospect (Section 0:
 "net-new prospecting and existing account management", "account status" filter).
+The status lands in companies.account_status. Each import is logged as a scrape_runs
+row (kind 'crm_import') with an audit event.
 
 CSV headers are matched loosely (e.g. "Account Name"/"Customer"/"name", "Zip"/
 "postal_code", "Phone"/"Main Phone", "Status", "Sales Rep"/"owner", "Annual
@@ -20,8 +22,8 @@ from typing import Any
 from sqlalchemy import delete, select
 
 from .db import Repository
-from .db.repository import as_utc, utcnow
-from .db.schema import accounts, contractors
+from .db.repository import _insert_for, as_utc, fit, stable_hash, utcnow
+from .db.schema import accounts, companies
 from .enrich.matching import name_similarity, phone_digits, zip5
 
 HEADER_ALIASES: dict[str, tuple[str, ...]] = {
@@ -76,7 +78,7 @@ def _parse_money(s: str | None) -> float | None:
 
 
 def match_account(acct: dict[str, Any], cands: list[dict[str, Any]]) -> tuple[str | None, float, str | None]:
-    """Best contractor for an account row -> (gaf_id, confidence, method)."""
+    """Best company for an account row -> (company_id, confidence, method)."""
     best: tuple[str | None, float, str | None] = (None, 0.0, None)
     a_phone, a_zip = phone_digits(acct.get("phone")), zip5(acct.get("postal_code"))
     a_city = (acct.get("city") or "").strip().lower()
@@ -96,7 +98,7 @@ def match_account(acct: dict[str, Any], cands: list[dict[str, Any]]) -> tuple[st
             else:
                 continue
         if conf > best[1]:
-            best = (c["gaf_id"], conf, method)
+            best = (c["company_id"], conf, method)
     return best
 
 
@@ -109,15 +111,18 @@ def import_accounts(repo: Repository, path: str | Path, replace: bool = True) ->
         raw_rows = list(reader)
     with repo.engine.connect() as conn:
         cands = [dict(r._mapping) for r in conn.execute(
-            select(contractors.c.gaf_id, contractors.c.name, contractors.c.legal_name, contractors.c.dba,
-                   contractors.c.phone, contractors.c.postal_code, contractors.c.city)
+            select(companies.c.id.label("company_id"), companies.c.business_name.label("name"), companies.c.legal_name,
+                   companies.c.dba, companies.c.phone, companies.c.postal_code, companies.c.city)
         )]
     now = utcnow()
     rows, matched = [], 0
     for i, r in enumerate(raw_rows):
         get = lambda k: (r.get(hmap[k]) or "").strip() if k in hmap else ""  # noqa: E731
         acct = {
-            "account_id": get("account_id") or f"row-{i + 1}",
+            # No account number: derive a stable id from the account itself, so re-imports and
+            # --append of several exports never collide on row numbers.
+            "account_id": get("account_id") or "auto-" + stable_hash(get("name").lower(), phone_digits(get("phone")) or "",
+                                                                  zip5(get("postal_code")) or "")[:40],  # VARCHAR(64)
             "name": get("name"),
             "phone": get("phone") or None,
             "postal_code": get("postal_code") or None,
@@ -132,16 +137,32 @@ def import_accounts(repo: Repository, path: str | Path, replace: bool = True) ->
         }
         if not acct["name"]:
             continue
-        gid, conf, method = match_account(acct, cands)
-        acct.update(gaf_id=gid, match_confidence=conf or None, match_method=method)
-        matched += gid is not None
-        rows.append(acct)
-    with repo.engine.begin() as conn:
-        if replace:
-            conn.execute(delete(accounts))
-        if rows:
-            conn.execute(accounts.insert(), rows)
-    return {"rows": len(rows), "matched": matched, "unmatched": len(rows) - matched, "headers_mapped": hmap}
+        cid, conf, method = match_account(acct, cands)
+        acct.update(company_id=cid, match_confidence=conf or None, match_method=method)
+        matched += cid is not None
+        rows.append(fit(accounts, acct))
+    rows = list({r["account_id"]: r for r in rows}.values())
+    run_id = repo.start_run("crm_import", {"path": str(path), "replace": replace})
+    try:
+        with repo.engine.begin() as conn:
+            if replace:
+                conn.execute(delete(accounts))
+            if rows:
+                stmt = _insert_for(conn)(accounts).values(rows)
+                conn.execute(stmt.on_conflict_do_update(
+                    index_elements=["account_id"],
+                    set_={k: stmt.excluded[k] for k in rows[0] if k != "account_id"}))
+            repo._audit(conn, [{"entity_type": "accounts", "entity_id": Path(path).name[:160], "action": "created",
+                                "changes": {"rows": [None, len(rows)], "matched": [None, matched],
+                                            "replace": [None, replace]}}], run_id)
+        statuses = refresh_account_status(repo, run_id=run_id)
+    except Exception as e:
+        repo.finish_run(run_id, "failed", {}, error=f"{type(e).__name__}: {e}")
+        raise
+    stats = {"run_id": run_id, "rows": len(rows), "matched": matched, "unmatched": len(rows) - matched,
+             "headers_mapped": hmap, "account_status_changed": statuses}
+    repo.finish_run(run_id, "succeeded", stats)
+    return stats
 
 
 def account_status(acct: dict[str, Any] | None, now: datetime | None = None) -> str:
@@ -160,15 +181,26 @@ def account_status(acct: dict[str, Any] | None, now: datetime | None = None) -> 
     return "existing_customer"
 
 
-def accounts_by_gaf_id(repo: Repository) -> dict[str, dict[str, Any]]:
+def accounts_by_company_id(repo: Repository) -> dict[str, dict[str, Any]]:
+    """The best-matched account of each company."""
     with repo.engine.connect() as conn:
         out: dict[str, dict[str, Any]] = {}
-        for r in conn.execute(select(accounts).where(accounts.c.gaf_id.is_not(None))):
+        for r in conn.execute(select(accounts).where(accounts.c.company_id.is_not(None))):
             d = dict(r._mapping)
-            prev = out.get(d["gaf_id"])
+            prev = out.get(d["company_id"])
             if prev is None or (d.get("match_confidence") or 0) > (prev.get("match_confidence") or 0):
-                out[d["gaf_id"]] = d
+                out[d["company_id"]] = d
         return out
+
+
+def refresh_account_status(repo: Repository, now: datetime | None = None, run_id: int | None = None) -> int:
+    """Set companies.account_status from the imported accounts (prospect without one). Returns changes."""
+    accts = accounts_by_company_id(repo)
+    with repo.engine.connect() as conn:
+        current = {r.id: r.account_status for r in conn.execute(select(companies.c.id, companies.c.account_status))}
+    updates = {cid: {"account_status": st} for cid, was in current.items()
+               if (st := account_status(accts.get(cid), now)) != was}
+    return repo.update_companies(updates, run_id=run_id)
 
 
 def account_tags(acct: dict[str, Any] | None) -> list[dict[str, Any]]:

@@ -35,7 +35,11 @@ Data contracts consumed by downstream enrichers / tagging (keys in `data`):
                       provider, model, prompt_version
   bbb:                bbb_id, profile_url, bbb_name, alt_names, rating, accredited, business_start,
                       years_in_business, entity_type, employees, out_of_business, categories,
-                      services[], licenses[], website, phone, address, complaints_*, people[]
+                      services[], licenses[], website, phone, address, complaints_*,
+                      people[{name, title|null, prefix, principal, management}],
+                      match_evidence{phone_match, license_match, address_match, reasons[]}
+  fmcsa:              dot_number, legal_name, dba_name, officers[], email, status_code,
+                      match_evidence{phone_match, name_sim, same_zip, same_city, phone_only?, inactive?}
 """
 
 from __future__ import annotations
@@ -54,23 +58,35 @@ def _json_hash(obj: Any) -> str:
     return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()
 
 
-# When several sources know a website, prefer the verified one.
+# When several sources know a website, prefer the verified one. The last entries are display / crawl
+# fallbacks only (see WEBSITE_NOT_EVIDENCE); the orchestrator stores the winner's name in
+# companies.website_source, so a fallback website is always labelled as such.
 WEBSITE_PRIORITY = ("website_discovery", "google_places", "osm", "bbb")
+# Websites a source merely *lists* for a business it matched on other evidence (BBB: phone / licence /
+# address). Fine to show and to crawl, never identity evidence: checking a match against a website that
+# came out of a match is circular, and a BBB listing can point at a sister company (GAF 1156862 "Bergen
+# Exteriors" -> BBB "Bergen Fence" -> bergenfence.com). Matchers that compare websites, domains or
+# site contents must use `LeadContext.best_website(evidence=True)` / `website_for(evidence=True)`.
+WEBSITE_NOT_EVIDENCE = frozenset({"bbb"})
 
 
 @dataclass
 class LeadContext:
     """What an enricher knows about a contractor when it runs."""
 
-    contractor: dict[str, Any]  # a row of the `contractors` table
+    contractor: dict[str, Any]  # a lead record (Repository.get_companies)
     prior: dict[str, EnrichmentResult] = field(default_factory=dict)  # earlier enrichers' results
 
     def get(self, key: str, default: Any = None) -> Any:
         return self.contractor.get(key, default)
 
     @property
-    def gaf_id(self) -> str:
-        return self.contractor["gaf_id"]
+    def company_id(self) -> str | None:
+        return self.contractor.get("company_id")
+
+    @property
+    def gaf_id(self) -> str | None:
+        return self.contractor.get("gaf_id")
 
     def names(self) -> list[str]:
         """Candidate business names, most-official first (legal name, listing name, DBA)."""
@@ -85,12 +101,26 @@ class LeadContext:
         r = self.prior.get(source)
         return r if r is not None and r.status == EnrichmentStatus.OK else None
 
-    def best_website(self) -> str | None:
+    def website_for(self, *, evidence: bool = False) -> tuple[str | None, str | None]:
+        """(website, source) by WEBSITE_PRIORITY, falling back to the stored website (companies.website_url).
+
+        evidence=True skips WEBSITE_NOT_EVIDENCE sources (including a stored website whose
+        website_source is one of them): use it whenever the website backs an identity decision.
+        """
         for src in WEBSITE_PRIORITY:
+            if evidence and src in WEBSITE_NOT_EVIDENCE:
+                continue
             r = self.ok_prior(src)
             if r is not None and r.website:
-                return r.website
-        return self.contractor.get("website")
+                return r.website, src
+        site, src = self.contractor.get("website"), self.contractor.get("website_source")
+        if not site or (evidence and src in WEBSITE_NOT_EVIDENCE):
+            return None, None
+        return site, src
+
+    def best_website(self, *, evidence: bool = False) -> str | None:
+        """Best website to show / crawl; evidence=True for one that may verify a match (no BBB listing)."""
+        return self.website_for(evidence=evidence)[0]
 
 
 # Contractor fields that identify the business; a change re-triggers enrichment.

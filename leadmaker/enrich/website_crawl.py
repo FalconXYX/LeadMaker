@@ -10,6 +10,7 @@ and extracts (see the data contract in `leadmaker.enrich.base`):
   social{platform: url}       facebook, instagram, linkedin, youtube, x, tiktok, yelp, houzz, ...
   services[]                  canonical service taxonomy (see SERVICE_PATTERNS; incl. tpo_roofing,
                               single_ply_roofing, new_construction)
+  service_evidence{svc: [{url, snippet}]}   where each service was seen (first page(s), one line each)
   service_areas[]             towns / counties / boroughs mentioned near "serving", "service area"
   founded_year                from "since 1998", "established in", "over 25 years" ...
   team_size_hint              e.g. "team of 25", "50+ employees", "10 crews"
@@ -82,13 +83,19 @@ LINK_KEYWORDS: dict[str, tuple[str, int]] = {
     "commercial": ("services", 4), "what-we-do": ("services", 6), "what we do": ("services", 6),
     "roofing": ("services", 3),
     "contact": ("contact", 6), "careers": ("careers", 2), "jobs": ("careers", 1),
-    "service-area": ("areas", 5), "service area": ("areas", 5), "areas-we-serve": ("areas", 5),
+    "service-area": ("areas", 6), "service area": ("areas", 6), "areas-we-serve": ("areas", 6),
     "areas we serve": ("areas", 5), "locations": ("areas", 3),
 }
 # How many pages of each category we are willing to spend the page budget on.
 CATEGORY_QUOTA = {"team": 2, "about": 2, "services": 2, "contact": 1, "areas": 1, "careers": 1}
 SKIP_EXT = re.compile(r"\.(?:pdf|jpe?g|png|gif|webp|svg|zip|docx?|xlsx?|pptx?|mp4|mov|mp3|ico|xml|css|js)(?:$|\?)", re.I)
-SKIP_PATH = re.compile(r"/(?:wp-admin|wp-login|cart|checkout|my-account|login|signin|feed|tag|author|category)/", re.I)
+SKIP_PATH = re.compile(r"/(?:cdn-cgi|wp-admin|wp-login|cart|checkout|my-account|login|signin|feed|tag|author|category)/", re.I)
+# Hacked / spam pages injected into contractor sites ("/beginners-guide-to-real-money-pokies-..." on a
+# roofer's site): never worth a page fetch, whatever keyword the slug or link text also contains.
+OFF_TOPIC_LINK = re.compile(
+    r"(?i)(?<![a-z])(?:casinos?|pokies|gambl\w*|slots?|betting|poker|roulette|blackjack|jackpots?|real[- ]money|"
+    r"payday|loans?|crypto\w*|bitcoin|forex|viagra|cialis|porn\w*|escorts?)(?![a-z])"
+)
 FALLBACK_PATHS = ("/about", "/about-us", "/contact", "/contact-us", "/services")
 
 # --------------------------------------------------------------------------------------
@@ -139,14 +146,19 @@ SERVICE_PATTERNS: dict[str, str] = {
                           r"\bpvc\s+(?:roof|membrane)|duro-?last|sarnafil|hypalon",
     # New-build work, not new roofs on existing homes ("new roof" is roof_replacement). "Builders" alone is
     # usually part of a company name ("Casey Builders") and "home builders" appears in "National
-    # Association of Home Builders", so builder/developer work needs "for/with builders" or "custom home".
-    "new_construction": r"\bnew[- ]constructions?\b|\bnew[- ]builds?\b|\bnewly[- ](?:built|constructed)\b|"
+    # Association of Home Builders", so builder/developer work needs a first-person partnership ("we
+    # partner with local builders"; not a bio's "Vincent has consulted with Builders, Architects") or
+    # "custom home". Bare "newly built" is a review compliment ("My house looks newly built."), and a
+    # warranty's "new construction systems (flat roof, pitched roof, ...)" means replaced systems.
+    "new_construction": r"\bnew[- ]constructions?\b(?!\s+systems?\b)|\bnew[- ]builds?\b|"
+                        r"\bnewly[- ](?:built|constructed)\s+(?:homes?|houses?|buildings?|properties|structures?|developments?)\b|"
                         r"\bground[- ]up\s+(?:construction|builds?|projects?)\b|"
-                        r"\bnew\s+(?:home|house|residential|commercial|building)\s+construction\b|"
+                        r"\bnew\s+(?:home|house|residential|commercial|building)\s+constructions?\b|"
                         r"\bcustom\s+home\s+(?:builders?|building|construction)\b|\bspec\s+homes?\b|"
-                        r"\b(?:for|with)\s+(?:local\s+|area\s+)?(?:(?:homeowners?|architects?|contractors?)\s*(?:,|and|&)\s*)?"
-                        r"(?:home\s*)?(?:builders|developers)\b|"
-                        r"\bbuilders?\s+(?:and|&)\s+developers?\b|\b(?:real estate|property)\s+developers?\b|"
+                        r"\b(?:we|our\s+(?:team|crews?|company|firm))\s+(?:[\w'’-]+\s+){0,3}?(?:for|with)\s+(?:local\s+|area\s+)?"
+                        r"(?:(?:homeowners?|architects?|contractors?)\s*(?:,|and|&)\s*)*(?:home\s*)?(?:builders|developers)\b|"
+                        r"\bservices?\s+for\s+(?:(?:homeowners?|architects?|contractors?)\s*(?:,|and|&)\s*)*(?:home\s*)?builders\b|"
+                        r"\bbuilders?\s+(?:and|&)\s+developers?\b|"
                         r"\bdevelopers?\s+(?:and|&)\s+(?:builders?|general contractors?)\b",
     "slate_roofing": r"\bslate\b",
     "metal_roofing": r"metal roof|standing seam|copper roof",
@@ -167,10 +179,22 @@ SERVICE_PATTERNS: dict[str, str] = {
     "ventilation": r"ventilation|ridge vents?|attic fans?",
     "solar": r"\bsolar\b",
     "sheet_metal": r"sheet metal|flashing",
-    "storm_damage": r"storm damage|hail damage|wind damage|hurricane",
+    # "Hurricane" alone is mostly a product feature ("hurricane-resistant siding", "Hurricane-Rated
+    # Materials"), "wind, hail" a warranty clause and "stains after storms" advice; only storm / hurricane
+    # *damage/repair* work counts ("Emergency Storm Repair", "Storm Demage Repair" [sic], "Storm related
+    # project documentation").
+    "storm_damage": r"\b(?:storm|hail|wind|hurricane)[- ](?:d[ae]mage[ds]?|repairs?|restoration|recovery|clean-?up|"
+                    r"claims?|related|documentation)\b|"
+                    r"\b(?:after|following)\s+(?:a\s+|the\s+)?hurricanes?\b",
     "insurance_claims": r"insurance (?:claims?|work|companies|adjusters?)|work with (?:your )?insurance",
     "inspections": r"\binspections?\b|roof assessment",
-    "emergency_service": r"emergency|24/7|24 hours?|24-hour",
+    # Bare "emergency" / "24 hours" also hit "written quote inside 24 hours" and "in an emergency": require
+    # emergency + roof/repair/service/response/tarp, 24/7 (or "Open 24 Hours", "24 hours a day"), or
+    # 24 hours + emergency/service/response.
+    "emergency_service": r"\bemergency\s+(?:roof(?:ing)?\s+|leak\s+|storm(?:[- ]damage)?\s+)?(?:roof(?:ing|ers?)?|repairs?|services?|"
+                         r"response|tarp(?:s|ping|ing)?|calls?|jobs?)\b|\b24\s*/\s*7\b|"
+                         r"\b24(?:[- ]|\s+)?(?:hours?|hrs?)\s+(?:(?:a|per)\s+day|emergency|services?|response)\b|"
+                         r"\b(?:open|call\s+us|available)\s+24(?:[- ]|\s+)?(?:hours?|hrs?)\b",
     "maintenance": r"roof maintenance|preventative maintenance|preventive maintenance|roof coatings?|\bcoatings?\b",
     "general_contracting": r"general contract|renovations?|remodel|home improvement|kitchens?\b|bathrooms?\b|basements?\b|additions?\b(?= to)",
     "decks": r"\bdecks?\b|decking|\bpatios?\b",
@@ -184,6 +208,23 @@ SERVICE_RES = {k: re.compile(v, re.I) for k, v in SERVICE_PATTERNS.items()}
 NEGATABLE_SERVICES = {"new_construction"}
 NEGATION_BEFORE = re.compile(r"(?i)(?:\b(?:do|does|will|can)\s+not|n['’]t|\bnot|\bno\s+longer|\bnever)\s+(?:[\w-]+\s+){0,2}$")
 NOT_ONLY = re.compile(r"(?i)\b(?:just|only)\s+(?:[\w-]+\s+)?$")
+# Services whose wording is too common outside a service offer (blog posts, terms of service, reviews)
+# to trust anywhere on a site: they only count on pages that are not articles or legal text, and never
+# in a block that links to such a page (a "recent posts" card on the homepage).
+CONTEXT_SERVICES = {"new_construction", "storm_damage", "emergency_service"}
+# The words any (current or earlier) detector of a context service fires on. Tagging uses them to judge
+# a crawl stored before the page-aware scan: if the stored text has a trace but no page-aware hit, the
+# old hit was most likely that rejected text; with no trace at all it lies in text that wasn't stored.
+CONTEXT_TRACES = {
+    "new_construction": re.compile(r"(?i)\bnew[- ]?(?:constructions?|builds?)\b|\bnewly[- ](?:built|constructed)\b|"
+                                   r"\bbuilders?\b|\bdevelopers?\b|\bground[- ]up\b|\bspec\s+homes?\b"),
+    "storm_damage": re.compile(r"(?i)\bstorms?\b|\bhail\b|\bwind[- ]damage|\bhurricanes?\b"),
+    "emergency_service": re.compile(r"(?i)\bemergenc(?:y|ies)\b|\b24\s*/\s*7\b|\b24(?:[- ]|\s+)(?:hours?|hrs?)\b"),
+}
+NON_SERVICE_PAGE = re.compile(
+    r"(?i)(?<![a-z])(?:blogs?|news|tips|guides?|articles?|terms|privacy|legal|disclaimers?)(?![a-z])"
+)
+MAX_EVIDENCE = 2  # evidence snippets kept per service (distinct pages)
 
 # --------------------------------------------------------------------------------------
 # Service areas
@@ -513,6 +554,7 @@ class ParsedPage:
     emails: list[str] = field(default_factory=list)
     phones: list[str] = field(default_factory=list)  # tel: links first, then text matches
     jsonld: list[Any] = field(default_factory=list)
+    article_lines: set[str] = field(default_factory=set)  # lines inside links to blog/news/legal pages
 
     @property
     def text(self) -> str:
@@ -588,6 +630,10 @@ def parse_page(html: str, url: str) -> ParsedPage:
         n.insert_before(SEP)
         n.insert_after(SEP)
     page.lines = _lines(body)
+    for a in body.css("a[href]"):
+        href = (a.attributes.get("href") or "").strip()
+        if href and not href.lower().startswith(("mailto:", "tel:", "#")) and non_service_page(urljoin(url, href)):
+            page.article_lines.update(_lines(a))
     text = "\n".join(page.lines)
     for m in EMAIL_RE.finditer(text):
         e = clean_email(m.group(0))
@@ -611,6 +657,11 @@ def parse_page(html: str, url: str) -> ParsedPage:
 # --------------------------------------------------------------------------------------
 # Extraction over parsed pages
 # --------------------------------------------------------------------------------------
+def non_service_page(url: str) -> bool:
+    """Blog / news / tips / guide / article / terms / privacy / legal / disclaimer page, by URL path."""
+    return bool(NON_SERVICE_PAGE.search(urlsplit(url).path))
+
+
 def score_link(url: str, text: str) -> tuple[str, int] | None:
     path = urlsplit(url).path.lower()
     hay_path = path.replace("_", "-")
@@ -631,6 +682,8 @@ def choose_links(page: ParsedPage, base_host: str, limit: int = MAX_EXTRA_PAGES)
     scored: dict[str, tuple[int, str, str]] = {}
     for url, text in page.links:
         if not same_site(url, base_host) or SKIP_EXT.search(url) or SKIP_PATH.search(urlsplit(url).path + "/"):
+            continue
+        if OFF_TOPIC_LINK.search(urlsplit(url).path) or OFF_TOPIC_LINK.search(text):
             continue
         cu = canonical_url(url)
         if cu == home or urlsplit(url).query:
@@ -690,23 +743,72 @@ def _negated(text: str, start: int) -> bool:
     return bool(NEGATION_BEFORE.search(before)) and not NOT_ONLY.search(before)
 
 
+def _service_hits(svc: str, text: str) -> list[re.Match[str]]:
+    hits = list(SERVICE_RES[svc].finditer(text))
+    if svc in NEGATABLE_SERVICES:
+        hits = [m for m in hits if not _negated(text, m.start())]
+    return hits
+
+
+def _line_snippet(text: str, m: re.Match[str], pad: int = 70) -> str:
+    """The match with up to `pad` chars of context inside its own text block (line); a short block
+    (a heading or list item such as "New Construction") also shows its neighbours: "Re-roof | New
+    Construction | Tear-Offs"."""
+    ls = text.rfind("\n", 0, m.start()) + 1
+    le = text.find("\n", m.end())
+    le = len(text) if le == -1 else le
+    if le - ls < 40:
+        prev = text.rfind("\n", 0, max(0, ls - 1)) + 1 if ls else ls
+        nxt = text.find("\n", le + 1) if le < len(text) else le
+        ls, le = prev, len(text) if nxt == -1 else nxt
+    s, e = max(ls, m.start() - pad), min(le, m.end() + pad)
+    out = re.sub(r"\s*\n\s*", " | ", text[s:e].strip())
+    return ("…" if s > ls else "") + re.sub(r"[^\S\n]+", " ", out) + ("…" if e < le else "")
+
+
 def extract_services(text: str) -> tuple[list[str], dict[str, int]]:
     """Canonical services found in `text` -> (services by mention count, {service: count}).
 
-    Pure over text, so it also runs on the stored `pages[].text` of an old crawl (tagging re-scans
-    it, so new patterns apply without re-crawling; recall is lower than a fresh crawl because the
-    stored text drops nav/footer boilerplate and is capped at TOTAL_TEXT_LIMIT).
+    Pure over text with no page context, so every pattern counts anywhere; `scan_services` is the
+    page-aware version the crawler and tagging use.
     """
-    counts: dict[str, int] = {}
-    for svc, rx in SERVICE_RES.items():
-        if svc in NEGATABLE_SERVICES:
-            n = sum(1 for m in rx.finditer(text) if not _negated(text, m.start()))
-        else:
-            n = len(rx.findall(text))
-        if n:
-            counts[svc] = n
+    counts = {svc: n for svc in SERVICE_RES if (n := len(_service_hits(svc, text)))}
     ordered = sorted(counts, key=lambda k: -counts[k])
     return ordered, counts
+
+
+def scan_services(
+    pages: list[tuple[str, str]], skip_lines: set[str] | frozenset[str] = frozenset()
+) -> tuple[list[str], dict[str, int], dict[str, list[dict[str, str]]]]:
+    """Services over [(url, text)] pages -> (services by mention count, {service: count}, evidence).
+
+    CONTEXT_SERVICES only count on pages that are not blog/news/tips/guide/article/terms/privacy/legal
+    pages (`non_service_page`) and never on `skip_lines` (link blocks pointing at such pages); every
+    other service counts on any page. evidence = {service: [{url, snippet}]}, first MAX_EVIDENCE pages.
+    Pure over text, so tagging also runs it on the stored `pages[]` of an old crawl (new patterns apply
+    without re-crawling; recall is lower than a fresh crawl because the stored text drops nav/footer
+    boilerplate and is capped at TOTAL_TEXT_LIMIT).
+    """
+    counts: dict[str, int] = {}
+    evidence: dict[str, list[dict[str, str]]] = {}
+    for url, text in pages:
+        article = non_service_page(url)
+        ctx_text = text
+        if skip_lines and not article:
+            ctx_text = "\n".join(ln for ln in text.split("\n") if ln not in skip_lines)
+        for svc in SERVICE_RES:
+            if svc in CONTEXT_SERVICES and article:
+                continue
+            t = ctx_text if svc in CONTEXT_SERVICES else text
+            hits = _service_hits(svc, t)
+            if not hits:
+                continue
+            counts[svc] = counts.get(svc, 0) + len(hits)
+            ev = evidence.setdefault(svc, [])
+            if len(ev) < MAX_EVIDENCE and all(e["url"] != url for e in ev):
+                ev.append({"url": url, "snippet": _line_snippet(t, hits[0])[:240]})
+    ordered = sorted(counts, key=lambda k: -counts[k])
+    return ordered, counts, {k: evidence[k] for k in ordered}
 
 
 def _clean_area(part: str) -> str | None:
@@ -843,6 +945,24 @@ def _title_ok(text: str, title_start: int) -> bool:
     return not NON_EXEC_PRECEDERS.search(text[max(0, title_start - 14): title_start])
 
 
+# Demo-content names that site themes and UI kits ship with ("Thomas Smith, Founder & CEO", "Esther Howard").
+PLACEHOLDER_NAMES = {
+    "john doe", "jane doe", "thomas smith", "john appleseed", "joe bloggs",
+    "your name", "first last", "firstname lastname", "first name last name", "name surname", "lorem ipsum",
+    "team member", "admin", "test user", "cheryl dunye",
+    "esther howard", "wade warren", "jane cooper", "cameron williamson", "brooklyn simmons", "leslie alexander",
+    "jenny wilson", "guy hawkins", "robert fox", "jacob jones", "kristin watson", "cody fisher",
+    "savannah nguyen", "darlene robertson", "ronald richards", "annette black", "courtney henry",
+    "theresa webb", "darrell steward", "marvin mckinney", "arlene mccoy", "devon lane", "bessie cooper",
+    "eleanor pena", "floyd miles", "kathryn murphy", "ralph edwards", "dianne russell", "jerome bell",
+    "albert flores",
+}
+
+
+def is_placeholder_name(name: str | None) -> bool:
+    return " ".join(re.sub(r"[^\w\s]", " ", (name or "").lower()).split()) in PLACEHOLDER_NAMES
+
+
 def extract_leadership(pages: list[ParsedPage], company_names: list[str]) -> list[Leader]:
     found: dict[str, Leader] = {}
 
@@ -960,7 +1080,7 @@ def extract_leadership(pages: list[ParsedPage], company_names: list[str]) -> lis
                     _add_leader(found, not_company(clean_name(item["name"])), jt,
                                 f"JSON-LD Person: {item['name']} ({jt})"[:240], page.url, 0.6)
     leaders = sorted(found.values(), key=lambda l: (-l.confidence, -title_rank(l.title), l.name))
-    return leaders[:MAX_LEADERSHIP]
+    return [l for l in leaders if not is_placeholder_name(l.name)][:MAX_LEADERSHIP]
 
 
 def _walk_jsonld(obj: Any, depth: int = 0) -> list[dict[str, Any]]:
@@ -1093,7 +1213,12 @@ def extract_all(pages: list[ParsedPage], ctx: LeadContext, site_host: str, today
             pcount[fp] += 1
     phones = [p for p, _ in pcount.most_common(MAX_PHONES)]
     social = extract_social(pages, facts["same_as"])
-    services, mentions = extract_services(full_text)
+    skip = {ln for p in pages for ln in p.article_lines}
+    # The homepage's meta description is the site's own summary ("From renovations to new builds, ...")
+    # and is stored with its text (build_page_texts), so it is scanned too.
+    scan = [(p.url, f"{p.meta_description}\n{p.text}" if i == 0 and p.meta_description else p.text)
+            for i, p in enumerate(pages)]
+    services, mentions, evidence = scan_services(scan, skip)
     areas = extract_service_areas([ln for p in pages for ln in p.lines])
     for a in facts["area_served"]:
         a = a.strip()
@@ -1115,6 +1240,7 @@ def extract_all(pages: list[ParsedPage], ctx: LeadContext, site_host: str, today
         "phones": phones,
         "social": social,
         "services": services,
+        "service_evidence": evidence,
         "service_areas": areas,
         "founded_year": founded,
         "team_size_hint": team_size,

@@ -1,0 +1,492 @@
+[
+  {
+    "name": "search:default:rep",
+    "filter": {},
+    "median_ms": 9,
+    "execution_ms": 6.9,
+    "planning_ms": 0.4,
+    "shared_hit": 1595,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on custom_tags (rows=263, loops=8)"
+    ],
+    "scans": [
+      "Index Only Scan on companies using companies_assigned_rep_priority_idx (rows=1001, loops=1)",
+      "Subquery Scan (rows=51, loops=1)",
+      "Index Scan on companies using companies_priority_idx (rows=51, loops=1)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=51)",
+      "Index Scan on users using users_pkey (rows=0, loops=51)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=51)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=51)",
+      "Seq Scan on custom_tags (rows=263, loops=8)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=51)",
+      "Function Scan (rows=21, loops=51)"
+    ]
+  },
+  {
+    "name": "search:mine:rep",
+    "filter": {
+      "scope": "mine"
+    },
+    "median_ms": 4,
+    "execution_ms": 2.6,
+    "planning_ms": 0.4,
+    "shared_hit": 622,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on custom_tags (rows=1, loops=1)"
+    ],
+    "scans": [
+      "Index Only Scan on companies using companies_assigned_rep_priority_idx (rows=35, loops=1)",
+      "Subquery Scan (rows=35, loops=1)",
+      "Index Only Scan on companies using companies_assigned_rep_priority_idx (rows=35, loops=1)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=35)",
+      "Index Scan on users using users_pkey (rows=1, loops=35)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=35)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=35)",
+      "Seq Scan on custom_tags (rows=1, loops=1)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=35)",
+      "Function Scan (rows=22, loops=35)"
+    ]
+  },
+  {
+    "name": "search:unallocated_tags:rep",
+    "filter": {
+      "scope": "unallocated",
+      "tagsAll": [
+        "service:metal_roofing"
+      ],
+      "size": [
+        "medium",
+        "large"
+      ]
+    },
+    "median_ms": 15.7,
+    "execution_ms": 13.6,
+    "planning_ms": 0.5,
+    "shared_hit": 5049,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on custom_tags (rows=240, loops=5)"
+    ],
+    "scans": [
+      "Bitmap Heap Scan on companies (rows=1001, loops=1)",
+      "Bitmap Index Scan using companies_tag_facets_gin (rows=12218, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=0, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=30058, loops=1)",
+      "Subquery Scan (rows=51, loops=1)",
+      "Bitmap Heap Scan on companies (rows=3655, loops=1)",
+      "Bitmap Index Scan using companies_tag_facets_gin (rows=12218, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=0, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=30058, loops=1)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=51)",
+      "Index Scan on users using users_pkey (rows=0, loops=51)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=51)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=51)",
+      "Seq Scan on custom_tags (rows=240, loops=5)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=51)",
+      "Function Scan (rows=22, loops=51)"
+    ]
+  },
+  {
+    "name": "search:cert_segment_rating:manager",
+    "filter": {
+      "certifications": [
+        "gaf:master_elite",
+        "gaf:certified_plus"
+      ],
+      "segment": [
+        "strategic",
+        "growth"
+      ],
+      "minRating": 4.5
+    },
+    "median_ms": 18.3,
+    "execution_ms": 15.1,
+    "planning_ms": 0.5,
+    "shared_hit": 996,
+    "shared_read": 2029,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on companies (rows=1001, loops=1)",
+      "Seq Scan on custom_tags (rows=273, loops=11)"
+    ],
+    "scans": [
+      "Seq Scan on companies (rows=1001, loops=1)",
+      "Subquery Scan (rows=51, loops=1)",
+      "Index Scan on companies using companies_priority_idx (rows=51, loops=1)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=51)",
+      "Index Scan on users using users_pkey (rows=1, loops=51)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=51)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=51)",
+      "Seq Scan on custom_tags (rows=273, loops=11)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=51)",
+      "Function Scan (rows=21, loops=51)"
+    ]
+  },
+  {
+    "name": "search:near_distance:manager",
+    "filter": {
+      "near": {
+        "zip": "10001",
+        "radiusMiles": 10
+      },
+      "sort": {
+        "by": "distance",
+        "dir": "asc"
+      }
+    },
+    "median_ms": 30.9,
+    "execution_ms": 62.8,
+    "planning_ms": 7.8,
+    "shared_hit": 8329,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on custom_tags (rows=263, loops=8)"
+    ],
+    "scans": [
+      "Bitmap Heap Scan on companies (rows=1001, loops=3)",
+      "Bitmap Index Scan using companies_location_gist (rows=18803, loops=1)",
+      "Subquery Scan (rows=51, loops=1)",
+      "Bitmap Heap Scan on companies (rows=4709, loops=3)",
+      "Bitmap Index Scan using companies_location_gist (rows=18803, loops=1)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=51)",
+      "Index Scan on users using users_pkey (rows=1, loops=51)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=51)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=51)",
+      "Seq Scan on custom_tags (rows=263, loops=8)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=51)",
+      "Function Scan (rows=20, loops=51)"
+    ]
+  },
+  {
+    "name": "search:near_storm:rep",
+    "filter": {
+      "near": {
+        "zip": "07030",
+        "radiusMiles": 25
+      },
+      "tagsAny": [
+        "work_type:storm_emergency",
+        "service:storm_damage"
+      ]
+    },
+    "median_ms": 34.2,
+    "execution_ms": 31.7,
+    "planning_ms": 1.4,
+    "shared_hit": 7736,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on custom_tags (rows=257, loops=7)"
+    ],
+    "scans": [
+      "Bitmap Heap Scan on companies (rows=1001, loops=3)",
+      "Bitmap Index Scan using companies_tag_facets_gin (rows=33822, loops=1)",
+      "Bitmap Index Scan using companies_tag_facets_gin (rows=24939, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=35, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=30058, loops=1)",
+      "Bitmap Index Scan using companies_location_gist (rows=43449, loops=1)",
+      "Subquery Scan (rows=51, loops=1)",
+      "Bitmap Heap Scan on companies (rows=1906, loops=3)",
+      "Bitmap Index Scan using companies_tag_facets_gin (rows=33822, loops=1)",
+      "Bitmap Index Scan using companies_tag_facets_gin (rows=24939, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=35, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=30058, loops=1)",
+      "Bitmap Index Scan using companies_location_gist (rows=43449, loops=1)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=51)",
+      "Index Scan on users using users_pkey (rows=0, loops=51)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=51)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=51)",
+      "Seq Scan on custom_tags (rows=257, loops=7)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=51)",
+      "Function Scan (rows=22, loops=51)"
+    ]
+  },
+  {
+    "name": "search:text:rep",
+    "filter": {
+      "text": "summit"
+    },
+    "median_ms": 26.9,
+    "execution_ms": 23.9,
+    "planning_ms": 0.8,
+    "shared_hit": 12027,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on field_overrides (rows=0, loops=1)",
+      "Seq Scan on field_overrides (rows=0, loops=1)",
+      "Seq Scan on custom_tags (rows=300, loops=6)"
+    ],
+    "scans": [
+      "Bitmap Heap Scan on companies (rows=1001, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=35, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=30058, loops=1)",
+      "Seq Scan on field_overrides (rows=0, loops=1)",
+      "Subquery Scan (rows=51, loops=1)",
+      "Index Scan on companies using companies_priority_idx (rows=51, loops=1)",
+      "Seq Scan on field_overrides (rows=0, loops=1)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=51)",
+      "Index Scan on users using users_pkey (rows=0, loops=51)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=51)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=51)",
+      "Seq Scan on custom_tags (rows=300, loops=6)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=51)",
+      "Function Scan (rows=21, loops=51)"
+    ]
+  },
+  {
+    "name": "search:unchecked_team:manager",
+    "filter": {
+      "unchecked": "team",
+      "unserviced": "team",
+      "updatedSince": "2026-09-18"
+    },
+    "median_ms": 7.7,
+    "execution_ms": 5.1,
+    "planning_ms": 0.4,
+    "shared_hit": 1892,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on companies (rows=1001, loops=1)",
+      "Seq Scan on custom_tags (rows=257, loops=7)"
+    ],
+    "scans": [
+      "Seq Scan on companies (rows=1001, loops=1)",
+      "Subquery Scan (rows=51, loops=1)",
+      "Index Scan on companies using companies_priority_idx (rows=51, loops=1)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=51)",
+      "Index Scan on users using users_pkey (rows=1, loops=51)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=51)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=51)",
+      "Seq Scan on custom_tags (rows=257, loops=7)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=51)",
+      "Function Scan (rows=21, loops=51)"
+    ]
+  },
+  {
+    "name": "search:unchecked_me:rep",
+    "filter": {
+      "unchecked": "me",
+      "scope": "mine"
+    },
+    "median_ms": 3.8,
+    "execution_ms": 2,
+    "planning_ms": 0.5,
+    "shared_hit": 740,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on custom_tags (rows=1, loops=1)"
+    ],
+    "scans": [
+      "Bitmap Heap Scan on companies (rows=35, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=35, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=0, loops=1)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=35)",
+      "Subquery Scan (rows=27, loops=1)",
+      "Bitmap Heap Scan on companies (rows=35, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=35, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=0, loops=1)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=35)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=27)",
+      "Index Scan on users using users_pkey (rows=1, loops=27)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=27)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=27)",
+      "Seq Scan on custom_tags (rows=1, loops=1)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=27)",
+      "Function Scan (rows=22, loops=27)"
+    ]
+  },
+  {
+    "name": "search:custom:manager",
+    "filter": {
+      "customFields": [
+        {
+          "key": "preferred_supplier",
+          "op": "eq",
+          "value": "Beacon"
+        }
+      ]
+    },
+    "median_ms": 7.9,
+    "execution_ms": 6.2,
+    "planning_ms": 0.5,
+    "shared_hit": 3330,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on custom_tags (rows=267, loops=9)"
+    ],
+    "scans": [
+      "Bitmap Heap Scan on companies (rows=1001, loops=1)",
+      "Bitmap Index Scan using companies_custom_fields_gin (rows=3083, loops=1)",
+      "Subquery Scan (rows=51, loops=1)",
+      "Index Scan on companies using companies_priority_idx (rows=51, loops=1)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=51)",
+      "Index Scan on users using users_pkey (rows=1, loops=51)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=51)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=51)",
+      "Seq Scan on custom_tags (rows=267, loops=9)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=51)",
+      "Function Scan (rows=21, loops=51)"
+    ]
+  },
+  {
+    "name": "search:years_sort:manager",
+    "filter": {
+      "minYearsInBusiness": 20,
+      "sort": {
+        "by": "years_in_business",
+        "dir": "desc"
+      }
+    },
+    "median_ms": 5.5,
+    "execution_ms": 3.6,
+    "planning_ms": 0.3,
+    "shared_hit": 874,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on custom_tags (rows=257, loops=7)"
+    ],
+    "scans": [
+      "Index Only Scan on companies using companies_founded_year_desc_idx (rows=1001, loops=1)",
+      "Subquery Scan (rows=51, loops=1)",
+      "Index Only Scan on companies using companies_founded_year_idx (rows=51, loops=1)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=51)",
+      "Index Scan on users using users_pkey (rows=1, loops=51)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=51)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=51)",
+      "Seq Scan on custom_tags (rows=257, loops=7)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=51)",
+      "Function Scan (rows=20, loops=51)"
+    ]
+  },
+  {
+    "name": "search:default:manager",
+    "filter": {},
+    "median_ms": 6,
+    "execution_ms": 3.7,
+    "planning_ms": 0.4,
+    "shared_hit": 852,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on custom_tags (rows=250, loops=6)"
+    ],
+    "scans": [
+      "Index Only Scan on companies using companies_county_fips_idx (rows=1001, loops=1)",
+      "Subquery Scan (rows=51, loops=1)",
+      "Index Only Scan on companies using companies_priority_idx (rows=51, loops=1)",
+      "Index Scan on companies using companies_pkey (rows=1, loops=51)",
+      "Index Scan on users using users_pkey (rows=1, loops=51)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=51)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=51)",
+      "Seq Scan on custom_tags (rows=250, loops=6)",
+      "Index Only Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=51)",
+      "Function Scan (rows=22, loops=51)"
+    ]
+  },
+  {
+    "name": "profile:head:rep",
+    "median_ms": 1.1,
+    "execution_ms": 0.1,
+    "planning_ms": 0.3,
+    "shared_hit": 67,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [],
+    "scans": [
+      "Index Scan on companies using companies_pkey (rows=1, loops=1)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=0, loops=1)",
+      "Index Scan on lead_rep_state using lead_rep_state_pkey (rows=1, loops=1)",
+      "Index Scan on users using users_pkey (rows=1, loops=1)",
+      "Subquery Scan (rows=2, loops=1)",
+      "Index Scan on lead_allocations using lead_allocations_history_idx (rows=2, loops=1)",
+      "Index Scan on users using users_pkey (rows=1, loops=2)",
+      "Index Scan on users using users_pkey (rows=1, loops=2)",
+      "Index Scan on users using users_pkey (rows=0, loops=2)",
+      "Subquery Scan (rows=5, loops=1)",
+      "Index Scan on activity_logs using activity_logs_company_idx (rows=5, loops=1)",
+      "Index Scan on users using users_pkey (rows=1, loops=5)",
+      "Subquery Scan (rows=1, loops=1)",
+      "Bitmap Heap Scan on activity_logs (rows=1, loops=1)",
+      "Bitmap Index Scan using activity_logs_company_idx (rows=5, loops=1)",
+      "Index Scan on users using users_pkey (rows=1, loops=1)",
+      "Bitmap Heap Scan on regional_signals (rows=8, loops=1)",
+      "Bitmap Index Scan using regional_signals_county_kind_idx (rows=8, loops=1)"
+    ]
+  },
+  {
+    "name": "profile:body",
+    "median_ms": 1,
+    "execution_ms": 0.1,
+    "planning_ms": 0.2,
+    "shared_hit": 25,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on custom_tags (rows=1, loops=1)"
+    ],
+    "scans": [
+      "Index Scan on companies using companies_pkey (rows=1, loops=1)",
+      "Bitmap Heap Scan on company_source_ids (rows=1, loops=1)",
+      "Bitmap Index Scan using company_source_ids_company_idx (rows=1, loops=1)",
+      "Index Scan on field_overrides using field_overrides_history_idx (rows=0, loops=1)",
+      "Index Scan on users using users_pkey (rows=0, loops=0)",
+      "Index Scan on contacts using contacts_company_idx (rows=2, loops=1)",
+      "Seq Scan on custom_tags (rows=1, loops=1)",
+      "Index Scan on company_custom_tags using company_custom_tags_pkey (rows=0, loops=1)",
+      "Index Scan on users using users_pkey (rows=0, loops=0)",
+      "Subquery Scan (rows=0, loops=1)",
+      "Index Scan on company_insights using company_insights_latest_idx (rows=0, loops=1)",
+      "Index Scan on enrichments using enrichments_pkey (rows=0, loops=1)"
+    ]
+  },
+  {
+    "name": "kpi:mine:rep",
+    "median_ms": 0.8,
+    "execution_ms": 0,
+    "planning_ms": 0.1,
+    "shared_hit": 18,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [],
+    "scans": [
+      "Bitmap Heap Scan on companies (rows=35, loops=1)",
+      "Bitmap Index Scan using companies_assigned_rep_priority_idx (rows=35, loops=1)",
+      "Bitmap Heap Scan on lead_rep_state (rows=19, loops=1)",
+      "Bitmap Index Scan using lead_rep_state_user_idx (rows=19, loops=1)"
+    ]
+  },
+  {
+    "name": "kpi:team",
+    "median_ms": 9.4,
+    "execution_ms": 6,
+    "planning_ms": 0.1,
+    "shared_hit": 86,
+    "shared_read": 0,
+    "jit": 0,
+    "seq_scans": [
+      "Seq Scan on team_dashboard_kpis (rows=2001, loops=1)",
+      "Seq Scan on team_dashboard_kpis (rows=2001, loops=1)",
+      "Seq Scan on users (rows=2000, loops=1)",
+      "Seq Scan on team_dashboard_kpis (rows=2001, loops=1)"
+    ],
+    "scans": [
+      "Seq Scan on team_dashboard_kpis (rows=2001, loops=1)",
+      "Subquery Scan (rows=1, loops=1)",
+      "Seq Scan on team_dashboard_kpis (rows=2001, loops=1)",
+      "Index Scan on team_dashboard_kpis using team_dashboard_kpis_rep_key (rows=1, loops=1)",
+      "Seq Scan on users (rows=2000, loops=1)",
+      "Seq Scan on team_dashboard_kpis (rows=2001, loops=1)"
+    ]
+  }
+]

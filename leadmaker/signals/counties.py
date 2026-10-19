@@ -1,4 +1,4 @@
-"""Contractor ZIP -> 5-digit county FIPS (+ county name, state).
+"""Company ZIP -> 5-digit county FIPS (+ county name, state).
 
 Source: Census 2020 ZCTA-to-county relationship file (pipe-delimited, ~7 MB, keyless):
   https://www2.census.gov/geo/docs/maps-data/data/rel2020/zcta520/tab20_zcta520_county20_natl.txt
@@ -19,14 +19,16 @@ import io
 import logging
 import os
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import bindparam, select, update
+from sqlalchemy import select
 
 from ..db import Repository
-from ..db.schema import contractors
+from ..db.repository import company_label
+from ..db.schema import companies
 from ..http import HttpClient
 
 log = logging.getLogger(__name__)
@@ -150,18 +152,23 @@ async def load_county_index(http: HttpClient, cache: str | Path | None = None) -
 
 
 # ------------------------------------------------------------------ assignment
-def assign_county_fips(repo: Repository, index: CountyIndex | None = None, *, force: bool = False) -> dict[str, Any]:
-    """Fill contractors.county_fips from the ZIP for leads missing it (all leads with force=True).
+def assign_county_fips(repo: Repository, index: CountyIndex | None = None, *, force: bool = False,
+                       run_id: int | None = None, company_ids: Sequence[str] | None = None) -> dict[str, Any]:
+    """Fill companies.county_fips from the ZIP for leads missing it (all leads with force=True),
+    among company_ids when given.
 
-    Returns counts plus the gaf_ids worth a point check: `unmapped` (no ZCTA for the
+    Returns counts plus the company ids worth a point check: `unmapped` (no ZCTA for the
     ZIP) and `split` (assigned from a ZCTA whose best county holds < SPLIT_SHARE).
     """
     index = index or load_cached_county_index()
+    q = select(companies.c.id, companies.c.postal_code, companies.c.county_fips)
     with repo.engine.connect() as conn:
-        rows = conn.execute(
-            select(contractors.c.gaf_id, contractors.c.postal_code, contractors.c.county_fips)
-        ).all()
-    updates: list[dict[str, Any]] = []
+        if company_ids is None:
+            rows = conn.execute(q).all()
+        else:
+            ids = sorted(set(company_ids))
+            rows = [r for i in range(0, len(ids), 500) for r in conn.execute(q.where(companies.c.id.in_(ids[i:i + 500])))]
+    updates: dict[str, str] = {}
     unmapped: list[str] = []
     split: list[str] = []
     already = 0
@@ -171,31 +178,24 @@ def assign_county_fips(repo: Repository, index: CountyIndex | None = None, *, fo
             continue
         m = index.lookup(r.postal_code)
         if m is None:
-            unmapped.append(r.gaf_id)
+            unmapped.append(r.id)
             continue
         if m.share < SPLIT_SHARE:
-            split.append(r.gaf_id)
+            split.append(r.id)
         if m.county_fips != r.county_fips:
-            updates.append({"gid": r.gaf_id, "fips": m.county_fips})
-    _set_fips(repo, updates)
+            updates[r.id] = m.county_fips
+    _set_fips(repo, updates, run_id)
     with repo.engine.connect() as conn:
         n_counties = len({
-            f for (f,) in conn.execute(select(contractors.c.county_fips).where(contractors.c.county_fips.is_not(None)))
+            f for (f,) in conn.execute(select(companies.c.county_fips).where(companies.c.county_fips.is_not(None)))
         })
     return {"leads": len(rows), "assigned": len(updates), "already_set": already,
             "unmapped": unmapped, "split": split, "counties": n_counties}
 
 
-def _set_fips(repo: Repository, updates: list[dict[str, Any]]) -> None:
-    if not updates:
-        return
-    stmt = (
-        update(contractors)
-        .where(contractors.c.gaf_id == bindparam("gid"))
-        .values(county_fips=bindparam("fips"))
-    )
-    with repo.engine.begin() as conn:
-        conn.execute(stmt, updates)
+def _set_fips(repo: Repository, updates: dict[str, str], run_id: int | None = None) -> None:
+    """{company_id: county_fips}; audited and published like every other company change."""
+    repo.update_companies({cid: {"county_fips": fips} for cid, fips in updates.items()}, run_id=run_id)
 
 
 async def county_from_point(http: HttpClient, lat: float, lng: float) -> tuple[str, str] | None:
@@ -210,33 +210,34 @@ async def county_from_point(http: HttpClient, lat: float, lng: float) -> tuple[s
     return counties[0]["GEOID"], counties[0].get("NAME") or ""
 
 
-async def refine_by_point(http: HttpClient, repo: Repository, gaf_ids: list[str]) -> dict[str, Any]:
+async def refine_by_point(http: HttpClient, repo: Repository, company_ids: list[str],
+                          run_id: int | None = None) -> dict[str, Any]:
     """Confirm/override the county of split-ZCTA and unmapped leads from their geocoded lat/lng."""
-    if not gaf_ids:
+    if not company_ids:
         return {"checked": 0, "changed": 0}
     http.set_host_interval(GEOCODER_HOST, 1.5)
-    updates: list[dict[str, Any]] = []
+    updates: dict[str, str] = {}
     checked = failed = 0
-    for c in repo.get_contractors(gaf_ids):
+    for c in repo.get_companies(company_ids):
         if c.get("latitude") is None or c.get("longitude") is None:
             continue
         try:
             hit = await county_from_point(http, float(c["latitude"]), float(c["longitude"]))
         except Exception as e:  # the ZCTA answer (if any) stays in place
             failed += 1
-            log.warning("counties: point lookup failed for %s: %s", c["gaf_id"], e)
+            log.warning("counties: point lookup failed for %s: %s", company_label(c), e)
             continue
         checked += 1
         if hit and hit[0] != c.get("county_fips"):
-            updates.append({"gid": c["gaf_id"], "fips": hit[0]})
-    _set_fips(repo, updates)
+            updates[c["company_id"]] = hit[0]
+    _set_fips(repo, updates, run_id)
     return {"checked": checked, "changed": len(updates), "failed": failed}
 
 
 def lead_counties(repo: Repository, index: CountyIndex | None = None) -> list[dict[str, Any]]:
     """Distinct lead counties as [{county_fips, county_name, state, leads}], most leads first."""
     with repo.engine.connect() as conn:
-        rows = conn.execute(select(contractors.c.county_fips).where(contractors.c.county_fips.is_not(None))).all()
+        rows = conn.execute(select(companies.c.county_fips).where(companies.c.county_fips.is_not(None))).all()
     counts: dict[str, int] = defaultdict(int)
     for (f,) in rows:
         counts[f] += 1

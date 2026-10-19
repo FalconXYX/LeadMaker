@@ -36,9 +36,11 @@ LLC_WORDS = {"llc", "pllc", "l.l.c"}
 # 5-digit ZIPs to boroughs for a weak same-area signal.
 _NYC_ZIP3_BOROUGH = {
     "100": "manhattan", "101": "manhattan", "102": "manhattan", "103": "staten island",
-    "104": "bronx", "112": "brooklyn", "110": "queens", "111": "queens", "113": "queens",
+    "104": "bronx", "112": "brooklyn", "111": "queens", "113": "queens",
     "114": "queens", "116": "queens",
 }
+# 110xx is mostly Nassau County (Floral Park, Great Neck, Port Washington); only these are Queens.
+_NYC_ZIP5_BOROUGH = {"11004": "queens", "11005": "queens"}
 
 
 def _ascii(s: str) -> str:
@@ -74,7 +76,7 @@ def strict_tokens(name: str | None) -> list[str]:
             continue
         out.append(_singular(t))
     # "New York" and "NY" are used interchangeably in business names.
-    joined = " ".join(out).replace("new york", "ny")
+    joined = " ".join(out).replace("new york", "ny").replace("new jersey", "nj")
     return joined.split()
 
 
@@ -141,7 +143,7 @@ def legal_form(name: str | None) -> str | None:
 
 def nyc_borough_of_zip(z: str | None) -> str | None:
     z5 = zip5(z)
-    return _NYC_ZIP3_BOROUGH.get(z5[:3]) if z5 else None
+    return (_NYC_ZIP5_BOROUGH.get(z5) or _NYC_ZIP3_BOROUGH.get(z5[:3])) if z5 else None
 
 
 def norm_city(c: str | None) -> str:

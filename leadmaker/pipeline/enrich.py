@@ -1,8 +1,8 @@
-"""Enrichment orchestrator: runs every enabled enricher over a set of contractors.
+"""Enrichment orchestrator: runs every enabled enricher over a set of companies.
 
-Per contractor, enrichers run in dependency order (so website_crawl sees the
-website found by website_discovery); across contractors, work runs concurrently.
-Each (contractor, source) result is persisted immediately, so an interrupted
+Per company, enrichers run in dependency order (so website_crawl sees the
+website found by website_discovery); across companies, work runs concurrently.
+Each (company, source) result is persisted immediately, so an interrupted
 run resumes where it stopped. Fresh results (TTL) are reused as inputs, not
 re-fetched.
 """
@@ -17,12 +17,12 @@ from typing import Any
 
 from ..config import Settings
 from ..db import Repository
-from ..db.repository import utcnow
+from ..db.repository import company_label, utcnow
 from ..enrich import load_enrichers
 from ..models import EnrichmentStatus
 from ..enrich.base import WEBSITE_PRIORITY, Enricher, LeadContext
 from ..http import HttpClient
-from ..models import EnrichmentResult, EnrichmentStatus
+from ..models import EnrichmentResult
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +34,8 @@ class EnrichOptions:
     postal_code: str | None = "10013"
     radius_miles: float = 25
     sources: list[str] | None = None
-    gaf_ids: list[str] | None = None
+    company_ids: list[str] | None = None
+    gaf_ids: list[str] | None = None  # resolved to company ids through company_source_ids
     force: bool = False
     limit: int | None = None
 
@@ -50,7 +51,7 @@ def _row_to_result(row: dict[str, Any]) -> EnrichmentResult:
     return EnrichmentResult(
         source=row["source"],
         status=EnrichmentStatus(row["status"]),
-        confidence=row.get("confidence") or 0.0,
+        confidence=row.get("confidence") or 0.0,  # enrichments.match_confidence (repository read model)
         data=row.get("data") or {},
         website=row.get("website"),
         source_urls=row.get("source_urls") or [],
@@ -80,18 +81,24 @@ def resolve_website(ctx: LeadContext) -> tuple[str | None, str | None]:
     return None, None
 
 
-async def run_enrich(settings: Settings, repo: Repository, opts: EnrichOptions) -> EnrichReport:
-    repo.create_schema()
-    if opts.gaf_ids:
-        ids = list(opts.gaf_ids)
+def target_company_ids(repo: Repository, opts: EnrichOptions) -> list[str]:
+    if opts.company_ids or opts.gaf_ids:
+        by_gaf = repo.company_ids(opts.gaf_ids or [])
+        missing = [g for g in opts.gaf_ids or [] if g not in by_gaf]
+        if missing:
+            log.warning("no company for GAF ids %s", ", ".join(missing))
+        ids = list(dict.fromkeys([*(opts.company_ids or []), *(by_gaf[g] for g in opts.gaf_ids or [] if g in by_gaf)]))
     elif opts.postal_code:
-        ids = repo.area_gaf_ids(opts.postal_code, opts.radius_miles)
+        ids = repo.area_company_ids(opts.postal_code, opts.radius_miles)
     else:
-        ids = [r["gaf_id"] for r in repo.get_contractors()]
-    if opts.limit is not None:
-        ids = ids[: opts.limit]
-    rows_by_id = {r["gaf_id"]: r for r in repo.get_contractors(ids)}
-    rows = [rows_by_id[i] for i in ids if i in rows_by_id]
+        ids = [r["company_id"] for r in repo.get_companies()]
+    return ids[: opts.limit] if opts.limit is not None else ids
+
+
+async def run_enrich(settings: Settings, repo: Repository, opts: EnrichOptions) -> EnrichReport:
+    ids = target_company_ids(repo, opts)
+    rows = repo.get_companies(ids)
+    ids = [r["company_id"] for r in rows]
 
     enrichers = load_enrichers(settings, opts.sources)
     run_id = repo.start_run(
@@ -129,15 +136,15 @@ async def run_enrich(settings: Settings, repo: Repository, opts: EnrichOptions) 
 
             async def per_contractor(row: dict[str, Any]) -> None:
                 nonlocal done
-                gid = row["gaf_id"]
+                cid = row["company_id"]
                 ctx = LeadContext(
                     contractor=row,
-                    prior={src: _row_to_result(r) for src, r in stored.get(gid, {}).items()},
+                    prior={src: _row_to_result(r) for src, r in stored.get(cid, {}).items()},
                 )
                 async def run_one(e: Enricher) -> None:
                     ihash = e.input_hash(ctx)
-                    stored_hash = (stored.get(gid, {}).get(e.name) or {}).get("input_hash")
-                    if gid not in due[e.name]:
+                    stored_hash = (stored.get(cid, {}).get(e.name) or {}).get("input_hash")
+                    if cid not in due[e.name]:
                         if stored_hash is None or stored_hash == ihash:
                             counts[e.name]["fresh"] += 1
                             return
@@ -148,16 +155,16 @@ async def run_enrich(settings: Settings, repo: Repository, opts: EnrichOptions) 
                         try:
                             result = await asyncio.wait_for(e.enrich(ctx, http), getattr(e, "timeout_s", ENRICHER_TIMEOUT_S))
                         except Exception as ex:
-                            log.warning("%s failed for %s: %s", e.name, gid, ex)
+                            log.warning("%s failed for %s: %s", e.name, company_label(row), ex)
                             result = e.error(f"{type(ex).__name__}: {ex}")
-                    prev = stored.get(gid, {}).get(e.name) or {}
+                    prev = stored.get(cid, {}).get(e.name) or {}
                     if (result.status == EnrichmentStatus.SKIPPED and (result.data or {}).get("retry")
                             and prev.get("status") in ("ok", EnrichmentStatus.OK)):
                         # Quota skip (e.g. LLM free-tier budget): keep the old result; next run retries.
                         counts[e.name]["deferred"] += 1
                         return
                     result.fetched_at = utcnow()
-                    repo.save_enrichment(gid, result, run_id, input_hash=ihash)
+                    repo.save_enrichment(cid, result, run_id, input_hash=ihash)
                     ctx.prior[e.name] = result
                     counts[e.name][result.status.value] += 1
 
@@ -167,7 +174,7 @@ async def run_enrich(settings: Settings, repo: Repository, opts: EnrichOptions) 
                         await asyncio.gather(*(run_one(e) for e in wave))
                     site, src = resolve_website(ctx)
                     if site and (site != row.get("website") or src != row.get("website_source")):
-                        repo.set_website(gid, site, src)
+                        repo.set_website(cid, site, src, run_id=run_id)
                 done += 1
                 if done % 25 == 0 or done == len(rows):
                     log.info("enriched %d/%d contractors", done, len(rows))

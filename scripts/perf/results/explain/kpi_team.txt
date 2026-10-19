@@ -1,0 +1,64 @@
+-- kpi:team
+-- filter: null
+-- params: []
+
+  SELECT
+    (SELECT max(refreshed_at) FROM team_dashboard_kpis) AS refreshed_at,
+    (SELECT row_to_json(t) FROM (
+       SELECT COALESCE(sum(lead_count), 0)::int AS lead_count, COALESCE(sum(unchecked_count), 0)::int AS unchecked_count,
+              COALESCE(sum(unserviced_count), 0)::int AS unserviced_count,
+              COALESCE(sum(recent_updates_count), 0)::int AS recent_updates_count
+       FROM team_dashboard_kpis) t) AS totals,
+    (SELECT row_to_json(p) FROM (
+       SELECT lead_count, unchecked_count, unserviced_count, recent_updates_count
+       FROM team_dashboard_kpis WHERE assigned_rep_id IS NULL) p) AS pool,
+    (SELECT COALESCE(json_agg(r ORDER BY r.name, r.rep_id), '[]'::json) FROM (
+       SELECT u.id AS rep_id, u.name, u.email, COALESCE(k.lead_count, 0) AS lead_count,
+              COALESCE(k.rep_unchecked_count, 0) AS rep_unchecked_count,
+              COALESCE(k.rep_unserviced_count, 0) AS rep_unserviced_count,
+              COALESCE(k.recent_updates_count, 0) AS recent_updates_count,
+              COALESCE(k.unchecked_count, 0) AS unchecked_count, COALESCE(k.unserviced_count, 0) AS unserviced_count
+       FROM users u LEFT JOIN team_dashboard_kpis k ON k.assigned_rep_id = u.id
+       WHERE u.role = 'rep') r) AS reps
+
+Result  (cost=353.83..353.84 rows=1 width=104) (actual time=5.812..5.813 rows=1 loops=1)
+  Buffers: shared hit=86
+  InitPlan 1 (returns $0)
+    ->  Aggregate  (cost=44.01..44.02 rows=1 width=8) (actual time=0.171..0.172 rows=1 loops=1)
+          Buffers: shared hit=19
+          ->  Seq Scan on team_dashboard_kpis  (cost=0.00..39.01 rows=2001 width=8) (actual time=0.001..0.078 rows=2001 loops=1)
+                Buffers: shared hit=19
+  InitPlan 2 (returns $1)
+    ->  Subquery Scan on t  (cost=59.02..59.05 rows=1 width=32) (actual time=0.195..0.196 rows=1 loops=1)
+          Buffers: shared hit=19
+          ->  Aggregate  (cost=59.02..59.04 rows=1 width=16) (actual time=0.193..0.194 rows=1 loops=1)
+                Buffers: shared hit=19
+                ->  Seq Scan on team_dashboard_kpis team_dashboard_kpis_1  (cost=0.00..39.01 rows=2001 width=16) (actual time=0.001..0.077 rows=2001 loops=1)
+                      Buffers: shared hit=19
+  InitPlan 3 (returns $2)
+    ->  Index Scan using team_dashboard_kpis_rep_key on team_dashboard_kpis team_dashboard_kpis_2  (cost=0.28..8.30 rows=1 width=32) (actual time=0.002..0.002 rows=1 loops=1)
+          Index Cond: (assigned_rep_id IS NULL)
+          Buffers: shared hit=3
+  InitPlan 4 (returns $3)
+    ->  Aggregate  (cost=242.44..242.45 rows=1 width=32) (actual time=5.428..5.429 rows=1 loops=1)
+          Buffers: shared hit=45
+          ->  Sort  (cost=232.44..237.44 rows=2000 width=75) (actual time=2.767..2.836 rows=2000 loops=1)
+                Sort Key: u.name, u.id
+                Sort Method: quicksort  Memory: 251kB
+                Buffers: shared hit=45
+                ->  Hash Left Join  (cost=64.02..122.78 rows=2000 width=75) (actual time=0.304..0.667 rows=2000 loops=1)
+                      Hash Cond: (u.id = k.assigned_rep_id)
+                      Buffers: shared hit=45
+                      ->  Seq Scan on users u  (cost=0.00..53.50 rows=2000 width=51) (actual time=0.009..0.149 rows=2000 loops=1)
+                            Filter: ((role)::text = 'rep'::text)
+                            Rows Removed by Filter: 200
+                            Buffers: shared hit=26
+                      ->  Hash  (cost=39.01..39.01 rows=2001 width=40) (actual time=0.293..0.293 rows=2000 loops=1)
+                            Buckets: 2048  Batches: 1  Memory Usage: 157kB
+                            Buffers: shared hit=19
+                            ->  Seq Scan on team_dashboard_kpis k  (cost=0.00..39.01 rows=2001 width=40) (actual time=0.001..0.120 rows=2001 loops=1)
+                                  Buffers: shared hit=19
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.087 ms
+Execution Time: 5.827 ms

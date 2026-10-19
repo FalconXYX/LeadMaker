@@ -26,15 +26,19 @@ from __future__ import annotations
 
 import math
 import re
+from collections import Counter
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 from typing import Any
 
-from ..enrich.website_crawl import extract_services
+from ..enrich.matching import tokens
+from ..enrich.website_crawl import CONTEXT_SERVICES, CONTEXT_TRACES, scan_services
 from .taxonomy import (
     COMMERCIAL_SERVICES, CONTACT_ROLE_LABELS, CONTACT_ROLE_PATTERNS, CONTACT_ROLE_PREFERENCE, DECISION_MAKER_ROLES,
-    DISTANCE_BANDS, FALLBACK_ROLE, GAF_SPECIALTIES, IDENTIFIED_CONFIDENCE, MATURITY_BANDS, MIN_TARGET_CONFIDENCE,
-    MULTI_TRADE_SERVICES, NJ_ZIP3, NY_REGIONS, NY_ZIP3, NYC_REGIONS, PREMIUM_MATERIALS, QUEENS, REVIEW_BANDS,
-    ROCKLAND, SERVICE_IMPLIES, SERVICE_LABELS, STORM_SERVICES, TIER_LABELS, WESTCHESTER, WORK_TYPES,
+    DISTANCE_BANDS, EXPLICIT_TITLE_BONUS, FALLBACK_ROLE, GAF_SPECIALTIES, GENERIC_MANAGEMENT_PATTERN, GENERIC_TITLE_PATTERN,
+    IDENTIFIED_CONFIDENCE, MATURITY_BANDS, MIN_TARGET_CONFIDENCE, MULTI_TRADE_SERVICES, NJ_ZIP3, NY_REGIONS, NY_ZIP3,
+    NYC_REGIONS, PREMIUM_MATERIALS, QUEENS, REVIEW_BANDS, ROCKLAND, SAME_PERSON_SIMILARITY, SERVICE_IMPLIES,
+    SERVICE_LABELS, STATED_OWNER_TITLE_PATTERN, STORM_SERVICES, TIER_LABELS, WESTCHESTER, WORK_TYPES,
 )
 
 WEIGHTS = {
@@ -120,26 +124,57 @@ def _maturity(lead: dict[str, Any]) -> tuple[int | None, str | None]:
     return min(cands) if cands else (None, None)
 
 
-def _services(lead: dict[str, Any]) -> tuple[set[str], str | None]:
+def _services(lead: dict[str, Any]) -> tuple[set[str], str | None, dict[str, dict[str, str]]]:
+    """(service keys, first source that had any, {service: first website evidence {url, snippet}})."""
     found: set[str] = set()
     src = None
+    evidence: dict[str, dict[str, str]] = {}
     for source in ("website_crawl", "llm_extract", "bbb"):
         d = _ok(lead, source)
         if not d or (source == "bbb" and d.get("out_of_business")):
             continue
         got = {str(s) for s in d.get("services") or []}
-        if source == "website_crawl" and d.get("pages"):
-            # Re-scan the stored page text so detectors added after the crawl (tpo_roofing,
-            # new_construction, ...) apply without re-crawling. Stored text is a subset of what
-            # the crawler saw, so this only ever adds.
-            text = "\n".join(str(p.get("text") or "") for p in d["pages"] if isinstance(p, dict))
-            got |= set(extract_services(text)[0])
+        if source == "website_crawl":
+            stored_ev = d.get("service_evidence")
+            for svc, evs in (stored_ev or {}).items():
+                if isinstance(evs, list) and evs and isinstance(evs[0], dict):
+                    evidence.setdefault(svc, evs[0])
+            pages = [(str(p.get("url") or ""), str(p.get("text") or "")) for p in d.get("pages") or []
+                     if isinstance(p, dict)]
+            if pages:
+                # Re-scan the stored page text so detectors added after the crawl (tpo_roofing,
+                # new_construction, ...) apply without re-crawling.
+                rescanned, _, ev = scan_services(pages)
+                if stored_ev is None:
+                    # The crawl predates page-aware context services (blog / terms pages, "newly built",
+                    # bare "hurricane" / "24 hours"). A stored context service the stored text can't
+                    # confirm is dropped when that text holds a rejected mention (the likely source of
+                    # the old hit); with no mention at all the hit lies in text that wasn't stored
+                    # (nav, boilerplate, the size cap), so it is kept, without evidence.
+                    text = "\n".join(t for _, t in pages)
+                    got -= {s for s in CONTEXT_SERVICES - set(rescanned) if CONTEXT_TRACES[s].search(text)}
+                    got |= set(rescanned)
+                else:
+                    # Page-aware already; the stored text has lost the link context (homepage cards
+                    # pointing at /blog/ posts), so only non-context services are re-derived from it.
+                    got |= set(rescanned) - CONTEXT_SERVICES
+                for svc, evs in ev.items():
+                    if svc in got:
+                        evidence.setdefault(svc, evs[0])
         if got:
             found |= got
             src = src or {"website_crawl": "website", "llm_extract": "llm", "bbb": "bbb"}[source]
     for s in list(found):
         found |= SERVICE_IMPLIES.get(s, set())
-    return found, src
+    return found, src, evidence
+
+
+def _service_reason(svc: str, evidence: dict[str, dict[str, str]]) -> str:
+    ev = evidence.get(svc)
+    if not ev or not ev.get("snippet"):
+        return "listed on company website"
+    snippet = ev["snippet"] if len(ev["snippet"]) <= 160 else ev["snippet"][:157].rsplit(" ", 1)[0] + "…"
+    return f"website: “{snippet}” ({ev.get('url')})"
 
 
 def _size(lead: dict[str, Any], reviews: int) -> tuple[str, str]:
@@ -166,6 +201,10 @@ def _size(lead: dict[str, Any], reviews: int) -> tuple[str, str]:
 
 
 _ROLE_RES = {role: re.compile(rx, re.I) for role, rx in CONTACT_ROLE_PATTERNS.items()}
+_GENERIC_TITLE = re.compile(GENERIC_TITLE_PATTERN, re.I)
+_STATED_OWNER = re.compile(STATED_OWNER_TITLE_PATTERN, re.I)
+_GENERIC_MANAGEMENT = re.compile(GENERIC_MANAGEMENT_PATTERN, re.I)
+_NAME_SUFFIX = {"jr", "sr", "ii", "iii", "iv"}
 _LARGE_PREF_TEXT = "purchasing/office/operations/PM, then owner"
 _PREF_TEXT = {"small": "owner", "unknown": "owner", "medium": _LARGE_PREF_TEXT, "large": _LARGE_PREF_TEXT}
 
@@ -176,30 +215,111 @@ def contact_roles(title: str | None) -> set[str]:
     return roles or {"other"}
 
 
+def explicit_title(title: str | None) -> bool:
+    """A stated job title ("President", "Chairman/CEO (NY DOS filing)"), not a generic source note
+    ("Company officer (FMCSA MCS-150)", "Business management") or a bare "Vice President"."""
+    if not title or _GENERIC_TITLE.search(title):
+        return False
+    roles = contact_roles(title)
+    return roles != {"other"} and (roles != {"owner"} or bool(_STATED_OWNER.search(title)))
+
+
+def _role_rank(role: str, title: str | None, pref: tuple[str, ...]) -> float:
+    rank = float(pref.index(role))
+    if role == "operations" and _GENERIC_MANAGEMENT.search(title or ""):
+        rank = max(rank, pref.index("owner")) + 0.5  # right after the owner role, at every size
+    return rank
+
+
+def _person_tokens(name: str) -> list[str]:
+    return [t for t in tokens(name) if t not in _NAME_SUFFIX]
+
+
+def same_person(a: str, b: str) -> bool:
+    """'Giberto Alas Quijada' == 'Gilberto Alas Quijada'; 'William A. Alas Valdez' == 'William Alexander Alas Valdez'.
+    Never merged: different middle initials ('Edward B. Carolan' President / 'Edward P. Carolan' Vice President
+    on 1006073), different suffixes (Jr / Sr), or first names that end differently ('Paul' / 'Paula',
+    'Antonio' / 'Antonia')."""
+    ta, tb = _person_tokens(a), _person_tokens(b)
+    if len(ta) < 2 or len(tb) < 2:
+        return ta == tb and bool(ta)
+    if ta[1:-1] and tb[1:-1] and ta[1][0] != tb[1][0]:
+        return False
+    sa, sb = ({t for t in tokens(n) if t in _NAME_SUFFIX} for n in (a, b))
+    if sa and sb and sa != sb:
+        return False
+    if ta[0] == tb[0] and ta[-1] == tb[-1]:
+        return True
+    first_ok = ta[0][-1] == tb[0][-1] and (
+        SequenceMatcher(None, ta[0], tb[0]).ratio() >= 0.85
+        or (min(len(ta[0]), len(tb[0])) >= 3 and (ta[0].startswith(tb[0]) or tb[0].startswith(ta[0]))))
+    return first_ok and SequenceMatcher(None, " ".join(ta), " ".join(tb)).ratio() >= SAME_PERSON_SIMILARITY
+
+
+def dedupe_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One row per person. The row with a stated title (then the highest confidence) supplies title and
+    source; the name is the most common spelling (then the longest); confidence is the group's best;
+    email/phone are filled from any row; `also_sources` lists the other sources that named the person."""
+    groups: list[list[dict[str, Any]]] = []
+    for c in contacts:
+        name = str(c.get("name") or "").strip()
+        if not name:
+            continue
+        for g in groups:
+            if any(same_person(name, str(o["name"])) for o in g):
+                g.append(c)
+                break
+        else:
+            groups.append([c])
+    out: list[dict[str, Any]] = []
+    for g in groups:
+        if len(g) == 1:
+            out.append(g[0])
+            continue
+        best = max(g, key=lambda c: (explicit_title(c.get("title")), float(c.get("confidence") or 0)))
+        spellings = Counter(str(c["name"]).strip() for c in g)
+        merged = {**best, "name": max(spellings, key=lambda n: (spellings[n], len(n))),
+                  "confidence": max(float(c.get("confidence") or 0) for c in g)}
+        for k in ("email", "phone"):
+            merged[k] = best.get(k) or next((c.get(k) for c in g if c.get(k)), None)
+        others = sorted({str(c.get("source")) for c in g if c is not best and c.get("source") != best.get("source")})
+        if others:
+            merged["also_sources"] = others
+        out.append(merged)
+    return out
+
+
+def _role_title(c: dict[str, Any]) -> str | None:
+    """Title used for role logic: BBB lists untitled people only under management, so read them as that."""
+    return c.get("title") or ("Business management" if c.get("source") == "bbb" else None)
+
+
 def _who(c: dict[str, Any]) -> str:
-    return f"{c['name']} ({c.get('title') or 'no title'}, {c.get('source')} @ {c.get('confidence')})"
+    also = f"; also {', '.join(c['also_sources'])}" if c.get("also_sources") else ""
+    return f"{c['name']} ({c.get('title') or 'no title'}, {c.get('source')} @ {c.get('confidence')}{also})"
 
 
 def target_contact(lead: dict[str, Any], size: str = "unknown") -> dict[str, Any]:
     """The person -- or, failing that, the role -- a rep should ask for, given company size.
 
-    Named contacts are ranked by confidence tier (>= IDENTIFIED_CONFIDENCE, >= MIN_TARGET_CONFIDENCE,
-    below = hint only), then the size's role preference (CONTACT_ROLE_PREFERENCE), then confidence, so a
-    well-sourced officer still beats a shaky office-manager guess at a larger firm. If no credible
+    Contacts are first merged per person (`dedupe_contacts`), then ranked by confidence tier
+    (>= IDENTIFIED_CONFIDENCE, >= MIN_TARGET_CONFIDENCE, below = hint only), then the size's role
+    preference (CONTACT_ROLE_PREFERENCE), then confidence, with a stated title (`explicit_title`) winning
+    over a generic source note within EXPLICIT_TITLE_BONUS, so a well-sourced officer still beats a
+    shaky office-manager guess at a larger firm. If no credible
     contact holds a decision-maker role for this size, the target is the Owner role on the company's
     main phone (`name=None`, `fallback=True`) and the best lead on a name is kept as `hint`.
     `status` is the decision_maker tag value: identified | weak | none.
     """
     pref = CONTACT_ROLE_PREFERENCE.get(size, CONTACT_ROLE_PREFERENCE["unknown"])
     dm_roles = DECISION_MAKER_ROLES.get(size, DECISION_MAKER_ROLES["unknown"])
-    ranked: list[tuple[int, int, float, str, dict[str, Any]]] = []
-    for c in lead.get("contacts") or []:
-        if not str(c.get("name") or "").strip():
-            continue
-        role = min(contact_roles(c.get("title")), key=pref.index)
+    ranked: list[tuple[int, float, float, str, dict[str, Any]]] = []
+    for c in dedupe_contacts(lead.get("contacts") or []):
+        role = min(contact_roles(_role_title(c)), key=pref.index)
         conf = float(c.get("confidence") or 0)
         tier = 0 if conf >= IDENTIFIED_CONFIDENCE else 1 if conf >= MIN_TARGET_CONFIDENCE else 2
-        ranked.append((tier, pref.index(role), -conf, role, c))
+        score = conf + (EXPLICIT_TITLE_BONUS if explicit_title(c.get("title")) else 0.0)
+        ranked.append((tier, _role_rank(role, _role_title(c), pref), -score, role, c))
     ranked.sort(key=lambda r: r[:3])
     named = [r for r in ranked if r[0] < 2 and r[3] in dm_roles]
     head = f"size={size} → {_PREF_TEXT.get(size, 'owner')}"
@@ -217,7 +337,7 @@ def target_contact(lead: dict[str, Any], size: str = "unknown") -> dict[str, Any
         if skipped is not None:  # a preferred role exists but only at a lower confidence tier
             why += f"; passed over {CONTACT_ROLE_LABELS[skipped[3]].lower()} {_who(skipped[4])} (lower confidence)"
         elif rank > 0:
-            why += f"; no {'/'.join(r.replace('project_manager', 'PM') for r in pref[:rank])} contact found"
+            why += f"; no {'/'.join(r.replace('project_manager', 'PM') for r in pref[:math.ceil(rank)])} contact found"
     else:
         status = "weak" if ranked else "none"
         out = {
@@ -316,10 +436,11 @@ def tag_lead(lead: dict[str, Any]) -> dict[str, Any]:
         norm = str(code).upper().replace("™", "").replace(" ROOF", "").strip()
         key, label = GAF_SPECIALTIES.get(norm, (norm.lower().replace(" ", "_"), str(code).title()))
         tags.append(_tag(f"specialty:{key}", True, label, "specialty", "GAF-listed specialty", "gaf"))
-    services, ssrc = _services(lead)
+    services, ssrc, evidence = _services(lead)
     for s in sorted(services):
         if s in SERVICE_LABELS:
-            tags.append(_tag(f"service:{s}", True, SERVICE_LABELS[s], "services", "listed on company website", ssrc or "website"))
+            tags.append(_tag(f"service:{s}", True, SERVICE_LABELS[s], "services", _service_reason(s, evidence),
+                             ssrc or "website"))
     if services & COMMERCIAL_SERVICES:
         tags.append(_tag("focus", "residential_and_commercial", "Also commercial / flat roofing", "services",
                          "commercial or flat-roof services found", ssrc or "website"))

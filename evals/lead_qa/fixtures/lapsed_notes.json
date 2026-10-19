@@ -1,0 +1,56 @@
+{
+  "id": "11111111-1111-4111-8111-000000000004",
+  "businessName": "Hudson Valley Exteriors",
+  "city": "Jersey City", "state": "NJ", "postalCode": "07302",
+  "countyFips": "34017", "countyName": "Hudson County, NJ",
+  "websiteUrl": "https://hudsonvalleyexteriors.example/",
+  "gaf": {
+    "tier": "certified_plus",
+    "certifications": ["GAF Certified™ - Certification"],
+    "rating": 4.5, "reviewCount": 76, "yearsInBusiness": 14, "employeesRange": "10-19",
+    "specialties": ["Residential roofing", "Siding"],
+    "distinctions": [],
+    "presidentsClubStars": 0,
+    "description": "Roofing and siding replacement across Hudson County."
+  },
+  "size": "medium", "segment": "growth", "priorityScore": 47,
+  "priorityDrivers": ["Lapsed customer"],
+  "accountStatus": "lapsed_customer", "salesStage": "contacted",
+  "stageChangedAt": "2026-10-09T18:20:00Z", "lastContactedAt": "2026-10-09T18:20:00Z",
+  "assignedRep": { "id": "ab3ee7d1-f903-4b52-a89d-20d26eac84d6", "name": "Jordan Lee" },
+  "canWrite": true,
+  "tags": [
+    { "key": "gaf_tier", "label": "GAF Certified", "category": "certification" },
+    { "key": "service:roof_replacement", "label": "Roof replacement", "category": "services" },
+    { "key": "service:siding", "label": "Siding", "category": "services" }
+  ],
+  "customTags": [],
+  "customFields": { "last_order_date": "2026-06-28" },
+  "targetContact": { "label": "Owner", "reason": "Owner decides on suppliers", "name": "Frank DeLuca", "title": "Owner" },
+  "contacts": [
+    { "name": "Frank DeLuca", "title": "Owner", "hasEmail": false, "hasPhone": true, "doNotContact": false, "source": "rep" }
+  ],
+  "insights": {
+    "businessSummary": "Hudson Valley Exteriors is a Jersey City roofing and siding replacement contractor and a lapsed customer of ours.",
+    "salesRecommendation": "Open with a win-back offer on architectural shingles and underlayment with guaranteed delivery windows.",
+    "talkingPoints": ["Acknowledge the two late deliveries in July.", "Offer a guaranteed delivery window on the next order."],
+    "targetContact": { "name": "Frank DeLuca", "title": "Owner", "why": "Decides on suppliers" },
+    "productFocus": ["architectural_shingles", "underlayment"],
+    "citedFacts": [{ "id": "F9", "text": "account_status: lapsed customer" }],
+    "model": "fake:fake-1", "promptVersion": "insights/v1", "generatedAt": "2026-10-18T22:30:00Z"
+  },
+  "timing": [],
+  "notes": [
+    { "author": "Jordan L.", "at": "2026-10-09T18:15:00Z", "text": "Frank said they moved to another distributor in July after two late deliveries. Open to coming back if we can guarantee delivery windows and match pricing on siding." },
+    { "author": "Priya S.", "at": "2026-06-30T13:00:00Z", "text": "Last order shipped two days late; Frank was not happy." }
+  ],
+  "activity": [
+    { "type": "call", "outcome": "connected", "author": "Jordan L.", "at": "2026-10-09T18:20:00Z", "text": "Discussed the late deliveries; he wants guaranteed delivery windows before ordering again." }
+  ],
+  "openTasks": [{ "title": "Send delivery-window proposal", "type": "email", "dueAt": "2026-10-16T13:00:00Z" }],
+  "website": [
+    { "url": "https://hudsonvalleyexteriors.example/", "title": "Hudson Valley Exteriors", "text": "Roof and siding replacement for Hudson County homes since 2012." }
+  ],
+  "websiteSummary": "Roof and siding replacement contractor in Hudson County.",
+  "generatedAt": "2026-10-19T19:00:00.000Z"
+}

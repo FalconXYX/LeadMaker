@@ -15,7 +15,7 @@ dependencies = [
 # Gemini and OpenAI-compatible providers need no extra packages (they use the shared HttpClient).
 llm = ["anthropic>=1.0"]
 postgres = ["psycopg[binary]>=3.1"]
-dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "pytest-cov>=5"]
 
 [project.scripts]
 leadmaker = "leadmaker.cli:main"
@@ -30,3 +30,10 @@ packages = ["leadmaker"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# Live drift checks against the real sources (tests/live) hit the network: opt in with `pytest -m live`.
+# Postgres integration tests (tests/pg) need the compose database: opt in with `pytest -m pg`.
+addopts = '-m "not live and not pg"'
+markers = [
+    "live: opt-in drift check against a real external source (network; run with `pytest -m live`)",
+    "pg: Postgres integration test against the compose database (run with `pytest -m pg`; see tests/pg/conftest.py)",
+]

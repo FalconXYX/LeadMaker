@@ -1,0 +1,72 @@
+{
+  "company_id": "22222222-2222-4222-8222-000000000005",
+  "business_name": "Hudson Valley Exteriors",
+  "facts": [
+    {
+      "id": "F1",
+      "key": "business_name",
+      "text": "business_name: Hudson Valley Exteriors"
+    },
+    {
+      "id": "F2",
+      "key": "location",
+      "text": "location: Jersey City, NJ 07302 (Hudson County)"
+    },
+    {
+      "id": "F3",
+      "key": "gaf_tier",
+      "text": "gaf_tier: GAF Certified"
+    },
+    {
+      "id": "F4",
+      "key": "rating",
+      "text": "rating: 4.5 stars from 76 reviews"
+    },
+    {
+      "id": "F5",
+      "key": "size",
+      "text": "size: medium"
+    },
+    {
+      "id": "F6",
+      "key": "services",
+      "text": "services: Roof replacement, Siding"
+    },
+    {
+      "id": "F7",
+      "key": "target_contact",
+      "text": "target_contact: Owner — Frank DeLuca"
+    },
+    {
+      "id": "F8",
+      "key": "account_status",
+      "text": "account_status: lapsed customer"
+    },
+    {
+      "id": "F9",
+      "key": "sales_stage",
+      "text": "sales_stage: contacted"
+    },
+    {
+      "id": "F10",
+      "key": "custom_field",
+      "text": "custom_field: last_order_date = 2026-06-28"
+    },
+    {
+      "id": "F11",
+      "key": "note",
+      "text": "note (Jordan L., 2026-10-09): Frank moved to another distributor in July after two late deliveries. Open to coming back if we guarantee delivery windows and match siding pricing."
+    },
+    {
+      "id": "F12",
+      "key": "note",
+      "text": "note (Priya S., 2026-06-30): Last order shipped two days late; Frank was not happy."
+    },
+    {
+      "id": "F13",
+      "key": "activity",
+      "text": "activity (call, connected, 2026-10-09): Discussed the late deliveries; wants guaranteed delivery windows before ordering again."
+    }
+  ],
+  "website_excerpt": "Roof and siding replacement for Hudson County homes since 2012."
+}

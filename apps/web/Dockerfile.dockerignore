@@ -1,0 +1,8 @@
+# Used by BuildKit for `-f apps/web/Dockerfile` (overrides the root .dockerignore): send only what the build needs.
+*
+!packages/shared/src
+!apps/web
+apps/web/node_modules
+apps/web/dist
+apps/web/.env
+apps/web/.env.local

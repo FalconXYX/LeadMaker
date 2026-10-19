@@ -1,0 +1,39 @@
+{
+  "counties": [
+    { "fips": "34003", "name": "Bergen County, NJ", "leadCount": 96 },
+    { "fips": "34013", "name": "Essex County, NJ", "leadCount": 57 },
+    { "fips": "36059", "name": "Nassau County, NY", "leadCount": 42 },
+    { "fips": "34031", "name": "Passaic County, NJ", "leadCount": 39 },
+    { "fips": "34039", "name": "Union County, NJ", "leadCount": 34 },
+    { "fips": "36081", "name": "Queens County, NY", "leadCount": 31 },
+    { "fips": "34023", "name": "Middlesex County, NJ", "leadCount": 22 },
+    { "fips": "36085", "name": "Richmond County, NY", "leadCount": 19 },
+    { "fips": "34027", "name": "Morris County, NJ", "leadCount": 18 },
+    { "fips": "36119", "name": "Westchester County, NY", "leadCount": 17 },
+    { "fips": "36047", "name": "Kings County, NY", "leadCount": 14 },
+    { "fips": "34025", "name": "Monmouth County, NJ", "leadCount": 12 },
+    { "fips": "34017", "name": "Hudson County, NJ", "leadCount": 9 },
+    { "fips": "36005", "name": "Bronx County, NY", "leadCount": 5 },
+    { "fips": "34035", "name": "Somerset County, NJ", "leadCount": 4 },
+    { "fips": "36087", "name": "Rockland County, NY", "leadCount": 3 },
+    { "fips": "36061", "name": "New York County, NY", "leadCount": 2 }
+  ],
+  "customTags": [
+    { "id": "7a0c2d8e-1b3f-4c5d-9e6f-0a1b2c3d4e01", "name": "Bulk buyer", "leadCount": 12 },
+    { "id": "7a0c2d8e-1b3f-4c5d-9e6f-0a1b2c3d4e02", "name": "Referral partner", "leadCount": 6 },
+    { "id": "7a0c2d8e-1b3f-4c5d-9e6f-0a1b2c3d4e03", "name": "Pays on time", "leadCount": 5 },
+    { "id": "7a0c2d8e-1b3f-4c5d-9e6f-0a1b2c3d4e04", "name": "Prefers email", "leadCount": 3 }
+  ],
+  "customFieldKeys": [
+    { "key": "annual_volume_squares", "valueType": "number" },
+    { "key": "preferred_supplier", "valueType": "string" },
+    { "key": "last_order_date", "valueType": "date" },
+    { "key": "crew_count", "valueType": "number" }
+  ],
+  "reps": [
+    { "id": "ab3ee7d1-f903-4b52-a89d-20d26eac84d6", "name": "Jordan Lee" },
+    { "id": "50302c37-aeb7-4cef-b8c7-cc14004df3bb", "name": "Priya Shah" },
+    { "id": "51167968-bd6a-45d9-9dfa-ba8e4d235ea2", "name": "Sam Rivera" }
+  ],
+  "generatedAt": "2026-10-19T19:00:00.000Z"
+}

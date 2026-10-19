@@ -1,0 +1,23 @@
+{
+  "name": "@leadmaker/relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.ts",
+    "dev": "node --watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:db": "sh ../../scripts/dbmate.sh --db leadmaker_relay_test drop && sh ../../scripts/dbmate.sh --db leadmaker_relay_test up && TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgres://leadmaker:leadmaker@localhost:55432/leadmaker_relay_test} TEST_REDIS_URL=${TEST_REDIS_URL:-redis://localhost:56379/12} vitest run"
+  },
+  "dependencies": {
+    "@leadmaker/db": "^0.1.0",
+    "@leadmaker/shared": "^0.1.0",
+    "ioredis": "^5.11.1",
+    "pg": "^8.23.1",
+    "pino": "^10.4.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
+  }
+}

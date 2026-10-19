@@ -1,0 +1,153 @@
+-- profile:head:rep
+-- filter: null
+-- params: ["0bef1328-0977-42cc-8555-dfce097bffdc",20,100,100,"2401de6c-a1ee-4248-8b88-0d7a3e66a730","0bef1328-0977-42cc-8555-dfce097bffdc"]
+
+    SELECT row_to_json(h) AS doc FROM (
+      SELECT c.id, c.version, c.assigned_rep_id, c.team_last_checked_at, c.team_last_serviced_at,
+        (c.team_last_checked_at IS NOT NULL AND (c.last_material_change_at IS NULL OR c.team_last_checked_at >= c.last_material_change_at)) AS team_checked,
+        (SELECT row_to_json(s) FROM (
+           SELECT st.checked_at, st.serviced_at, (st.checked_at IS NOT NULL AND (c.last_material_change_at IS NULL OR st.checked_at >= c.last_material_change_at)) AS checked
+           FROM lead_rep_state st WHERE st.company_id = c.id AND st.user_id = $1::uuid) s) AS my_state,
+        (SELECT COALESCE(json_agg(s ORDER BY s.name, s.user_id), '[]'::json) FROM (
+           SELECT st.user_id, u.name, st.checked_at, st.serviced_at, (st.checked_at IS NOT NULL AND (c.last_material_change_at IS NULL OR st.checked_at >= c.last_material_change_at)) AS checked
+           FROM lead_rep_state st JOIN users u ON u.id = st.user_id WHERE st.company_id = c.id) s) AS team_states,
+        (SELECT COALESCE(json_agg(a ORDER BY a.allocated_at DESC), '[]'::json) FROM (
+           SELECT la.rep_id, r.name AS rep_name, la.allocated_by, b.name AS allocated_by_name, la.allocated_at,
+                  la.ended_at, la.ended_by, e.name AS ended_by_name
+           FROM lead_allocations la JOIN users r ON r.id = la.rep_id JOIN users b ON b.id = la.allocated_by
+           LEFT JOIN users e ON e.id = la.ended_by
+           WHERE la.company_id = c.id ORDER BY la.allocated_at DESC LIMIT $2::int) a) AS allocations,
+        (
+  SELECT COALESCE(json_agg(l ORDER BY l.created_at DESC, l.id), '[]'::json) FROM (
+    SELECT al.id, al.action_type, al.actor_type, al.user_id, u.name AS user_name, al.outcome, al.note_text,
+           al.field_diff, al.created_at
+    FROM activity_logs al LEFT JOIN users u ON u.id = al.user_id
+    WHERE al.company_id = c.id 
+    ORDER BY al.created_at DESC, al.id LIMIT $3::int) l) AS activity,
+        (
+  SELECT COALESCE(json_agg(l ORDER BY l.created_at DESC, l.id), '[]'::json) FROM (
+    SELECT al.id, al.action_type, al.actor_type, al.user_id, u.name AS user_name, al.outcome, al.note_text,
+           al.field_diff, al.created_at
+    FROM activity_logs al LEFT JOIN users u ON u.id = al.user_id
+    WHERE al.company_id = c.id AND al.action_type = 'note'
+    ORDER BY al.created_at DESC, al.id LIMIT $4::int) l) AS notes,
+        (SELECT COALESCE(json_agg(r ORDER BY r.valid_from DESC NULLS LAST, r.id), '[]'::json) FROM (
+           SELECT rs.id, rs.county_fips, rs.kind, rs.source, rs.payload, rs.valid_from, rs.valid_to
+           FROM regional_signals rs
+           WHERE rs.county_fips = c.county_fips AND rs.kind IN ('active_alert', 'storm_history')
+             AND (rs.kind = 'storm_history' OR rs.valid_to IS NULL OR rs.valid_to > now() - interval '8 days')) r) AS signals
+      FROM companies c
+      WHERE c.id = $5::uuid AND (c.assigned_rep_id = $6::uuid OR c.assigned_rep_id IS NULL)) h
+
+Index Scan using companies_pkey on companies c  (cost=0.42..153.73 rows=1 width=32) (actual time=0.068..0.070 rows=1 loops=1)
+  Index Cond: (id = '2401de6c-a1ee-4248-8b88-0d7a3e66a730'::uuid)
+  Filter: ((assigned_rep_id = '0bef1328-0977-42cc-8555-dfce097bffdc'::uuid) OR (assigned_rep_id IS NULL))
+  Buffers: shared hit=67
+  SubPlan 1
+    ->  Index Scan using lead_rep_state_pkey on lead_rep_state st  (cost=0.41..8.44 rows=1 width=32) (actual time=0.001..0.001 rows=0 loops=1)
+          Index Cond: ((company_id = c.id) AND (user_id = '0bef1328-0977-42cc-8555-dfce097bffdc'::uuid))
+          Buffers: shared hit=3
+  SubPlan 2
+    ->  Aggregate  (cost=16.76..16.77 rows=1 width=32) (actual time=0.006..0.006 rows=1 loops=1)
+          Buffers: shared hit=7
+          ->  Sort  (cost=16.75..16.75 rows=1 width=48) (actual time=0.004..0.004 rows=1 loops=1)
+                Sort Key: u.name, st_1.user_id
+                Sort Method: quicksort  Memory: 25kB
+                Buffers: shared hit=7
+                ->  Nested Loop  (cost=0.70..16.74 rows=1 width=48) (actual time=0.003..0.003 rows=1 loops=1)
+                      Buffers: shared hit=7
+                      ->  Index Scan using lead_rep_state_pkey on lead_rep_state st_1  (cost=0.41..8.43 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=1)
+                            Index Cond: (company_id = c.id)
+                            Buffers: shared hit=4
+                      ->  Index Scan using users_pkey on users u  (cost=0.28..8.30 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=1)
+                            Index Cond: (id = st_1.user_id)
+                            Buffers: shared hit=3
+  SubPlan 3
+    ->  Aggregate  (cost=33.36..33.37 rows=1 width=32) (actual time=0.011..0.012 rows=1 loops=1)
+          Buffers: shared hit=20
+          ->  Subquery Scan on a  (cost=1.26..33.36 rows=1 width=144) (actual time=0.005..0.008 rows=2 loops=1)
+                Buffers: shared hit=20
+                ->  Limit  (cost=1.26..33.35 rows=1 width=112) (actual time=0.004..0.007 rows=2 loops=1)
+                      Buffers: shared hit=20
+                      ->  Nested Loop Left Join  (cost=1.26..33.35 rows=1 width=112) (actual time=0.004..0.007 rows=2 loops=1)
+                            Buffers: shared hit=20
+                            ->  Nested Loop  (cost=0.98..25.04 rows=1 width=96) (actual time=0.003..0.006 rows=2 loops=1)
+                                  Buffers: shared hit=17
+                                  ->  Nested Loop  (cost=0.70..16.74 rows=1 width=80) (actual time=0.002..0.004 rows=2 loops=1)
+                                        Buffers: shared hit=11
+                                        ->  Index Scan using lead_allocations_history_idx on lead_allocations la  (cost=0.42..8.44 rows=1 width=64) (actual time=0.001..0.002 rows=2 loops=1)
+                                              Index Cond: (company_id = c.id)
+                                              Buffers: shared hit=5
+                                        ->  Index Scan using users_pkey on users r  (cost=0.28..8.30 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=2)
+                                              Index Cond: (id = la.rep_id)
+                                              Buffers: shared hit=6
+                                  ->  Index Scan using users_pkey on users b  (cost=0.28..8.30 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=2)
+                                        Index Cond: (id = la.allocated_by)
+                                        Buffers: shared hit=6
+                            ->  Index Scan using users_pkey on users e  (cost=0.28..8.30 rows=1 width=32) (actual time=0.000..0.000 rows=0 loops=2)
+                                  Index Cond: (id = la.ended_by)
+                                  Buffers: shared hit=3
+  SubPlan 4
+    ->  Aggregate  (cost=41.55..41.56 rows=1 width=32) (actual time=0.015..0.016 rows=1 loops=1)
+          Buffers: shared hit=16
+          ->  Subquery Scan on l  (cost=14.27..41.54 rows=3 width=276) (actual time=0.007..0.009 rows=5 loops=1)
+                Buffers: shared hit=16
+                ->  Limit  (cost=14.27..41.51 rows=3 width=228) (actual time=0.006..0.007 rows=5 loops=1)
+                      Buffers: shared hit=16
+                      ->  Incremental Sort  (cost=14.27..41.51 rows=3 width=228) (actual time=0.006..0.007 rows=5 loops=1)
+                            Sort Key: al.created_at DESC, al.id
+                            Presorted Key: al.created_at
+                            Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 25kB  Peak Memory: 25kB
+                            Buffers: shared hit=16
+                            ->  Nested Loop Left Join  (cost=0.70..41.37 rows=3 width=228) (actual time=0.002..0.005 rows=5 loops=1)
+                                  Buffers: shared hit=16
+                                  ->  Index Scan using activity_logs_company_idx on activity_logs al  (cost=0.42..16.47 rows=3 width=212) (actual time=0.001..0.002 rows=5 loops=1)
+                                        Index Cond: (company_id = c.id)
+                                        Buffers: shared hit=4
+                                  ->  Index Scan using users_pkey on users u_1  (cost=0.28..8.30 rows=1 width=32) (actual time=0.000..0.000 rows=1 loops=5)
+                                        Index Cond: (id = al.user_id)
+                                        Buffers: shared hit=12
+  SubPlan 5
+    ->  Aggregate  (cost=24.55..24.56 rows=1 width=32) (actual time=0.006..0.007 rows=1 loops=1)
+          Buffers: shared hit=7
+          ->  Subquery Scan on l_1  (cost=24.53..24.55 rows=1 width=276) (actual time=0.004..0.005 rows=1 loops=1)
+                Buffers: shared hit=7
+                ->  Limit  (cost=24.53..24.54 rows=1 width=228) (actual time=0.004..0.004 rows=1 loops=1)
+                      Buffers: shared hit=7
+                      ->  Sort  (cost=24.53..24.54 rows=1 width=228) (actual time=0.004..0.004 rows=1 loops=1)
+                            Sort Key: al_1.created_at DESC, al_1.id
+                            Sort Method: quicksort  Memory: 25kB
+                            Buffers: shared hit=7
+                            ->  Nested Loop Left Join  (cost=4.72..24.52 rows=1 width=228) (actual time=0.003..0.003 rows=1 loops=1)
+                                  Buffers: shared hit=7
+                                  ->  Bitmap Heap Scan on activity_logs al_1  (cost=4.44..16.22 rows=1 width=212) (actual time=0.002..0.002 rows=1 loops=1)
+                                        Recheck Cond: (company_id = c.id)
+                                        Filter: ((action_type)::text = 'note'::text)
+                                        Rows Removed by Filter: 4
+                                        Heap Blocks: exact=1
+                                        Buffers: shared hit=4
+                                        ->  Bitmap Index Scan on activity_logs_company_idx  (cost=0.00..4.44 rows=3 width=0) (actual time=0.001..0.001 rows=5 loops=1)
+                                              Index Cond: (company_id = c.id)
+                                              Buffers: shared hit=3
+                                  ->  Index Scan using users_pkey on users u_2  (cost=0.28..8.30 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=1)
+                                        Index Cond: (id = al_1.user_id)
+                                        Buffers: shared hit=3
+  SubPlan 6
+    ->  Aggregate  (cost=20.58..20.59 rows=1 width=32) (actual time=0.020..0.021 rows=1 loops=1)
+          Buffers: shared hit=10
+          ->  Sort  (cost=20.53..20.55 rows=8 width=164) (actual time=0.008..0.008 rows=8 loops=1)
+                Sort Key: rs.valid_from DESC NULLS LAST, rs.id
+                Sort Method: quicksort  Memory: 26kB
+                Buffers: shared hit=10
+                ->  Bitmap Heap Scan on regional_signals rs  (cost=4.34..20.41 rows=8 width=164) (actual time=0.003..0.006 rows=8 loops=1)
+                      Recheck Cond: (county_fips = c.county_fips)
+                      Filter: (((kind)::text = ANY ('{active_alert,storm_history}'::text[])) AND (((kind)::text = 'storm_history'::text) OR (valid_to IS NULL) OR (valid_to > (now() - '8 days'::interval))))
+                      Heap Blocks: exact=8
+                      Buffers: shared hit=10
+                      ->  Bitmap Index Scan on regional_signals_county_kind_idx  (cost=0.00..4.33 rows=8 width=0) (actual time=0.002..0.002 rows=8 loops=1)
+                            Index Cond: (county_fips = c.county_fips)
+                            Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=55
+Planning Time: 0.342 ms
+Execution Time: 0.101 ms

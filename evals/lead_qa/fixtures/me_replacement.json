@@ -1,0 +1,60 @@
+{
+  "id": "11111111-1111-4111-8111-000000000001",
+  "businessName": "Carework Construction LLC",
+  "city": "Lyndhurst", "state": "NJ", "postalCode": "07071",
+  "countyFips": "34003", "countyName": "Bergen County, NJ",
+  "websiteUrl": "https://careworkconstruction.example/",
+  "gaf": {
+    "tier": "master_elite",
+    "certifications": ["GAF Master Elite® - Certification"],
+    "rating": 4.8, "reviewCount": 132, "yearsInBusiness": 17, "employeesRange": "10-19",
+    "specialties": ["Residential roofing"],
+    "distinctions": ["GAF Master Elite® - Certification"],
+    "presidentsClubStars": 0,
+    "description": "Carework Construction is a family-owned roofing contractor serving Bergen County since 2009. We specialize in full roof replacements with architectural shingles, plus gutters and attic ventilation."
+  },
+  "size": "medium", "segment": "strategic", "priorityScore": 51,
+  "priorityDrivers": ["GAF Master Elite", "132 reviews", "Replacement specialist"],
+  "accountStatus": "prospect", "salesStage": "interested",
+  "stageChangedAt": "2026-10-07T14:10:00Z", "lastContactedAt": "2026-10-12T15:30:00Z",
+  "assignedRep": { "id": "ab3ee7d1-f903-4b52-a89d-20d26eac84d6", "name": "Jordan Lee" },
+  "canWrite": true,
+  "tags": [
+    { "key": "gaf_tier", "label": "GAF Master Elite", "category": "certification" },
+    { "key": "service:roof_replacement", "label": "Roof replacement", "category": "services" },
+    { "key": "service:shingle_roofing", "label": "Shingle roofing", "category": "services" },
+    { "key": "service:gutters", "label": "Gutters", "category": "services" },
+    { "key": "reputation", "label": "4.8★ (excellent)", "category": "reputation" },
+    { "key": "size", "label": "Size: medium", "category": "size" }
+  ],
+  "customTags": ["Bulk buyer"],
+  "customFields": { "annual_volume_squares": 2400, "preferred_supplier": "a regional yard in Secaucus" },
+  "targetContact": { "label": "Owner", "reason": "Owner-operated shop: the owner signs off on supplier changes", "name": "Jose Sucuzhanay Sr.", "title": "Owner" },
+  "contacts": [
+    { "name": "Jose Sucuzhanay Sr.", "title": "Owner", "hasEmail": true, "hasPhone": true, "doNotContact": false, "source": "website" },
+    { "name": "Maria Lopez", "title": "Office Manager", "hasEmail": true, "hasPhone": false, "doNotContact": false, "source": "website" }
+  ],
+  "insights": {
+    "businessSummary": "Carework Construction is a GAF Master Elite contractor in Lyndhurst, NJ focused on full residential roof replacements, with gutter and ventilation work.",
+    "salesRecommendation": "Lead with bulk architectural shingle pricing for a high-volume Master Elite replacement shop.",
+    "talkingPoints": ["Ask how the 4.8-star rating is holding up as they add crews.", "Follow up on the late deliveries from their current supplier."],
+    "targetContact": { "name": "Jose Sucuzhanay Sr.", "title": "Owner", "why": "Signs off on supplier changes" },
+    "productFocus": ["architectural_shingles", "underlayment"],
+    "citedFacts": [{ "id": "F3", "text": "gaf_tier: GAF Master Elite" }, { "id": "F5", "text": "rating: 4.8 stars from 132 reviews" }],
+    "model": "fake:fake-1", "promptVersion": "insights/v1", "generatedAt": "2026-10-18T22:30:00Z"
+  },
+  "timing": [],
+  "notes": [
+    { "author": "Jordan L.", "at": "2026-10-07T14:05:00Z", "text": "Spoke with Jose. Unhappy with late deliveries from his current supplier; wants a quote on architectural shingles for three November jobs." }
+  ],
+  "activity": [
+    { "type": "call", "outcome": "connected", "author": "Jordan L.", "at": "2026-10-12T15:30:00Z", "text": "Walked through pricing tiers; he asked for a bulk quote by Friday." },
+    { "type": "stage_changed", "outcome": null, "author": "Jordan L.", "at": "2026-10-07T14:10:00Z", "text": "New to Interested" }
+  ],
+  "openTasks": [{ "title": "Send bulk shingle quote", "type": "email", "dueAt": "2026-10-20T13:00:00Z" }],
+  "website": [
+    { "url": "https://careworkconstruction.example/", "title": "Carework Construction | Roof Replacement in Bergen County", "text": "Family-owned since 2009. Full roof replacements, repairs, gutters and attic ventilation across Bergen County. Free estimates and a workmanship warranty on every job." }
+  ],
+  "websiteSummary": "Bergen County roofing contractor focused on full residential roof replacements, with gutter and ventilation work.",
+  "generatedAt": "2026-10-19T19:00:00.000Z"
+}

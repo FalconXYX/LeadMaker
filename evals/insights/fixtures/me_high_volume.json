@@ -1,0 +1,82 @@
+{
+  "company_id": "22222222-2222-4222-8222-000000000001",
+  "business_name": "Carework Construction LLC",
+  "facts": [
+    {
+      "id": "F1",
+      "key": "business_name",
+      "text": "business_name: Carework Construction LLC"
+    },
+    {
+      "id": "F2",
+      "key": "location",
+      "text": "location: Lyndhurst, NJ 07071 (Bergen County)"
+    },
+    {
+      "id": "F3",
+      "key": "gaf_tier",
+      "text": "gaf_tier: GAF Master Elite"
+    },
+    {
+      "id": "F4",
+      "key": "certification",
+      "text": "certification: GAF Master Elite® - Certification"
+    },
+    {
+      "id": "F5",
+      "key": "rating",
+      "text": "rating: 4.8 stars from 132 reviews"
+    },
+    {
+      "id": "F6",
+      "key": "in_business_since",
+      "text": "in_business_since: 2009"
+    },
+    {
+      "id": "F7",
+      "key": "employees",
+      "text": "employees: 10-19"
+    },
+    {
+      "id": "F8",
+      "key": "size",
+      "text": "size: medium"
+    },
+    {
+      "id": "F9",
+      "key": "segment",
+      "text": "segment: strategic"
+    },
+    {
+      "id": "F10",
+      "key": "services",
+      "text": "services: Roof replacement, Roof repair, Gutters"
+    },
+    {
+      "id": "F11",
+      "key": "materials",
+      "text": "materials: Shingle roofing"
+    },
+    {
+      "id": "F12",
+      "key": "target_contact",
+      "text": "target_contact: Owner — Jose Sucuzhanay Sr."
+    },
+    {
+      "id": "F13",
+      "key": "contact",
+      "text": "contact: Maria Lopez, Office Manager"
+    },
+    {
+      "id": "F14",
+      "key": "sales_stage",
+      "text": "sales_stage: interested"
+    },
+    {
+      "id": "F15",
+      "key": "note",
+      "text": "note (Jordan L., 2026-10-07): Runs 6-8 full replacements a week in season; buys architectural shingles by the truckload and wants volume pricing."
+    }
+  ],
+  "website_excerpt": "Family-owned since 2009. Full roof replacements, repairs, gutters and attic ventilation across Bergen County. Free estimates and a workmanship warranty on every job."
+}

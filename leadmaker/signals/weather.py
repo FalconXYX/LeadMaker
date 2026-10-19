@@ -15,6 +15,12 @@ API (no page crawling), queried a handful of times per run.
 Message lifecycle: an `Update` replaces the alerts it references (per county) and a
 `Cancel` ends them at its send time. Alerts that vanish from /alerts/active before
 their end time are closed at fetch time. Ended alerts are kept RETENTION_DAYS.
+
+Area: storm-based warnings (Severe Thunderstorm, Tornado, Flash Flood...) carry a polygon
+that often covers only part of a county ("Northern Westchester County"). The payload keeps
+the message's own polygon as `geometry` (an Update's polygon is the forecaster's latest
+word on the threatened area, so it replaces the original's) for timing to test each lead's
+point. Zone-based products have no geometry; their `ugc` zone codes are kept instead.
 """
 
 from __future__ import annotations
@@ -46,6 +52,7 @@ HISTORY_PAGE = 500
 MAX_PAGES = 5
 RETENTION_DAYS = 30
 INSTRUCTION_MAX = 280
+COORD_DIGITS = 4  # ~11 m: NWS polygons are drawn to 0.01 deg
 
 
 def county_zone(county_fips: str) -> str:
@@ -108,6 +115,22 @@ async def fetch_alerts(
     return list(features.values()), active
 
 
+def polygons(geometry: dict[str, Any] | None) -> list[list[list[list[float]]]]:
+    """GeoJSON Polygon / MultiPolygon -> [polygon [ring [lon, lat]]], coordinates rounded."""
+    if not isinstance(geometry, dict):
+        return []
+    coords = geometry.get("coordinates") or []
+    typ = geometry.get("type")
+    polys = [coords] if typ == "Polygon" else coords if typ == "MultiPolygon" else []
+    out = []
+    for poly in polys:
+        rings = [[[round(float(x), COORD_DIGITS), round(float(y), COORD_DIGITS)] for x, y, *_ in ring]
+                 for ring in poly or [] if ring]
+        if rings and len(rings[0]) >= 4:
+            out.append(rings)
+    return out
+
+
 def _counties_of(p: dict[str, Any], wanted: set[str]) -> list[str]:
     same = (p.get("geocode") or {}).get("SAME") or []
     return sorted({s[-5:] for s in same if len(s) == 6 and s[-5:] in wanted})
@@ -124,8 +147,9 @@ def alert_rows(
     superseded: set[tuple[str, str]] = set()
     cancelled: dict[tuple[str, str], datetime] = {}
     rows: dict[tuple[str, str], dict[str, Any]] = {}
-    props = sorted((f["properties"] for f in features if f.get("properties")), key=lambda p: p.get("sent") or "")
-    for p in props:
+    feats = sorted((f for f in features if f.get("properties")), key=lambda f: f["properties"].get("sent") or "")
+    for f in feats:
+        p = f["properties"]
         if (p.get("status") or "Actual") != "Actual":  # Test / Exercise / Draft
             continue
         counties = _counties_of(p, county_fips)
@@ -141,6 +165,7 @@ def alert_rows(
             continue
         if mtype == "Update":
             superseded.update((ref, c) for ref in refs for c in counties)
+        polys = polygons(f.get("geometry"))
         start = parse_time(p.get("effective")) or parse_time(p.get("sent"))
         end = parse_time(p.get("ends")) or parse_time(p.get("expires"))
         payload = {
@@ -157,6 +182,8 @@ def alert_rows(
             "message_type": mtype,
             "sender_name": p.get("senderName"),
             "url": p.get("@id"),
+            "ugc": sorted((p.get("geocode") or {}).get("UGC") or []),
+            "geometry": {"type": "MultiPolygon", "coordinates": polys} if polys else None,
         }
         for c in counties:
             rows[(p["id"], c)] = {

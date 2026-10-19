@@ -182,7 +182,7 @@ BRANDS: list[tuple[str, str]] = [
     ("Firestone / Holcim Elevate", r"firestone building|holcim elevate|elevate roofing"),
     ("Carlisle", r"carlisle syntec|carlisle roofing"),
     ("Englert", r"englert"),
-    ("LeafFilter / Leaf Guard", r"leaffilter|leaf guard|leafguard"),
+    ("LeafFilter / Leaf Guard", r"leaf\s?filter|leafguard"),
 ]
 
 SOCIAL: list[tuple[str, str]] = [
@@ -505,6 +505,8 @@ class WebSignalsEnricher(Enricher):
     CDX = "https://web.archive.org/cdx/search/cdx"
     RDAP = {"com": "https://rdap.verisign.com/com/v1/domain/", "net": "https://rdap.verisign.com/net/v1/domain/"}
     RDAP_FALLBACK = "https://rdap.org/domain/"
+    # Wayback lookups queue on one archive.org slot (1.5 s spacing), so allow more than the default 180 s.
+    timeout_s = 600
     scan_gtm = True  # read the public GTM container to find ad tags loaded via Tag Manager
     scan_sitemap = True
 
@@ -572,7 +574,7 @@ class WebSignalsEnricher(Enricher):
         signals: dict[str, Any] = {"website": website}
 
         rp = await self._robots(http, website)
-        allowed = rp is None or rp.can_fetch(UA_TOKEN, website) or rp.can_fetch("*", website)
+        allowed = rp is None or rp.can_fetch(UA_TOKEN, website)  # falls back to the * group by itself
         signals["robots_disallowed"] = not allowed
         html, headers, final = "", {}, website
         if allowed:

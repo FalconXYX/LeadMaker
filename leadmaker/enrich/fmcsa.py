@@ -20,6 +20,7 @@ from typing import Any
 
 from ..http import HttpClient
 from ..models import Contact, EnrichmentResult
+from ._registry_match import distinctive_tokens, strict_similarity, strict_tokens
 from .base import Enricher, LeadContext
 from .matching import match_confidence, name_similarity, normalize_name, phone_digits, zip5
 
@@ -33,17 +34,35 @@ COLS = ("dot_number,legal_name,dba_name,phy_street,phy_city,phy_state,phy_zip,ph
         "carrier_operation,business_org_desc")
 KEYWORDS = ("ROOF", "CONSTRUC", "CONTRACT", "SIDING", "HOME IMPROV", "REMODEL", "EXTERIOR", "RENOVAT", "BUILD", "GUTTER")
 MIN_CONFIDENCE = 0.75
+STRICT_NAME = 0.85  # name-only matches: strict similarity needed (see _strict_name_agrees)
 PAGE = 50_000
+# A shared phone alone does not make two differently named businesses one: owners file a truck
+# business (e.g. "KOS-TRANS LLC" for "VMF Construction LLC") under their own number. Without a name
+# that agrees or a shared locality, a phone match is only a lead to the owner, not the same company.
+WEAK_NAME = 0.5
+PHONE_ONLY_CAP = 0.6  # < MIN_CONFIDENCE: recorded as the best candidate, never accepted
+INACTIVE_STATUS = {"I"}  # census status_code; "A" = active
+INACTIVE_PENALTY = 0.1  # an inactive USDOT registration under another name is likelier the owner's old side business
 
 
 def _title(name: str) -> str:
     return " ".join(w.capitalize() if w.isupper() or w.islower() else w for w in name.split())
 
 
+def _names(contractor: dict[str, Any]) -> list[str]:
+    return [contractor[k] for k in ("legal_name", "name", "dba") if contractor.get(k)]
+
+
+def strict_name_sim(contractor: dict[str, Any], row: dict[str, Any]) -> float:
+    """Name agreement with trade words kept ("FM Construction Group" != "FM Home Improvement")."""
+    return max((strict_similarity(n, x) for n in _names(contractor) for x in (row.get("legal_name"), row.get("dba_name"))
+                if x), default=0.0)
+
+
 def score(contractor: dict[str, Any], row: dict[str, Any]) -> tuple[float, dict[str, Any]]:
     ph = phone_digits(contractor.get("phone"))
     pm = bool(ph and ph in {phone_digits(row.get("phone")), phone_digits(row.get("cell_phone"))})
-    names = [contractor.get(k) for k in ("legal_name", "name", "dba") if contractor.get(k)]
+    names = _names(contractor)
     ns = max((name_similarity(n, x) for n in names for x in (row.get("legal_name"), row.get("dba_name")) if x),
              default=0.0)
     same_zip = zip5(contractor.get("postal_code")) is not None and zip5(contractor.get("postal_code")) == zip5(row.get("phy_zip"))
@@ -52,7 +71,35 @@ def score(contractor: dict[str, Any], row: dict[str, Any]) -> tuple[float, dict[
     core = normalize_name(contractor.get("legal_name") or contractor.get("name"))
     if not pm and len(core) <= 3:  # very short names ("ABC") collide too easily without a phone match
         conf = min(conf, 0.5)
-    return conf, {"phone_match": pm, "name_sim": round(ns, 2), "same_zip": same_zip, "same_city": same_city}
+    strict_differs = not pm and conf >= MIN_CONFIDENCE and not _strict_name_agrees(names, row)
+    if strict_differs:
+        conf = min(conf, MIN_CONFIDENCE - 0.05)
+    phone_only = pm and ns < WEAK_NAME and not (same_zip or same_city)
+    if phone_only:
+        conf = min(conf, PHONE_ONLY_CAP)
+    inactive = (row.get("status_code") or "").strip().upper() in INACTIVE_STATUS
+    if inactive and ns < 0.7:  # only a phone ties it to the contractor: weaker still if the carrier is gone
+        conf -= INACTIVE_PENALTY
+    ev = {"phone_match": pm, "name_sim": round(ns, 2), "same_zip": same_zip, "same_city": same_city}
+    if phone_only:
+        ev["phone_only"] = True
+    if inactive:
+        ev["inactive"] = True
+    if strict_differs:
+        ev["strict_name_differs"] = True
+    return round(max(conf, 0.0), 3), ev
+
+
+def _strict_name_agrees(names: list[str], row: dict[str, Any]) -> bool:
+    """Name-only matches need the words that identify the business to agree, not just trade words."""
+    carrier = [x for x in (row.get("legal_name"), row.get("dba_name")) if x]
+    if any(strict_similarity(n, x) >= STRICT_NAME for n in names for x in carrier):
+        return True
+    for n in names:
+        mine = set(distinctive_tokens(n))
+        if mine and any(mine <= set(strict_tokens(x)) for x in carrier):
+            return True
+    return False
 
 
 class FmcsaEnricher(Enricher):
@@ -115,10 +162,15 @@ class FmcsaEnricher(Enricher):
 
     async def enrich(self, ctx: LeadContext, http: HttpClient) -> EnrichmentResult:
         best: tuple[float, dict[str, Any], dict[str, Any]] | None = None
+        best_key: tuple = ()
         for k in self.candidates(ctx.contractor):
             conf, ev = score(ctx.contractor, self.rows[k])
-            if best is None or conf > best[0]:
-                best = (conf, self.rows[k], ev)
+            # Ties (one owner, several USDOT numbers on one phone) go to the closer name (trade words
+            # kept), then the active, most recently filed registration -- deterministic, not set order.
+            key = (conf, ev["name_sim"], strict_name_sim(ctx.contractor, self.rows[k]), not ev.get("inactive"),
+                   self.rows[k].get("mcs150_date") or "", k)
+            if best is None or key > best_key:
+                best, best_key = (conf, self.rows[k], ev), key
         if best is None or best[0] < MIN_CONFIDENCE:
             return self.no_match({"best_confidence": round(best[0], 3) if best else None})
         conf, r, ev = best

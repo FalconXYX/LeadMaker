@@ -1,0 +1,6 @@
+{
+  "rep1": { "id": "ab3ee7d1-f903-4b52-a89d-20d26eac84d6", "name": "Jordan Lee", "email": "rep1@demo.local", "role": "rep" },
+  "rep2": { "id": "50302c37-aeb7-4cef-b8c7-cc14004df3bb", "name": "Priya Shah", "email": "rep2@demo.local", "role": "rep" },
+  "rep3": { "id": "51167968-bd6a-45d9-9dfa-ba8e4d235ea2", "name": "Sam Rivera", "email": "rep3@demo.local", "role": "rep" },
+  "manager": { "id": "f4d9577f-3a16-464b-a232-8ec8ea71e6bf", "name": "Alex Morgan", "email": "manager@demo.local", "role": "manager" }
+}

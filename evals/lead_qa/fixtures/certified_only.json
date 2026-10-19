@@ -1,0 +1,39 @@
+{
+  "id": "11111111-1111-4111-8111-000000000003",
+  "businessName": "Garden State Roof Pros",
+  "city": "Clifton", "state": "NJ", "postalCode": "07011",
+  "countyFips": "34031", "countyName": "Passaic County, NJ",
+  "websiteUrl": null,
+  "gaf": {
+    "tier": "certified",
+    "certifications": ["GAF Certified™ - Certification"],
+    "rating": 4.4, "reviewCount": 41, "yearsInBusiness": 6, "employeesRange": "1-9",
+    "specialties": ["Residential roofing"],
+    "distinctions": [],
+    "presidentsClubStars": 0,
+    "description": "Residential roof repair and replacement in Passaic County."
+  },
+  "size": "small", "segment": "emerging", "priorityScore": 38,
+  "priorityDrivers": ["41 reviews"],
+  "accountStatus": "prospect", "salesStage": "new",
+  "stageChangedAt": null, "lastContactedAt": null,
+  "assignedRep": null,
+  "canWrite": false,
+  "tags": [
+    { "key": "gaf_tier", "label": "GAF Certified", "category": "certification" },
+    { "key": "service:roof_repair", "label": "Roof repair", "category": "services" },
+    { "key": "service:roof_replacement", "label": "Roof replacement", "category": "services" }
+  ],
+  "customTags": [],
+  "customFields": {},
+  "targetContact": { "label": "Owner", "reason": "Small shop: ask for the owner", "name": null, "title": null },
+  "contacts": [],
+  "insights": null,
+  "timing": [],
+  "notes": [],
+  "activity": [],
+  "openTasks": [],
+  "website": [],
+  "websiteSummary": null,
+  "generatedAt": "2026-10-19T19:00:00.000Z"
+}

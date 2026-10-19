@@ -1118,7 +1118,7 @@ class LlmExtractEnricher(Enricher):
         user_message, _ = self.build(ctx)
         if user_message is None:
             return None
-        return {"custom_id": ctx.gaf_id, "params": self.request_params(user_message)}
+        return {"custom_id": ctx.company_id or ctx.gaf_id, "params": self.request_params(user_message)}
 
     # -- main entry point -----------------------------------------------------
     async def enrich(self, ctx: LeadContext, http: HttpClient) -> EnrichmentResult:

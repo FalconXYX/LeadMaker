@@ -6,3 +6,10 @@ __pycache__/
 data
 research
 tests
+node_modules
+.coverage
+# Local secrets (copy .env.example to .env)
+.env
+.env.*
+!.env.example
+scripts/perf/results/runs/

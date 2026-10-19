@@ -1,0 +1,148 @@
+-- search:unallocated_tags:rep
+-- filter: {"scope":"unallocated","tagsAll":["service:metal_roofing"],"size":["medium","large"]}
+-- params: ["0bef1328-0977-42cc-8555-dfce097bffdc",["service:metal_roofing"],["size=medium","size=large"],51,"0bef1328-0977-42cc-8555-dfce097bffdc",["service:metal_roofing"],["size=medium","size=large"],1001,"0bef1328-0977-42cc-8555-dfce097bffdc"]
+
+    WITH page AS (
+      SELECT c.id, c.priority_score AS sort_val, NULL::float8 AS distance_m
+      FROM companies c 
+      WHERE ((c.assigned_rep_id = $1::uuid OR c.assigned_rep_id IS NULL) AND c.assigned_rep_id IS NULL AND c.tag_facets @> $2::text[] AND c.tag_facets && $3::text[]) AND TRUE
+      ORDER BY c.priority_score desc NULLS LAST, c.id desc LIMIT $4::int
+    )
+    SELECT (SELECT count(*)::int FROM (
+        SELECT 1 FROM companies c  WHERE ((c.assigned_rep_id = $5::uuid OR c.assigned_rep_id IS NULL) AND c.assigned_rep_id IS NULL AND c.tag_facets @> $6::text[] AND c.tag_facets && $7::text[]) LIMIT $8::int) capped) AS total,
+      COALESCE((SELECT json_agg(r ORDER BY r.ord) FROM (
+        SELECT row_number() OVER (ORDER BY p.sort_val desc NULLS LAST, p.id desc) AS ord,
+          p.sort_val::text AS sort_key, p.distance_m,
+          c.id, c.business_name, c.city, c.state, c.postal_code, c.phone, c.website_url, c.latitude, c.longitude,
+          c.county_fips, c.rating, c.review_count, c.tier, c.founded_year AS founded_year, c.segment,
+          c.priority_score::float8 AS priority_score, c.account_status, c.assigned_rep_id, u.name AS assigned_rep_name,
+          (SELECT COALESCE(jsonb_agg(jsonb_build_object('key', t->'key', 'value', t->'value', 'label', t->'label',
+                                                        'category', t->'category')), '[]'::jsonb)
+             FROM jsonb_array_elements(c.system_tags) t) AS tags,
+          ov.overrides, ct.custom_tags, c.updated_in_last_poll, COALESCE(c.last_material_change_at, c.first_seen_at) AS last_change_at,
+          ms.checked_at AS my_checked_at, ms.serviced_at AS my_serviced_at,
+          (ms.checked_at IS NOT NULL
+            AND (c.last_material_change_at IS NULL OR ms.checked_at >= c.last_material_change_at)) AS my_checked,
+          c.team_last_checked_at, c.team_last_serviced_at,
+          (c.team_last_checked_at IS NOT NULL
+            AND (c.last_material_change_at IS NULL OR c.team_last_checked_at >= c.last_material_change_at)) AS team_checked,
+          c.version
+        FROM page p
+        JOIN companies c ON c.id = p.id
+        LEFT JOIN users u ON u.id = c.assigned_rep_id
+        LEFT JOIN lead_rep_state ms ON ms.company_id = c.id AND ms.user_id = $9::uuid
+        LEFT JOIN LATERAL (
+          SELECT jsonb_object_agg(o.field, o.value) AS overrides FROM field_overrides o
+          WHERE o.company_id = c.id AND o.contact_id IS NULL AND o.superseded_at IS NULL) ov ON TRUE
+        LEFT JOIN LATERAL (
+          SELECT jsonb_agg(jsonb_build_object('id', t.id, 'name', t.name) ORDER BY lower(t.name), t.id) AS custom_tags
+          FROM company_custom_tags x JOIN custom_tags t ON t.id = x.tag_id WHERE x.company_id = c.id) ct ON TRUE
+      ) r), '[]'::json) AS items
+
+Result  (cost=9155.75..9155.76 rows=1 width=36) (actual time=13.355..13.359 rows=1 loops=1)
+  Buffers: shared hit=5049
+  InitPlan 1 (returns $0)
+    ->  Aggregate  (cost=3747.68..3747.69 rows=1 width=4) (actual time=4.149..4.150 rows=1 loops=1)
+          Buffers: shared hit=1083
+          ->  Limit  (cost=580.17..3735.86 rows=946 width=4) (actual time=3.795..4.113 rows=1001 loops=1)
+                Buffers: shared hit=1083
+                ->  Bitmap Heap Scan on companies c  (cost=580.17..3735.86 rows=946 width=4) (actual time=3.795..4.067 rows=1001 loops=1)
+                      Recheck Cond: ((tag_facets @> '{service:metal_roofing}'::text[]) AND (tag_facets && '{size=medium,size=large}'::text[]) AND (((assigned_rep_id = '0bef1328-0977-42cc-8555-dfce097bffdc'::uuid) AND (assigned_rep_id IS NULL)) OR ((assigned_rep_id IS NULL) AND (assigned_rep_id IS NULL))))
+                      Heap Blocks: exact=787
+                      Buffers: shared hit=1083
+                      ->  BitmapAnd  (cost=580.17..580.17 rows=946 width=0) (actual time=3.549..3.550 rows=0 loops=1)
+                            Buffers: shared hit=296
+                            ->  Bitmap Index Scan on companies_tag_facets_gin  (cost=0.00..166.43 rows=10759 width=0) (actual time=2.077..2.077 rows=12218 loops=1)
+                                  Index Cond: ((tag_facets @> '{service:metal_roofing}'::text[]) AND (tag_facets && '{size=medium,size=large}'::text[]))
+                                  Buffers: shared hit=55
+                            ->  BitmapOr  (cost=413.26..413.26 rows=8796 width=0) (actual time=1.132..1.132 rows=0 loops=1)
+                                  Buffers: shared hit=241
+                                  ->  Bitmap Index Scan on companies_assigned_rep_priority_idx  (cost=0.00..4.52 rows=10 width=0) (actual time=0.000..0.000 rows=0 loops=1)
+                                        Index Cond: ((assigned_rep_id = '0bef1328-0977-42cc-8555-dfce097bffdc'::uuid) AND (assigned_rep_id IS NULL))
+                                  ->  Bitmap Index Scan on companies_assigned_rep_priority_idx  (cost=0.00..408.27 rows=8785 width=0) (actual time=1.131..1.131 rows=30058 loops=1)
+                                        Index Cond: ((assigned_rep_id IS NULL) AND (assigned_rep_id IS NULL))
+                                        Buffers: shared hit=241
+  InitPlan 3 (returns $7)
+    ->  Aggregate  (cost=5408.05..5408.06 rows=1 width=32) (actual time=9.200..9.203 rows=1 loops=1)
+          Buffers: shared hit=3966
+          ->  Sort  (cost=5407.79..5407.92 rows=51 width=354) (actual time=8.628..8.633 rows=51 loops=1)
+                Sort Key: r.ord
+                Sort Method: quicksort  Memory: 155kB
+                Buffers: shared hit=3966
+                ->  Subquery Scan on r  (cost=3789.01..5406.35 rows=51 width=354) (actual time=5.763..8.617 rows=51 loops=1)
+                      Buffers: shared hit=3966
+                      ->  WindowAgg  (cost=3789.01..5405.84 rows=51 width=426) (actual time=5.760..8.589 rows=51 loops=1)
+                            Buffers: shared hit=3966
+                            ->  Nested Loop Left Join  (cost=3789.01..5276.04 rows=51 width=376) (actual time=5.701..6.191 rows=51 loops=1)
+                                  Buffers: shared hit=3813
+                                  ->  Nested Loop Left Join  (cost=3776.83..4653.91 rows=51 width=344) (actual time=5.693..5.922 rows=51 loops=1)
+                                        Buffers: shared hit=3693
+                                        ->  Nested Loop Left Join  (cost=3768.53..4229.47 rows=51 width=312) (actual time=5.691..5.863 rows=51 loops=1)
+                                              Buffers: shared hit=3590
+                                              ->  Nested Loop Left Join  (cost=3768.11..4205.49 rows=51 width=296) (actual time=5.688..5.801 rows=51 loops=1)
+                                                    Buffers: shared hit=3437
+                                                    ->  Nested Loop  (cost=3767.83..4190.24 rows=51 width=280) (actual time=5.687..5.784 rows=51 loops=1)
+                                                          Buffers: shared hit=3437
+                                                          ->  Limit  (cost=3767.42..3767.54 rows=51 width=30) (actual time=5.683..5.690 rows=51 loops=1)
+                                                                Buffers: shared hit=3233
+                                                                ->  Sort  (cost=3767.42..3769.78 rows=946 width=30) (actual time=5.683..5.686 rows=51 loops=1)
+                                                                      Sort Key: c_2.priority_score DESC NULLS LAST, c_2.id DESC
+                                                                      Sort Method: top-N heapsort  Memory: 30kB
+                                                                      Buffers: shared hit=3233
+                                                                      ->  Bitmap Heap Scan on companies c_2  (cost=580.17..3735.86 rows=946 width=30) (actual time=3.782..5.289 rows=3655 loops=1)
+                                                                            Recheck Cond: ((tag_facets @> '{service:metal_roofing}'::text[]) AND (tag_facets && '{size=medium,size=large}'::text[]) AND (((assigned_rep_id = '0bef1328-0977-42cc-8555-dfce097bffdc'::uuid) AND (assigned_rep_id IS NULL)) OR ((assigned_rep_id IS NULL) AND (assigned_rep_id IS NULL))))
+                                                                            Heap Blocks: exact=2937
+                                                                            Buffers: shared hit=3233
+                                                                            ->  BitmapAnd  (cost=580.17..580.17 rows=946 width=0) (actual time=3.544..3.544 rows=0 loops=1)
+                                                                                  Buffers: shared hit=296
+                                                                                  ->  Bitmap Index Scan on companies_tag_facets_gin  (cost=0.00..166.43 rows=10759 width=0) (actual time=2.081..2.081 rows=12218 loops=1)
+                                                                                        Index Cond: ((tag_facets @> '{service:metal_roofing}'::text[]) AND (tag_facets && '{size=medium,size=large}'::text[]))
+                                                                                        Buffers: shared hit=55
+                                                                                  ->  BitmapOr  (cost=413.26..413.26 rows=8796 width=0) (actual time=1.147..1.147 rows=0 loops=1)
+                                                                                        Buffers: shared hit=241
+                                                                                        ->  Bitmap Index Scan on companies_assigned_rep_priority_idx  (cost=0.00..4.52 rows=10 width=0) (actual time=0.000..0.000 rows=0 loops=1)
+                                                                                              Index Cond: ((assigned_rep_id = '0bef1328-0977-42cc-8555-dfce097bffdc'::uuid) AND (assigned_rep_id IS NULL))
+                                                                                        ->  Bitmap Index Scan on companies_assigned_rep_priority_idx  (cost=0.00..408.27 rows=8785 width=0) (actual time=1.146..1.146 rows=30058 loops=1)
+                                                                                              Index Cond: ((assigned_rep_id IS NULL) AND (assigned_rep_id IS NULL))
+                                                                                              Buffers: shared hit=241
+                                                          ->  Index Scan using companies_pkey on companies c_1  (cost=0.42..8.28 rows=1 width=250) (actual time=0.001..0.001 rows=1 loops=51)
+                                                                Index Cond: (id = c_2.id)
+                                                                Buffers: shared hit=204
+                                                    ->  Index Scan using users_pkey on users u  (cost=0.28..0.30 rows=1 width=32) (actual time=0.000..0.000 rows=0 loops=51)
+                                                          Index Cond: (id = c_1.assigned_rep_id)
+                                              ->  Index Scan using lead_rep_state_pkey on lead_rep_state ms  (cost=0.41..0.47 rows=1 width=32) (actual time=0.001..0.001 rows=0 loops=51)
+                                                    Index Cond: ((company_id = c_1.id) AND (user_id = '0bef1328-0977-42cc-8555-dfce097bffdc'::uuid))
+                                                    Buffers: shared hit=153
+                                        ->  Aggregate  (cost=8.30..8.31 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=51)
+                                              Buffers: shared hit=103
+                                              ->  Index Scan using field_overrides_history_idx on field_overrides o  (cost=0.28..8.30 rows=1 width=29) (actual time=0.001..0.001 rows=0 loops=51)
+                                                    Index Cond: (company_id = c_1.id)
+                                                    Filter: ((contact_id IS NULL) AND (superseded_at IS NULL))
+                                                    Buffers: shared hit=103
+                                  ->  Aggregate  (cost=12.18..12.19 rows=1 width=32) (actual time=0.005..0.005 rows=1 loops=51)
+                                        Buffers: shared hit=120
+                                        ->  Sort  (cost=12.16..12.16 rows=2 width=31) (actual time=0.004..0.005 rows=0 loops=51)
+                                              Sort Key: (lower((t_1.name)::text)), t_1.id
+                                              Sort Method: quicksort  Memory: 25kB
+                                              Buffers: shared hit=120
+                                              ->  Hash Join  (cost=4.35..12.15 rows=2 width=31) (actual time=0.002..0.004 rows=0 loops=51)
+                                                    Hash Cond: (t_1.id = x.tag_id)
+                                                    Buffers: shared hit=120
+                                                    ->  Seq Scan on custom_tags t_1  (cost=0.00..7.00 rows=300 width=31) (actual time=0.001..0.010 rows=240 loops=5)
+                                                          Buffers: shared hit=17
+                                                    ->  Hash  (cost=4.32..4.32 rows=2 width=16) (actual time=0.001..0.001 rows=0 loops=51)
+                                                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                          Buffers: shared hit=103
+                                                          ->  Index Only Scan using company_custom_tags_pkey on company_custom_tags x  (cost=0.29..4.32 rows=2 width=16) (actual time=0.001..0.001 rows=0 loops=51)
+                                                                Index Cond: (company_id = c_1.id)
+                                                                Heap Fetches: 0
+                                                                Buffers: shared hit=103
+                            SubPlan 2
+                              ->  Aggregate  (cost=2.51..2.52 rows=1 width=32) (actual time=0.046..0.046 rows=1 loops=51)
+                                    Buffers: shared hit=153
+                                    ->  Function Scan on jsonb_array_elements t  (cost=0.00..1.00 rows=100 width=32) (actual time=0.007..0.008 rows=22 loops=51)
+                                          Buffers: shared hit=153
+Planning:
+  Buffers: shared hit=78
+Planning Time: 0.433 ms
+Execution Time: 13.403 ms

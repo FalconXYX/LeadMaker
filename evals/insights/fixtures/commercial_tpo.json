@@ -1,0 +1,52 @@
+{
+  "company_id": "22222222-2222-4222-8222-000000000003",
+  "business_name": "Brooklyn Flat Roof Systems",
+  "facts": [
+    {
+      "id": "F1",
+      "key": "business_name",
+      "text": "business_name: Brooklyn Flat Roof Systems"
+    },
+    {
+      "id": "F2",
+      "key": "location",
+      "text": "location: Brooklyn, NY 11222 (Kings County)"
+    },
+    {
+      "id": "F3",
+      "key": "gaf_tier",
+      "text": "gaf_tier: GAF Certified"
+    },
+    {
+      "id": "F4",
+      "key": "rating",
+      "text": "rating: 4.6 stars from 95 reviews"
+    },
+    {
+      "id": "F5",
+      "key": "size",
+      "text": "size: large"
+    },
+    {
+      "id": "F6",
+      "key": "services",
+      "text": "services: Commercial roofing, Roof replacement"
+    },
+    {
+      "id": "F7",
+      "key": "materials",
+      "text": "materials: TPO roofing, Flat roofing, Single-ply roofing"
+    },
+    {
+      "id": "F8",
+      "key": "contractor_type",
+      "text": "contractor_type: Commercial"
+    },
+    {
+      "id": "F9",
+      "key": "gaf_description",
+      "text": "gaf_description: Commercial flat roofing for warehouses, retail and multifamily buildings across Brooklyn and Queens: TPO, EPDM and modified bitumen systems."
+    }
+  ],
+  "website_excerpt": "Commercial flat roof installation and repair: TPO and EPDM single-ply systems, roof coatings and maintenance contracts for building owners."
+}

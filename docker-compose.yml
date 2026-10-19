@@ -1,0 +1,337 @@
+# Local stack. Data services and migrations:   docker compose up -d postgres redis dbmate
+# Seeded demo (same as npm run stack:up):       docker compose --profile app up -d --build
+#   migrations, the Section 1 import (a copy of data/leadmaker.db), db/seed, then the services, the worker and
+#   the web app (http://localhost:3000).
+# AI (Section 4): the assistant service answers /api/assistant/* behind the gateway (lead Q&A and NL filtering) and
+#   the worker writes batch insights and territory briefs. With no GEMINI_API_KEY (or other provider) in .env both
+#   stay off and the app works as before. AI schedules are opt-in (LEADMAKER_AI_SCHEDULES=1). Gemini defaults: both
+#   run on gemini-3.5-flash-lite (a much larger free day than gemini-3.8-flash), the worker capped at LEADMAKER_WORKER_LLM_RPD (150) and the
+#   assistant at LEADMAKER_ASSISTANT_RPD (100) with gemini-3.8-flash (20) as its fallback; each user gets a quarter of
+#   the assistant's day. crm-write queues an insights refresh when an edit changes a lead's AI inputs.
+name: leadmaker
+
+x-db-url: &db-url postgres://${POSTGRES_USER:-leadmaker}:${POSTGRES_PASSWORD:-leadmaker}@postgres:5432/leadmaker?sslmode=disable
+x-pipeline-db-url: &pipeline-db-url postgresql+psycopg://${POSTGRES_USER:-leadmaker}:${POSTGRES_PASSWORD:-leadmaker}@postgres:5432/leadmaker
+
+x-node-service: &node-service
+  profiles: ["app"]
+  init: true
+  restart: unless-stopped
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+    seed: { condition: service_completed_successfully }
+
+# Node services have no curl; the probe exits 0 only on a 2xx from the URL given as its argument.
+x-probe: &probe "fetch(process.argv[1]).then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+x-node-health: &node-health
+  interval: 5s
+  timeout: 3s
+  retries: 12
+  start_period: 10s
+
+x-node-env: &node-env
+  NODE_ENV: production
+  DATABASE_URL: *db-url
+  REDIS_URL: redis://redis:6379
+  INTERNAL_TOKEN: ${INTERNAL_TOKEN:-dev-internal-token-change-me}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+
+# Request limits crm-write enforces and the sales dashboard's weekly goal (query); the gateway reads the same values
+# for GET /api/config.
+x-limits-env: &limits-env
+  MAX_BULK_ALLOCATION: ${MAX_BULK_ALLOCATION:-5000}
+  MAX_BULK_TAG: ${MAX_BULK_TAG:-500}
+  LEADMAKER_USER_JOBS_PER_HOUR: ${LEADMAKER_USER_JOBS_PER_HOUR:-20}
+  WEEKLY_ACTIVITY_GOAL: ${WEEKLY_ACTIVITY_GOAL:-25}
+
+services:
+  postgres:
+    # Multi-arch build of the official postgis/postgis image (that one is amd64-only); same entrypoint.
+    image: ${POSTGIS_IMAGE:-imresamu/postgis:16-3.4}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-leadmaker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-leadmaker}
+      # The image's init script loads PostGIS (plus topology/tiger) into POSTGRES_DB; keep that in
+      # the maintenance DB so dbmate creates 'leadmaker' clean and the migrations own every extension.
+      POSTGRES_DB: postgres
+    shm_size: 256mb  # parallel query workers share memory through /dev/shm (Docker's default is 64 MB)
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-55432}:5432"  # host-only: default password; the gateway is the only public port
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:${REDIS_HOST_PORT:-56379}:6379"  # host-only: no auth
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # One-shot: creates the 'leadmaker' database if needed and applies db/migrations, then exits.
+  dbmate:
+    image: ghcr.io/amacneil/dbmate:2.37.0
+    command: ["--wait", "up"]
+    environment:
+      DATABASE_URL: *db-url
+      DBMATE_MIGRATIONS_DIR: /db/migrations
+      DBMATE_NO_DUMP_SCHEMA: "true"
+      DBMATE_MIGRATION_LOCK: "true"
+    volumes:
+      - ./db/migrations:/db/migrations
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  # One-shot after dbmate: imports the Section 1 SQLite file (scripts/docker/import-section1.sh). Only this
+  # service mounts data/, read-only, and it copies just the main file; re-runs skip what is already there.
+  import:
+    profiles: ["app"]
+    build: &worker-build
+      context: .
+      dockerfile: scripts/docker/worker.Dockerfile
+    command: ["import-section1"]
+    environment:
+      DATABASE_URL: *pipeline-db-url
+      SECTION1_DB_FILE: ${SECTION1_DB_FILE:-leadmaker.db}
+    volumes:
+      - ${SECTION1_DIR:-./data}:/seed:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+      dbmate: { condition: service_completed_successfully }
+
+  # One-shot after the import: demo users, ~50 leads per rep, then their demo sales history (scripts/db-seed.sh,
+  # idempotent). db/seed/003_demo_activity.sql reads SEED_DEMO_ACTIVITY as the setting seed.demo_activity (PGOPTIONS).
+  seed:
+    profiles: ["app"]
+    image: ${POSTGIS_IMAGE:-imresamu/postgis:16-3.4}  # for its psql
+    entrypoint: ["sh", "/app/scripts/db-seed.sh"]
+    environment:
+      DATABASE_URL: *db-url
+      SEED_LEADS_PER_REP: ${SEED_LEADS_PER_REP:-50}
+      SEED_DEMO_ACTIVITY: ${SEED_DEMO_ACTIVITY:-1}
+      PGOPTIONS: -c seed.demo_activity=${SEED_DEMO_ACTIVITY:-1}
+    volumes:
+      - ./scripts/db-seed.sh:/app/scripts/db-seed.sh:ro
+      - ./db/seed:/app/db/seed:ro
+    depends_on:
+      import: { condition: service_completed_successfully }
+
+  gateway:
+    <<: *node-service
+    build: &node-build
+      context: .
+      dockerfile: scripts/docker/node-service.Dockerfile
+      args: { SERVICE: gateway }
+    environment:
+      <<: [*node-env, *limits-env]
+      PORT: "8080"
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
+      JWT_TTL: ${JWT_TTL:-12h}
+      DEMO_MODE: ${DEMO_MODE:-1}
+      QUERY_URL: http://query:8081
+      CRM_WRITE_URL: http://crm-write:8082
+      NOTIFIER_URL: http://notifier:8084
+      # Not in depends_on: the app keeps working without the AI (its routes then answer 502, shown as "offline").
+      ASSISTANT_URL: http://assistant:8085
+      ASSISTANT_TIMEOUT_MS: ${ASSISTANT_TIMEOUT_MS:-90000}
+      RATE_LIMIT_PER_SECOND: ${RATE_LIMIT_PER_SECOND:-10}
+      RATE_LIMIT_BURST: ${RATE_LIMIT_BURST:-40}
+      UPSTREAM_TIMEOUT_MS: ${UPSTREAM_TIMEOUT_MS:-5000}
+      USER_ROLE_TTL_SECONDS: ${USER_ROLE_TTL_SECONDS:-30}
+      SSE_ROLE_CHECK_MS: ${SSE_ROLE_CHECK_MS:-10000}
+    ports:
+      # The only published service port. Loopback by default: DEMO_MODE lets anyone who can reach it log in
+      # as any demo user (GATEWAY_BIND=0.0.0.0 to share it on the LAN).
+      - "${GATEWAY_BIND:-127.0.0.1}:${GATEWAY_HOST_PORT:-8080}:8080"
+    healthcheck:
+      <<: *node-health
+      test: ["CMD", "node", "-e", *probe, "http://localhost:8080/readyz"]
+    depends_on:  # replaces the anchor's list, so it repeats the data services
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      query: { condition: service_healthy }
+      crm-write: { condition: service_healthy }
+
+  query:
+    <<: *node-service
+    build:
+      <<: *node-build
+      args: { SERVICE: query }
+    environment:
+      <<: [*node-env, *limits-env]
+      PORT: "8081"
+      LEAD_LIST_CACHE_TTL_SECONDS: ${LEAD_LIST_CACHE_TTL_SECONDS:-60}
+      DATABASE_SEARCH_POOL_MAX: ${DATABASE_SEARCH_POOL_MAX:-8}
+      SEARCH_CONCURRENCY: ${SEARCH_CONCURRENCY:-8}
+      SEARCH_QUEUE_MAX: ${SEARCH_QUEUE_MAX:-32}
+      SEARCH_QUEUE_WAIT_MS: ${SEARCH_QUEUE_WAIT_MS:-1000}
+      # statement_timeout is set per connection here; in production behind PgBouncer it must become a per-role setting.
+      SEARCH_STATEMENT_TIMEOUT_MS: ${SEARCH_STATEMENT_TIMEOUT_MS:-2000}
+      STATEMENT_TIMEOUT_MS: ${STATEMENT_TIMEOUT_MS:-1000}
+      REDIS_COMMAND_TIMEOUT_MS: ${REDIS_COMMAND_TIMEOUT_MS:-250}
+    healthcheck:
+      <<: *node-health
+      test: ["CMD", "node", "-e", *probe, "http://localhost:8081/readyz"]
+
+  crm-write:
+    <<: *node-service
+    build:
+      <<: *node-build
+      args: { SERVICE: crm-write }
+    environment:
+      <<: [*node-env, *limits-env]
+      PORT: "8082"
+      # A note, logged call, override, custom field/tag or stage change queues an `insights` job for that lead (60 s
+      # later, merged per lead); the worker calls the model only if the lead's input_hash changed.
+      LEADMAKER_INSIGHTS_ON_EDIT: ${LEADMAKER_INSIGHTS_ON_EDIT:-1}
+      LEADMAKER_INSIGHTS_EDIT_DELAY_SECONDS: ${LEADMAKER_INSIGHTS_EDIT_DELAY_SECONDS:-60}
+    healthcheck:
+      <<: *node-health
+      test: ["CMD", "node", "-e", *probe, "http://localhost:8082/health"]
+
+  relay:
+    <<: *node-service
+    build:
+      <<: *node-build
+      args: { SERVICE: relay }
+    environment:
+      <<: *node-env
+      PORT: "8083"
+      KPI_REFRESH_INTERVAL_MS: ${KPI_REFRESH_INTERVAL_MS:-300000}
+      KPI_REFRESH_DEBOUNCE_MS: ${KPI_REFRESH_DEBOUNCE_MS:-2000}
+      LIST_VERSION_COALESCE_MS: ${LIST_VERSION_COALESCE_MS:-1000}
+    healthcheck:
+      <<: *node-health
+      test: ["CMD", "node", "-e", *probe, "http://localhost:8083/healthz"]
+
+  # In-app notifications: consumer group 'notifier' on the events stream, plus /api/notifications behind the gateway.
+  notifier:
+    <<: *node-service
+    build:
+      <<: *node-build
+      args: { SERVICE: notifier }
+    environment:
+      <<: *node-env
+      PORT: "8084"
+    healthcheck:
+      <<: *node-health
+      test: ["CMD", "node", "-e", *probe, "http://localhost:8084/readyz"]
+
+  # On-demand AI (Section 4): lead Q&A and the applyListFilters tool, behind the gateway at /api/assistant/*.
+  # Reads leads only through the query service with the caller's identity; budgets and limits in Redis.
+  assistant:
+    <<: *node-service
+    build:
+      <<: *node-build
+      args: { SERVICE: assistant }
+    environment:
+      <<: *node-env
+      PORT: "8085"
+      QUERY_URL: http://query:8081
+      LEADMAKER_LLM_PROVIDER: ${LEADMAKER_LLM_PROVIDER:-}
+      LEADMAKER_LLM_MODEL: ${LEADMAKER_LLM_MODEL:-}
+      LEADMAKER_LLM_BASE_URL: ${LEADMAKER_LLM_BASE_URL:-}
+      LEADMAKER_ASSISTANT_LLM_PROVIDER: ${LEADMAKER_ASSISTANT_LLM_PROVIDER:-}
+      LEADMAKER_ASSISTANT_LLM_MODEL: ${LEADMAKER_ASSISTANT_LLM_MODEL:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LEADMAKER_LLM_API_KEY: ${LEADMAKER_LLM_API_KEY:-}
+      LEADMAKER_ALLOW_FAKE_LLM: ${LEADMAKER_ALLOW_FAKE_LLM:-0}
+      LEADMAKER_ASSISTANT_RPM: ${LEADMAKER_ASSISTANT_RPM:-}
+      # Empty = the service defaults: Gemini 100 a day on the primary model (gemini-3.5-flash-lite), then the fallbacks
+      # (default "gemini-3.8-flash:20"; "none" turns them off), and a quarter of that per user in provider calls.
+      LEADMAKER_ASSISTANT_RPD: ${LEADMAKER_ASSISTANT_RPD:-}
+      LEADMAKER_ASSISTANT_FALLBACK_MODELS: ${LEADMAKER_ASSISTANT_FALLBACK_MODELS:-}
+      ASSISTANT_USER_LLM_CALLS_PER_DAY: ${ASSISTANT_USER_LLM_CALLS_PER_DAY:-}
+      ASSISTANT_USER_PER_MINUTE: ${ASSISTANT_USER_PER_MINUTE:-6}
+      ASSISTANT_USER_PER_DAY: ${ASSISTANT_USER_PER_DAY:-150}
+      # Free-tier latency tuning without a rebuild. Gemini's free tier queues requests at busy times (a one-line
+      # answer measured 47 s on 2026-10-19), so the demo allows 70 s per provider call and 80 s per request (the
+      # service defaults are 30 s and 60 s; keep both under the gateway's ASSISTANT_TIMEOUT_MS, 90 s). Empty
+      # thinking level = Gemini 3 "low" (the lowest this model accepts: "minimal" is rejected with a 400).
+      ASSISTANT_PROVIDER_TIMEOUT_MS: ${ASSISTANT_PROVIDER_TIMEOUT_MS:-70000}
+      ASSISTANT_REQUEST_TIMEOUT_MS: ${ASSISTANT_REQUEST_TIMEOUT_MS:-80000}
+      ASSISTANT_GEMINI_THINKING_LEVEL: ${ASSISTANT_GEMINI_THINKING_LEVEL:-}
+    healthcheck:
+      <<: *node-health
+      test: ["CMD", "node", "-e", *probe, "http://localhost:8085/readyz"]
+    depends_on:
+      redis: { condition: service_healthy }
+      query: { condition: service_healthy }
+
+  # The web app: nginx serves the built SPA and proxies /api (with the SSE stream) and /auth to the gateway
+  # (apps/web/nginx.conf). The tile URL is baked in at build time.
+  web:
+    profiles: ["app"]
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_TILE_URL: ${VITE_TILE_URL:-}
+        VITE_TILE_ATTRIBUTION: ${VITE_TILE_ATTRIBUTION:-}
+        VITE_DEMO_MODE: ${VITE_DEMO_MODE:-}
+        VITE_DEFAULT_DEMO_USER: ${VITE_DEFAULT_DEMO_USER:-}
+    environment:
+      GATEWAY_URL: http://gateway:8080
+    ports:
+      # Loopback by default, like the gateway (WEB_BIND=0.0.0.0 to share it on the LAN).
+      - "${WEB_BIND:-127.0.0.1}:${WEB_HOST_PORT:-3000}:80"
+    depends_on:
+      gateway: { condition: service_healthy }
+
+  # Python pipeline: job queue + schedules. No data/ mount: the import service loads the Section 1 file.
+  worker:
+    profiles: ["app"]
+    init: true
+    restart: unless-stopped
+    build: *worker-build
+    command: ["sh", "-c", "exec leadmaker worker --poll \"$${WORKER_POLL_SECONDS:-5}\""]
+    environment:
+      DATABASE_URL: *pipeline-db-url
+      LEADMAKER_CACHE_DIR: /cache
+      LEADMAKER_LLM_USAGE_FILE: /cache/llm_usage.json
+      WORKER_POLL_SECONDS: ${WORKER_POLL_SECONDS:-5}
+      LEADMAKER_CONTACT: ${LEADMAKER_CONTACT:-}
+      LEADMAKER_USER_JOBS_PER_HOUR: ${LEADMAKER_USER_JOBS_PER_HOUR:-20}
+      LEADMAKER_LLM_PROVIDER: ${LEADMAKER_LLM_PROVIDER:-}
+      # Free-tier quotas are per model (gemini-3.8-flash: 20 requests/day per project, measured 2026-10-19); the
+      # worker's Gemini default is gemini-3.5-flash-lite, whose free day is much larger. Insight hashes include
+      # the model: keep it stable, or every lead regenerates on the next run. Unset = LEADMAKER_LLM_MODEL (else the
+      # provider's default).
+      LEADMAKER_LLM_MODEL: ${LEADMAKER_WORKER_LLM_MODEL:-${LEADMAKER_LLM_MODEL:-}}
+      LEADMAKER_LLM_RPM: ${LEADMAKER_LLM_RPM:-}
+      LEADMAKER_LLM_RPD: ${LEADMAKER_WORKER_LLM_RPD:-150}
+      LEADMAKER_LLM_BASE_URL: ${LEADMAKER_LLM_BASE_URL:-}
+      # Section 4 AI: batch insights (5 leads per call) chained after refreshes when a provider is configured, and
+      # territory briefs. AI schedules are opt-in: 1 adds 'insights-stale' (15 min) and 'briefing' (1 h).
+      LEADMAKER_INSIGHTS_BATCH_SIZE: ${LEADMAKER_INSIGHTS_BATCH_SIZE:-5}
+      LEADMAKER_INSIGHTS_ON_REFRESH: ${LEADMAKER_INSIGHTS_ON_REFRESH:-1}
+      LEADMAKER_AI_SCHEDULES: ${LEADMAKER_AI_SCHEDULES:-0}
+      LEADMAKER_BRIEFING_AI: ${LEADMAKER_BRIEFING_AI:-1}
+      LEADMAKER_ALLOW_FAKE_LLM: ${LEADMAKER_ALLOW_FAKE_LLM:-0}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      SOCRATA_APP_TOKEN: ${SOCRATA_APP_TOKEN:-}
+    volumes:
+      - worker-cache:/cache
+    depends_on:
+      postgres: { condition: service_healthy }
+      import: { condition: service_completed_successfully }
+
+volumes:
+  pgdata:
+  redisdata:
+  worker-cache:

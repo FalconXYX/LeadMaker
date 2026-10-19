@@ -1,0 +1,59 @@
+{
+  "id": "11111111-1111-4111-8111-000000000002",
+  "businessName": "Shore Line Roofing & Restoration",
+  "city": "Hackensack", "state": "NJ", "postalCode": "07601",
+  "countyFips": "34003", "countyName": "Bergen County, NJ",
+  "websiteUrl": "https://shorelineroofing.example/",
+  "gaf": {
+    "tier": "certified",
+    "certifications": ["GAF Certified™ - Certification"],
+    "rating": 4.6, "reviewCount": 88, "yearsInBusiness": 11, "employeesRange": "20-49",
+    "specialties": ["Storm damage", "Insurance claims"],
+    "distinctions": [],
+    "presidentsClubStars": 0,
+    "description": "Storm damage and insurance restoration roofing for North Jersey homeowners. 24/7 emergency tarping and leak repair."
+  },
+  "size": "medium", "segment": "growth", "priorityScore": 64,
+  "priorityDrivers": ["Storm restoration", "Active warning in county"],
+  "accountStatus": "prospect", "salesStage": "contacted",
+  "stageChangedAt": "2026-10-02T16:00:00Z", "lastContactedAt": "2026-10-02T16:00:00Z",
+  "assignedRep": { "id": "ab3ee7d1-f903-4b52-a89d-20d26eac84d6", "name": "Jordan Lee" },
+  "canWrite": true,
+  "tags": [
+    { "key": "gaf_tier", "label": "GAF Certified", "category": "certification" },
+    { "key": "service:storm_damage", "label": "Storm damage", "category": "services" },
+    { "key": "service:insurance_claims", "label": "Insurance claims", "category": "services" },
+    { "key": "service:emergency_service", "label": "Emergency service", "category": "services" },
+    { "key": "work_type:storm_emergency", "label": "Storm / emergency repair", "category": "services" }
+  ],
+  "customTags": [],
+  "customFields": {},
+  "targetContact": { "label": "Operations manager", "reason": "Mid-size crew: operations orders materials", "name": "Kevin Brandt", "title": "Operations Manager" },
+  "contacts": [
+    { "name": "Kevin Brandt", "title": "Operations Manager", "hasEmail": true, "hasPhone": true, "doNotContact": false, "source": "website" }
+  ],
+  "insights": {
+    "businessSummary": "Shore Line Roofing & Restoration is a GAF Certified storm and insurance restoration roofer in Hackensack, NJ with 24/7 emergency tarping.",
+    "salesRecommendation": "Lead with emergency tarps and repair stock for their storm-restoration work.",
+    "talkingPoints": ["Ask how they stock tarps for emergency calls.", "Ask which insurance carriers they work with most."],
+    "targetContact": { "name": "Kevin Brandt", "title": "Operations Manager", "why": "Orders materials for the crews" },
+    "productFocus": ["tarps_emergency_repair", "underlayment"],
+    "citedFacts": [{ "id": "F7", "text": "services: storm damage, insurance claims, emergency service" }],
+    "model": "fake:fake-1", "promptVersion": "insights/v1", "generatedAt": "2026-10-18T22:30:00Z"
+  },
+  "timing": [
+    { "key": "storm_response", "label": "Storm response", "reason": "Severe Thunderstorm Warning in Bergen County until 8 PM; storm-restoration roofers there may need tarps and repair stock", "source": "nws", "severity": "high" }
+  ],
+  "notes": [
+    { "author": "Jordan L.", "at": "2026-10-02T15:55:00Z", "text": "Kevin says they buy tarps by the pallet before storm season; currently using a big-box store." }
+  ],
+  "activity": [
+    { "type": "call", "outcome": "connected", "author": "Jordan L.", "at": "2026-10-02T16:00:00Z", "text": "Intro call; asked for a price sheet on tarps and ice and water shield." }
+  ],
+  "openTasks": [],
+  "website": [
+    { "url": "https://shorelineroofing.example/", "title": "Shore Line Roofing & Restoration", "text": "Storm damage? We respond 24/7 with emergency tarping, leak repair and full insurance restoration. We work with every major carrier." }
+  ],
+  "websiteSummary": "Storm and insurance restoration roofer with 24/7 emergency tarping.",
+  "generatedAt": "2026-10-19T19:00:00.000Z"
+}

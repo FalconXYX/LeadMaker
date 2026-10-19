@@ -289,7 +289,8 @@ class NyDosEnricher(Enricher):
             if best_now >= GOOD_ENOUGH:
                 break
 
-        ranked = sorted(scored.values(), key=lambda x: (x[1]["confidence"], x[1].get("loc_bonus", 0),
+        ranked = sorted(scored.values(), key=lambda x: (x[1]["confidence"], x[1].get("name_similarity", 0),
+                                                        x[1].get("loc_bonus", 0),
                                                         x[0].get("initial_dos_filing_date") or ""), reverse=True)
         if not ranked or ranked[0][1]["confidence"] < ACCEPT:
             return self.no_match(

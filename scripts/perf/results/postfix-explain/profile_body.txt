@@ -1,0 +1,119 @@
+-- profile:body
+-- filter: null
+-- params: ["2401de6c-a1ee-4248-8b88-0d7a3e66a730"]
+
+    SELECT row_to_json(b) AS doc FROM (
+      SELECT c.id, c.version, c.updated_at, c.industry, c.business_name, c.dba, c.legal_name, c.contractor_type,
+        c.address, c.street, c.city, c.state, c.postal_code, c.phone, c.website_url, c.website_source,
+        c.latitude, c.longitude, c.county_fips, c.rating, c.review_count, c.profile_url, c.image_url, c.tier,
+        c.certifications, c.specialties, c.distinctions, c.presidents_club_stars, c.gaf_leads_enrolled,
+        c.google_place_id, c.description, c.in_business_since, c.founded_year AS founded_year, c.employees_range,
+        c.segment, c.priority_score::float8 AS priority_score, c.account_status, c.updated_in_last_poll,
+        c.last_material_change_at, c.first_seen_at, c.system_tags, c.custom_fields,
+        (SELECT COALESCE(json_agg(json_build_object('source', s.source, 'externalId', s.external_id)
+                                  ORDER BY s.source, s.external_id), '[]'::json)
+           FROM company_source_ids s WHERE s.company_id = c.id) AS source_ids,
+        (SELECT COALESCE(json_agg(o ORDER BY o.created_at), '[]'::json) FROM (
+           SELECT fo.contact_id, fo.field, fo.value, fo.scraped_value_at_edit, fo.user_id, u.name AS user_name, fo.created_at
+           FROM field_overrides fo JOIN users u ON u.id = fo.user_id
+           WHERE fo.company_id = c.id AND fo.superseded_at IS NULL) o) AS overrides,
+        (SELECT COALESCE(json_agg(k ORDER BY k.confidence DESC, k.id), '[]'::json) FROM (
+           SELECT ct.id, ct.name, ct.title, ct.email, ct.phone, ct.source, ct.source_url, ct.confidence,
+                  ct.email_verified_at, ct.do_not_contact, ct.version
+           FROM contacts ct WHERE ct.company_id = c.id) k) AS contacts,
+        (SELECT COALESCE(json_agg(t ORDER BY lower(t.name), t.id), '[]'::json) FROM (
+           SELECT tg.id, tg.name, x.added_by, u.name AS added_by_name, x.added_at
+           FROM company_custom_tags x JOIN custom_tags tg ON tg.id = x.tag_id JOIN users u ON u.id = x.added_by
+           WHERE x.company_id = c.id) t) AS custom_tags,
+        (SELECT row_to_json(i) FROM (
+           SELECT business_summary, sales_recommendation, model, prompt_version, generated_at
+           FROM company_insights WHERE company_id = c.id ORDER BY generated_at DESC, id LIMIT 1) i) AS insight,
+        (SELECT COALESCE(json_object_agg(e.source, json_build_object(
+                  'status', e.status, 'data', json_build_object('services', COALESCE(e.data->'services', '[]'::jsonb)))), '{}'::json)
+           FROM enrichments e WHERE e.company_id = c.id AND e.source IN ('website_crawl', 'llm_extract')) AS enrichment
+      FROM companies c WHERE c.id = $1::uuid) b
+
+Index Scan using companies_pkey on companies c  (cost=0.42..101.14 rows=1 width=32) (actual time=0.053..0.055 rows=1 loops=1)
+  Index Cond: (id = '2401de6c-a1ee-4248-8b88-0d7a3e66a730'::uuid)
+  Buffers: shared hit=25
+  SubPlan 1
+    ->  Aggregate  (cost=12.24..12.25 rows=1 width=32) (actual time=0.005..0.005 rows=1 loops=1)
+          Buffers: shared hit=4
+          ->  Sort  (cost=12.23..12.23 rows=2 width=14) (actual time=0.003..0.003 rows=1 loops=1)
+                Sort Key: s.source, s.external_id
+                Sort Method: quicksort  Memory: 25kB
+                Buffers: shared hit=4
+                ->  Bitmap Heap Scan on company_source_ids s  (cost=4.44..12.22 rows=2 width=14) (actual time=0.002..0.002 rows=1 loops=1)
+                      Recheck Cond: (company_id = c.id)
+                      Heap Blocks: exact=1
+                      Buffers: shared hit=4
+                      ->  Bitmap Index Scan on company_source_ids_company_idx  (cost=0.00..4.43 rows=2 width=0) (actual time=0.001..0.001 rows=1 loops=1)
+                            Index Cond: (company_id = c.id)
+                            Buffers: shared hit=3
+  SubPlan 2
+    ->  Aggregate  (cost=16.61..16.62 rows=1 width=32) (actual time=0.001..0.002 rows=1 loops=1)
+          Buffers: shared hit=2
+          ->  Nested Loop  (cost=0.56..16.60 rows=1 width=108) (actual time=0.001..0.001 rows=0 loops=1)
+                Buffers: shared hit=2
+                ->  Index Scan Backward using field_overrides_history_idx on field_overrides fo  (cost=0.28..8.30 rows=1 width=92) (actual time=0.001..0.001 rows=0 loops=1)
+                      Index Cond: (company_id = c.id)
+                      Filter: (superseded_at IS NULL)
+                      Buffers: shared hit=2
+                ->  Index Scan using users_pkey on users u  (cost=0.28..8.30 rows=1 width=32) (never executed)
+                      Index Cond: (id = fo.user_id)
+  SubPlan 3
+    ->  Aggregate  (cost=12.48..12.49 rows=1 width=32) (actual time=0.007..0.007 rows=1 loops=1)
+          Buffers: shared hit=4
+          ->  Sort  (cost=12.46..12.47 rows=2 width=136) (actual time=0.003..0.003 rows=2 loops=1)
+                Sort Key: ct.confidence DESC, ct.id
+                Sort Method: quicksort  Memory: 25kB
+                Buffers: shared hit=4
+                ->  Index Scan using contacts_company_idx on contacts ct  (cost=0.42..12.45 rows=2 width=136) (actual time=0.002..0.002 rows=2 loops=1)
+                      Index Cond: (company_id = c.id)
+                      Buffers: shared hit=4
+  SubPlan 4
+    ->  Aggregate  (cost=34.53..34.54 rows=1 width=32) (actual time=0.003..0.004 rows=1 loops=1)
+          Buffers: shared hit=3
+          ->  Sort  (cost=34.51..34.51 rows=2 width=71) (actual time=0.003..0.003 rows=0 loops=1)
+                Sort Key: (lower((tg.name)::text)), tg.id
+                Sort Method: quicksort  Memory: 25kB
+                Buffers: shared hit=3
+                ->  Nested Loop  (cost=10.38..34.50 rows=2 width=71) (actual time=0.002..0.003 rows=0 loops=1)
+                      Buffers: shared hit=3
+                      ->  Hash Join  (cost=10.10..17.90 rows=2 width=55) (actual time=0.002..0.003 rows=0 loops=1)
+                            Hash Cond: (tg.id = x.tag_id)
+                            Buffers: shared hit=3
+                            ->  Seq Scan on custom_tags tg  (cost=0.00..7.00 rows=300 width=31) (actual time=0.001..0.001 rows=1 loops=1)
+                                  Buffers: shared hit=1
+                            ->  Hash  (cost=10.07..10.07 rows=2 width=40) (actual time=0.001..0.001 rows=0 loops=1)
+                                  Buckets: 1024  Batches: 1  Memory Usage: 8kB
+                                  Buffers: shared hit=2
+                                  ->  Index Scan using company_custom_tags_pkey on company_custom_tags x  (cost=0.29..10.07 rows=2 width=40) (actual time=0.001..0.001 rows=0 loops=1)
+                                        Index Cond: (company_id = c.id)
+                                        Buffers: shared hit=2
+                      ->  Index Scan using users_pkey on users u_1  (cost=0.28..8.30 rows=1 width=32) (never executed)
+                            Index Cond: (id = x.added_by)
+  SubPlan 5
+    ->  Subquery Scan on i  (cost=8.31..8.35 rows=1 width=32) (actual time=0.002..0.002 rows=0 loops=1)
+          Buffers: shared hit=2
+          ->  Limit  (cost=8.31..8.34 rows=1 width=160) (actual time=0.002..0.002 rows=0 loops=1)
+                Buffers: shared hit=2
+                ->  Incremental Sort  (cost=8.31..8.36 rows=2 width=160) (actual time=0.001..0.002 rows=0 loops=1)
+                      Sort Key: company_insights.generated_at DESC, company_insights.id
+                      Presorted Key: company_insights.generated_at
+                      Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 25kB  Peak Memory: 25kB
+                      Buffers: shared hit=2
+                      ->  Index Scan using company_insights_latest_idx on company_insights  (cost=0.29..8.30 rows=1 width=160) (actual time=0.001..0.001 rows=0 loops=1)
+                            Index Cond: (company_id = c.id)
+                            Buffers: shared hit=2
+  SubPlan 6
+    ->  Aggregate  (cost=8.45..8.46 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=1)
+          Buffers: shared hit=3
+          ->  Index Scan using enrichments_pkey on enrichments e  (cost=0.41..8.43 rows=1 width=73) (actual time=0.001..0.001 rows=0 loops=1)
+                Index Cond: (company_id = c.id)
+                Filter: ((source)::text = ANY ('{website_crawl,llm_extract}'::text[]))
+                Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=24
+Planning Time: 0.232 ms
+Execution Time: 0.082 ms

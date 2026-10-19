@@ -1,0 +1,116 @@
+/* Dashboard-only styles. Every colour is a theme token: stage colours (with fallbacks until the theme names
+   them), the map's owner slots, and Leaflet chrome restyled to the app theme (popups, dark tiles). */
+:root {
+  --dash-owner-1: var(--c-owner-1, var(--c-accent));
+  --dash-owner-2: var(--c-owner-2, var(--c-seg-emerging));
+  --dash-owner-3: var(--c-owner-3, var(--c-seg-growth));
+  --dash-owner-4: var(--c-owner-4, var(--c-seg-strategic));
+  --dash-owner-5: var(--c-owner-5, var(--c-info));
+  --dash-owner-6: var(--c-owner-6, var(--c-danger));
+  --dash-owner-7: var(--c-owner-7, var(--c-warning));
+  --dash-owner-8: var(--c-owner-8, var(--c-muted));
+}
+
+.lm-stage {
+  --lm-stage: var(--c-muted);
+  --lm-stage-soft: var(--c-surface-2);
+  --lm-stage-fill: var(--lm-stage);
+}
+.lm-stage[data-stage='new'] {
+  --lm-stage: var(--c-stage-new, var(--c-muted));
+  --lm-stage-soft: var(--c-stage-new-soft, var(--c-surface-3));
+  --lm-stage-fill: var(--c-stage-new-fill, var(--lm-stage));
+}
+.lm-stage[data-stage='contacted'] {
+  --lm-stage: var(--c-stage-contacted, var(--c-info));
+  --lm-stage-soft: var(--c-stage-contacted-soft, var(--c-info-soft));
+  --lm-stage-fill: var(--c-stage-contacted-fill, var(--lm-stage));
+}
+.lm-stage[data-stage='interested'] {
+  --lm-stage: var(--c-stage-interested, var(--c-accent));
+  --lm-stage-soft: var(--c-stage-interested-soft, var(--c-accent-soft));
+  --lm-stage-fill: var(--c-stage-interested-fill, var(--lm-stage));
+}
+.lm-stage[data-stage='quoting'] {
+  --lm-stage: var(--c-stage-quoting, var(--c-warning));
+  --lm-stage-soft: var(--c-stage-quoting-soft, var(--c-warning-soft));
+  --lm-stage-fill: var(--c-stage-quoting-fill, var(--lm-stage));
+}
+.lm-stage[data-stage='won'] {
+  --lm-stage: var(--c-stage-won, var(--c-success));
+  --lm-stage-soft: var(--c-stage-won-soft, var(--c-success-soft));
+  --lm-stage-fill: var(--c-stage-won-fill, var(--lm-stage));
+}
+.lm-stage[data-stage='lost'] {
+  --lm-stage: var(--c-stage-lost, var(--c-subtle));
+  --lm-stage-soft: var(--c-stage-lost-soft, var(--c-surface-2));
+  --lm-stage-fill: var(--c-stage-lost-fill, var(--lm-stage));
+}
+.lm-stage-pill {
+  background: var(--lm-stage-soft);
+  color: var(--lm-stage);
+}
+.lm-stage-dot,
+.lm-stage-bar {
+  background: var(--lm-stage-fill, var(--lm-stage));
+}
+
+/* A muted basemap so the data markers carry the colour. */
+.lm-dash-map .leaflet-tile-pane {
+  filter: saturate(0.35) brightness(1.04) contrast(0.92);
+}
+
+:root[data-theme='dark'] .lm-dash-map .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.6);
+}
+
+.lm-dash-map .leaflet-container {
+  font: inherit;
+  background: var(--c-surface-2);
+}
+.lm-dash-map .leaflet-container:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: -2px;
+}
+.lm-dash-map .leaflet-popup-content-wrapper,
+.lm-dash-map .leaflet-popup-tip {
+  background: var(--c-surface);
+  color: var(--c-text);
+  box-shadow: var(--c-shadow-lg);
+}
+.lm-dash-map .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  border: 1px solid var(--c-border);
+}
+.lm-dash-map .leaflet-popup-content {
+  margin: 12px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.lm-dash-map .leaflet-container a.leaflet-popup-close-button {
+  color: var(--c-muted);
+  top: 6px;
+  right: 6px;
+}
+.lm-dash-map .leaflet-container a.leaflet-popup-close-button:hover {
+  color: var(--c-text);
+}
+.lm-dash-map .leaflet-bar a {
+  background: var(--c-surface);
+  color: var(--c-text);
+  border-color: var(--c-border);
+}
+.lm-dash-map .leaflet-bar a:hover {
+  background: var(--c-surface-2);
+}
+.lm-dash-map .leaflet-bar {
+  border: 1px solid var(--c-border);
+  box-shadow: var(--c-shadow-sm);
+}
+.lm-dash-map .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--c-surface) 85%, transparent);
+  color: var(--c-muted);
+}
+.lm-dash-map .leaflet-control-attribution a {
+  color: var(--c-muted);
+}

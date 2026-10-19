@@ -1,0 +1,47 @@
+{
+  "name": "leadmaker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "services/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "db:up": "docker compose up -d --wait postgres redis && npm run db:migrate",
+    "db:migrate": "sh scripts/dbmate.sh --wait up",
+    "db:rollback": "sh scripts/dbmate.sh rollback",
+    "db:status": "sh scripts/dbmate.sh status",
+    "db:new": "sh scripts/dbmate.sh new",
+    "db:roundtrip": "sh scripts/db-roundtrip.sh",
+    "db:test:reset": "sh scripts/dbmate.sh --db \"${TEST_DB:-leadmaker_test}\" drop && sh scripts/dbmate.sh --db \"${TEST_DB:-leadmaker_test}\" up",
+    "db:pull": "npm run pull -w @leadmaker/db",
+    "db:generate": "npm run generate -w @leadmaker/db",
+    "db:seed": "sh scripts/db-seed.sh",
+    "db:psql": "docker compose exec postgres psql -U leadmaker -d leadmaker",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:db": "TEST_DB=leadmaker_db_test npm run db:test:reset && npm run test:db -w @leadmaker/db",
+    "test:py": ".venv/bin/pytest -q",
+    "stack:up": "sh scripts/stack-up.sh",
+    "test:stack": "sh tests/integration_stack/compose.sh",
+    "test:stack:host": "sh tests/integration_stack/host-stack.sh test",
+    "eval:offline": "vitest run --config evals/vitest.config.ts && .venv/bin/pytest -q evals",
+    "eval:live": "node --env-file-if-exists=.env evals/assistant/run.ts --live && .venv/bin/python -m evals.insights.run --live"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.10.1": true,
+    "esbuild@0.28.2": true,
+    "prisma@7.10.1": true,
+    "fsevents@2.3.3": true
+  }
+}

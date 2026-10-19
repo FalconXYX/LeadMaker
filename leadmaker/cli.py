@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+import importlib.util
 import json
 import logging
 import sys
@@ -13,11 +14,20 @@ from typing import Any
 
 from .config import get_settings
 from .db import Repository
+from .db.repository import SchemaError
 
 
-def _area_args(p: argparse.ArgumentParser) -> None:
-    p.add_argument("--zip", dest="postal_code", default="10013", help="search origin ZIP (default 10013)")
-    p.add_argument("--radius", dest="radius_miles", type=float, default=25, help="miles (default 25)")
+DEFAULT_ZIP = "10013"
+DEFAULT_RADIUS = 25.0
+# Job kinds that are not tied to a search area (schedule add leaves the area out unless --zip/--radius is given).
+AREALESS_KINDS = ("insights", "briefing")
+
+
+def _area_args(p: argparse.ArgumentParser, *, defaults: bool = True) -> None:
+    p.add_argument("--zip", dest="postal_code", default=DEFAULT_ZIP if defaults else None,
+                   help=f"search origin ZIP (default {DEFAULT_ZIP})")
+    p.add_argument("--radius", dest="radius_miles", type=float, default=DEFAULT_RADIUS if defaults else None,
+                   help=f"miles (default {DEFAULT_RADIUS:g})")
 
 
 def _print(obj: Any) -> None:
@@ -25,7 +35,7 @@ def _print(obj: Any) -> None:
 
 
 def cmd_scrape(args: argparse.Namespace) -> int:
-    """One run per ZIP; overlapping areas de-duplicate on GAF contractor id."""
+    """One run per ZIP; overlapping areas share one company per GAF contractor id."""
     from .pipeline.scrape import ScrapeOptions, run_scrape
 
     s = get_settings()
@@ -38,17 +48,22 @@ def cmd_scrape(args: argparse.Namespace) -> int:
         return 2
     rc = 0
     for z in zips:
-        report = asyncio.run(
-            run_scrape(
-                s, repo,
-                ScrapeOptions(
-                    postal_code=z, country=args.country, radius_miles=args.radius_miles,
-                    latitude=args.lat, longitude=args.lng, fetch_profiles=not args.no_profiles,
-                    force_profiles=args.force_profiles, max_profiles=args.max_profiles,
-                    accept_count_drop=args.accept_count_drop,
-                ),
+        try:
+            report = asyncio.run(
+                run_scrape(
+                    s, repo,
+                    ScrapeOptions(
+                        postal_code=z, country=args.country, radius_miles=args.radius_miles,
+                        latitude=args.lat, longitude=args.lng, fetch_profiles=not args.no_profiles,
+                        force_profiles=args.force_profiles, max_profiles=args.max_profiles,
+                        accept_count_drop=args.accept_count_drop,
+                    ),
+                )
             )
-        )
+        except Exception as e:  # the run is already recorded as failed; carry on with the other ZIPs
+            print(f"scrape {z} failed: {type(e).__name__}: {e}", file=sys.stderr)
+            rc = 1
+            continue
         _print({"run_id": report.run_id, "status": report.status, **report.stats})
         if report.status not in {"succeeded", "partial"}:
             rc = 1
@@ -66,7 +81,8 @@ def cmd_enrich(args: argparse.Namespace) -> int:
             EnrichOptions(
                 postal_code=args.postal_code, radius_miles=args.radius_miles,
                 sources=args.sources.split(",") if args.sources else None,
-                gaf_ids=args.gaf_id or None, force=args.force, limit=args.limit,
+                company_ids=args.company_id or None, gaf_ids=args.gaf_id or None, force=args.force,
+                limit=args.limit,
             ),
         )
     )
@@ -110,7 +126,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 
 EXPORT_COLUMNS = [
-    "rank", "gaf_id", "name", "legal_name", "dba", "tier", "segment", "priority_score", "distance_miles",
+    "rank", "company_id", "gaf_id", "name", "legal_name", "dba", "tier", "segment", "priority_score", "distance_miles",
     "gaf_recommended", "rating", "review_count", "phone", "website", "street", "city", "state", "postal_code",
     "in_business_since", "employees_range", "presidents_club_stars", "gaf_leads_enrolled", "specialties",
     "certifications", "profile_url", "decision_makers", "target_contact", "county_fips", "timing", "tag_labels",
@@ -137,6 +153,9 @@ def _flatten(lead: dict[str, Any]) -> dict[str, Any]:
 def cmd_export(args: argparse.Namespace) -> int:
     s = get_settings()
     leads = Repository(args.db or s.database_url).lead_records(args.postal_code, args.radius_miles)
+    if not leads:
+        print(f"no leads for {args.postal_code} / {args.radius_miles} mi: that area has not been scraped",
+              file=sys.stderr)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     if args.format == "json":
@@ -194,12 +213,17 @@ def cmd_jobs(args: argparse.Namespace) -> int:
     if args.jobs_cmd == "enqueue":
         ids = []
         try:
-            for z in [args.postal_code, *(args.extra_zips or [])]:
+            if args.kind == "briefing":  # not area-scoped: one job covers every scope
+                ids.append(q.enqueue("briefing", {}, priority=args.priority, requested_by=args.requested_by))
+            for z in [args.postal_code, *(args.extra_zips or [])] if args.kind != "briefing" else []:
                 params = _area_params(args) | {"postal_code": z}
                 ids.append(q.enqueue(args.kind, params, priority=args.priority, requested_by=args.requested_by))
         except JobRateLimitError as e:
             print(str(e), file=sys.stderr)
             _print({"enqueued": [i for i in ids if i], "deduplicated": sum(1 for i in ids if not i), "rate_limited": True})
+            return 2
+        except ValueError as e:
+            print(str(e), file=sys.stderr)
             return 2
         _print({"enqueued": [i for i in ids if i], "deduplicated": sum(1 for i in ids if not i)})
     elif args.jobs_cmd == "list":
@@ -215,7 +239,22 @@ def cmd_schedule(args: argparse.Namespace) -> int:
     s = get_settings()
     q = JobQueue(Repository(args.db or s.database_url))
     if args.schedule_cmd == "add":
-        sid = q.add_schedule(args.name, args.kind, _area_params(args), args.every_hours)
+        try:
+            extra = json.loads(args.params) if args.params else {}
+        except ValueError as e:
+            print(f"--params must be a JSON object: {e}", file=sys.stderr)
+            return 2
+        if not isinstance(extra, dict):
+            print("--params must be a JSON object", file=sys.stderr)
+            return 2
+        # The AI kinds are not area jobs unless an area is given: {"stale": true} insights, the briefing.
+        area_given = args.postal_code is not None or args.radius_miles is not None
+        if args.kind in AREALESS_KINDS and not area_given:
+            params = {}
+        else:
+            params = _area_params(args) | {"postal_code": args.postal_code or DEFAULT_ZIP,
+                                           "radius_miles": args.radius_miles or DEFAULT_RADIUS}
+        sid = q.add_schedule(args.name, args.kind, params | extra, args.every_hours)
         _print({"schedule_id": sid})
     elif args.schedule_cmd == "list":
         _print(q.list_schedules())
@@ -248,8 +287,43 @@ def cmd_signals(args: argparse.Namespace) -> int:
 
 def cmd_audit(args: argparse.Namespace) -> int:
     s = get_settings()
-    _print(Repository(args.db or s.database_url).audit_log(gaf_id=args.gaf_id, run_id=args.run_id, limit=args.limit))
+    _print(Repository(args.db or s.database_url).audit_log(
+        company_id=args.company_id, gaf_id=args.gaf_id, run_id=args.run_id, limit=args.limit))
     return 0
+
+
+def cmd_import_sqlite(args: argparse.Namespace) -> int:
+    """Load a Section 1 SQLite file into the companies schema of --db / $DATABASE_URL."""
+    from .db.import_sqlite import SqliteImportError, import_sqlite
+
+    s = get_settings()
+    try:
+        stats = import_sqlite(args.path, Repository(args.db or s.database_url))
+    except SqliteImportError as e:
+        print(str(e), file=sys.stderr)
+        return 2
+    _print(stats)
+    return 0
+
+
+def cmd_validate(args: argparse.Namespace) -> int:
+    """Check the database against Section 1's guarantees; exit 1 on any failed check (or warning with --strict)."""
+    from .validate import exit_code, format_report, validate
+
+    s = get_settings()
+    url = args.db or s.database_url
+    path = url.removeprefix("sqlite:///") if url.startswith("sqlite:///") else None
+    if path and path != ":memory:" and not Path(path).exists():  # don't create an empty DB just to fail it
+        print(f"no database at {path}", file=sys.stderr)
+        return 2
+    report = validate(Repository(url), args.postal_code, args.radius_miles, settings=s)
+    print(format_report(report))
+    if args.out:
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(report, indent=2, default=str))
+        print(f"wrote {out}", file=sys.stderr)
+    return exit_code(report, strict=args.strict)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -272,7 +346,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     def add_enrich_args(sp: argparse.ArgumentParser) -> None:
         sp.add_argument("--sources", help="comma-separated enrichers (default: all)")
-        sp.add_argument("--gaf-id", action="append", help="limit to these contractor ids (repeatable)")
+        sp.add_argument("--gaf-id", action="append", help="limit to these GAF contractor ids (repeatable)")
+        sp.add_argument("--company-id", action="append", help="limit to these company ids (repeatable)")
         sp.add_argument("--force", action="store_true", help="ignore enrichment TTL")
         sp.add_argument("--limit", type=int, help="only the first N contractors (by distance)")
 
@@ -317,13 +392,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("jobs", help="job queue: enqueue on-demand work, inspect, retry")
     jsub = sp.add_subparsers(dest="jobs_cmd", required=True)
-    e = jsub.add_parser("enqueue", help="queue scrape|enrich|tag|pipeline for one or more ZIPs")
+    e = jsub.add_parser("enqueue", help="queue scrape|enrich|tag|pipeline|signals|insights for one or more ZIPs "
+                                        "(briefing: one job for every scope)")
     e.add_argument("kind", choices=JOB_KINDS)
     _area_args(e)
     e.add_argument("--also-zip", dest="extra_zips", action="append")
     e.add_argument("--sources")
     e.add_argument("--priority", type=int, default=100, help="lower runs first")
-    e.add_argument("--requested-by", help="user id of the rep asking; applies the per-user hourly limit "
+    e.add_argument("--requested-by", help="users.id (uuid) of the rep asking; applies the per-user hourly limit "
                                           "(LEADMAKER_USER_JOBS_PER_HOUR, default 20)")
     l = jsub.add_parser("list")
     l.add_argument("--status", choices=["queued", "running", "succeeded", "failed", "dead"])
@@ -339,7 +415,9 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--kind", choices=JOB_KINDS, default="pipeline")
     a.add_argument("--every-hours", type=float, required=True)
     a.add_argument("--sources")
-    _area_args(a)
+    a.add_argument("--params", help='extra job params as a JSON object, merged into the schedule\'s params '
+                                    '(e.g. \'{"stale": true}\' for --kind insights)')
+    _area_args(a, defaults=False)
     ssub.add_parser("list")
     for verb in ("enable", "disable"):
         v = ssub.add_parser(verb)
@@ -360,10 +438,32 @@ def build_parser() -> argparse.ArgumentParser:
     sp.set_defaults(fn=cmd_signals)
 
     sp = sub.add_parser("audit", help="change log: what was added/updated, when, by which run")
+    sp.add_argument("--company-id")
     sp.add_argument("--gaf-id")
     sp.add_argument("--run-id", type=int)
     sp.add_argument("--limit", type=int, default=50)
     sp.set_defaults(fn=cmd_audit)
+
+    sp = sub.add_parser("validate", help="check the database against Section 1's data guarantees")
+    sp.add_argument("--zip", dest="postal_code", help="area origin ZIP (default: area of the newest search run)")
+    sp.add_argument("--radius", dest="radius_miles", type=float, help="area radius in miles (default: newest run's)")
+    sp.add_argument("--out", help="also write the full JSON report here")
+    sp.add_argument("--strict", action="store_true", help="exit 1 on warnings too")
+    sp.set_defaults(fn=cmd_validate)
+
+    sp = sub.add_parser("import-sqlite", help="load a Section 1 SQLite database (e.g. a copy of data/leadmaker.db) "
+                                              "into the companies schema of --db / $DATABASE_URL")
+    sp.add_argument("path", help="Section 1 SQLite file; it is copied first and never written")
+    sp.set_defaults(fn=cmd_import_sqlite)
+
+    # Section 4: batch insights and territory briefs (each module registers its own sub-command).
+    from .insights.cli import register as register_insights
+
+    register_insights(sub)
+    if importlib.util.find_spec("leadmaker.briefing.cli") is not None:
+        from .briefing.cli import register as register_briefing
+
+        register_briefing(sub)
     return p
 
 
@@ -375,7 +475,11 @@ def main(argv: list[str] | None = None) -> int:
         datefmt="%H:%M:%S",
         stream=sys.stderr,
     )
-    return args.fn(args)
+    try:
+        return args.fn(args)
+    except SchemaError as e:
+        print(f"leadmaker: {e}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

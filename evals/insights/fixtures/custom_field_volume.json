@@ -1,0 +1,52 @@
+{
+  "company_id": "22222222-2222-4222-8222-000000000007",
+  "business_name": "Ridgeway Home Exteriors",
+  "facts": [
+    {
+      "id": "F1",
+      "key": "business_name",
+      "text": "business_name: Ridgeway Home Exteriors"
+    },
+    {
+      "id": "F2",
+      "key": "location",
+      "text": "location: Ridgewood, NJ 07450 (Bergen County)"
+    },
+    {
+      "id": "F3",
+      "key": "gaf_tier",
+      "text": "gaf_tier: GAF Certified"
+    },
+    {
+      "id": "F4",
+      "key": "rating",
+      "text": "rating: 4.7 stars from 58 reviews"
+    },
+    {
+      "id": "F5",
+      "key": "size",
+      "text": "size: medium"
+    },
+    {
+      "id": "F6",
+      "key": "services",
+      "text": "services: Roof replacement, Gutters, Skylights"
+    },
+    {
+      "id": "F7",
+      "key": "custom_field",
+      "text": "custom_field: annual_volume_squares = 2400"
+    },
+    {
+      "id": "F8",
+      "key": "custom_field",
+      "text": "custom_field: preferred_supplier = a regional yard in Secaucus"
+    },
+    {
+      "id": "F9",
+      "key": "custom_tag",
+      "text": "custom_tag: Bulk buyer"
+    }
+  ],
+  "website_excerpt": "Roof replacement, gutters and skylight installation in Ridgewood and nearby towns."
+}

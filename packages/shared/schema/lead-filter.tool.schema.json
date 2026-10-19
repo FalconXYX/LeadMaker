@@ -1,0 +1,321 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "tagsAll": {
+      "description": "Lead has every one of these system tags.",
+      "maxItems": 50,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200,
+        "description": "System tag: \"key\" (tag present and not false) or \"key=value\" (exact value), e.g. \"service:metal_roofing\", \"work_type:storm_emergency\", \"gaf_tier=master_elite\", \"region=Brooklyn\", \"distance_band=0-5\"."
+      }
+    },
+    "tagsAny": {
+      "description": "Lead has at least one of these system tags.",
+      "maxItems": 50,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200,
+        "description": "System tag: \"key\" (tag present and not false) or \"key=value\" (exact value), e.g. \"service:metal_roofing\", \"work_type:storm_emergency\", \"gaf_tier=master_elite\", \"region=Brooklyn\", \"distance_band=0-5\"."
+      }
+    },
+    "customTags": {
+      "description": "Rep-created custom tags, by id or name (case-insensitive); any of them.",
+      "maxItems": 50,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      }
+    },
+    "customFields": {
+      "description": "Conditions on rep-entered custom data slots; all must hold. gte/lte compare numbers, or strings such as ISO dates; contains is a case-insensitive substring (or an array element).",
+      "maxItems": 20,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "op": {
+            "type": "string",
+            "enum": [
+              "eq",
+              "gte",
+              "lte",
+              "contains",
+              "exists"
+            ]
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "op"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "certifications": {
+      "description": "Source-namespaced certification levels, any of: gaf:master_elite, gaf:certified_plus, gaf:certified, gaf:none.",
+      "maxItems": 20,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_]+:[a-z0-9_]+$"
+      }
+    },
+    "size": {
+      "maxItems": 3,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "small",
+          "medium",
+          "large"
+        ]
+      }
+    },
+    "segment": {
+      "maxItems": 4,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "strategic",
+          "growth",
+          "emerging",
+          "long_tail"
+        ]
+      }
+    },
+    "accountStatus": {
+      "maxItems": 4,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "prospect",
+          "existing_customer",
+          "lapsed_customer",
+          "do_not_contact"
+        ]
+      }
+    },
+    "stages": {
+      "description": "Sales stages, any of: new, contacted, interested, quoting, won, lost (\"Not a fit\").",
+      "maxItems": 6,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "new",
+          "contacted",
+          "interested",
+          "quoting",
+          "won",
+          "lost"
+        ]
+      }
+    },
+    "followUp": {
+      "description": "Open follow-up tasks: \"overdue\" (due before today), \"today\", \"week\" (due today or in the next 6 days), \"none\" (no open task). Days are in the sales team's time zone.",
+      "type": "string",
+      "enum": [
+        "overdue",
+        "today",
+        "week",
+        "none"
+      ]
+    },
+    "notContactedSince": {
+      "description": "No call, email or visit logged at or after this ISO date/time (never contacted included).",
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        {
+          "type": "string",
+          "format": "date",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+        }
+      ]
+    },
+    "materials": {
+      "description": "Roof materials, any of: shingle_roofing, metal_roofing, slate_roofing, tile_roofing, flat_roofing, tpo_roofing, single_ply_roofing.",
+      "maxItems": 20,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_]+$"
+      }
+    },
+    "services": {
+      "description": "Services / work types, any of: roof_replacement, roof_repair, storm_damage, insurance_claims, emergency_service, new_construction, commercial_roofing, inspections, gutters, siding, windows, skylights, chimney, masonry, waterproofing, insulation, solar, general_contracting, shingle_roofing, metal_roofing, slate_roofing, tile_roofing, flat_roofing, tpo_roofing, single_ply_roofing.",
+      "maxItems": 40,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_]+$"
+      }
+    },
+    "minRating": {
+      "description": "Minimum star rating (0-5).",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "minPriority": {
+      "description": "Minimum priority score (0-100).",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "minYearsInBusiness": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 200
+    },
+    "near": {
+      "description": "Within radiusMiles of the ZIP code centroid.",
+      "type": "object",
+      "properties": {
+        "zip": {
+          "type": "string",
+          "pattern": "^\\d{5}$"
+        },
+        "radiusMiles": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 250
+        }
+      },
+      "required": [
+        "zip",
+        "radiusMiles"
+      ],
+      "additionalProperties": false
+    },
+    "counties": {
+      "description": "County FIPS codes (5 digits, e.g. \"36061\"); any of.",
+      "maxItems": 100,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^\\d{5}$"
+      }
+    },
+    "unchecked": {
+      "description": "Not reviewed since its last material change, by me or by anyone on the team.",
+      "type": "string",
+      "enum": [
+        "me",
+        "team"
+      ]
+    },
+    "unserviced": {
+      "description": "No call, email or visit logged, by me or by anyone on the team.",
+      "type": "string",
+      "enum": [
+        "me",
+        "team"
+      ]
+    },
+    "updatedSince": {
+      "description": "New or materially changed at or after this ISO date/time.",
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        {
+          "type": "string",
+          "format": "date",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+        }
+      ]
+    },
+    "updatedInLastPoll": {
+      "description": "true: new or materially changed in the most recent complete pipeline run of its area; false: not.",
+      "type": "boolean"
+    },
+    "text": {
+      "description": "Business name contains this text.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "sort": {
+      "description": "Default priority_score desc. \"distance\" needs near. \"next_follow_up\": the earliest open task's due date (leads without one last); \"last_contacted\": the latest call, email or visit (never contacted counts as oldest).",
+      "type": "object",
+      "properties": {
+        "by": {
+          "type": "string",
+          "enum": [
+            "priority_score",
+            "distance",
+            "rating",
+            "review_count",
+            "years_in_business",
+            "last_change",
+            "next_follow_up",
+            "last_contacted"
+          ]
+        },
+        "dir": {
+          "type": "string",
+          "enum": [
+            "asc",
+            "desc"
+          ]
+        }
+      },
+      "required": [
+        "by",
+        "dir"
+      ],
+      "additionalProperties": false
+    },
+    "scope": {
+      "description": "\"mine\" (allocated to me), \"unallocated\" (the pool), \"all\" (everything I may view).",
+      "type": "string",
+      "enum": [
+        "mine",
+        "unallocated",
+        "all"
+      ]
+    },
+    "repId": {
+      "description": "Managers only: one rep's leads (an id from the vocabulary).",
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    }
+  },
+  "additionalProperties": false,
+  "description": "LeadFilter for the lead list (complete; it replaces the current filter)."
+}

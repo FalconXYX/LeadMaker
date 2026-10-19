@@ -1,0 +1,282 @@
+/* Design tokens: the only place colours are defined. Components use the Tailwind utilities generated from
+   @theme in index.css (bg-surface, text-muted, border-border, bg-accent, text-stage-won, bg-roof, ...), never raw hex.
+
+   Palette (from the brand set, pushed to working strength): gunmetal #37393A (text, top bar), alice-blue #E8EEF2
+   (tracks, neutral chips), pale-sky #C7D3DD (strong borders, top-bar text), cool-sky #77B6EA (chart fills and
+   highlights: bg-sky), a saturated cool-sky primary #1C74DC (buttons, active nav, links, focus), and a warm roof-tile
+   secondary #C2513A taken from dust-grey's rosy hue (hot / high-priority leads, overdue items, the Call / Log action).
+
+   Light is the default whatever the OS says; dark applies only with an explicit data-theme="dark" on <html>.
+
+   Readable shade vs fill: text-* uses the readable shade, bg-* uses the fill where the two differ (accent, roof,
+   success, warning, danger, info, segments). Stage tokens are one shade each, dark enough for white text on the
+   solid and for the shade on its own -soft tint; --c-stage-*-fill is the brighter bar colour (bg-stage-*-fill).
+   Every text colour below passes WCAG AA (4.5:1) on surface, bg and its own -soft tint. */
+:root {
+  color-scheme: light;
+  --c-bg: #f6f8fa;
+  --c-surface: #ffffff;
+  --c-surface-2: #f1f5f9;
+  --c-surface-3: #e8eef2;
+  --c-hover: #eef4fb;
+  --c-table-head: #f1f5f9;
+  --c-border: #dde4ea;
+  --c-border-strong: #b6c4d0;
+  --c-divider: #e8edf2;
+  --c-text: #37393a;
+  --c-muted: #4f5c6a;
+  --c-subtle: #5d6a77;
+
+  /* Primary: saturated cool-sky. White text on the fill is 4.6:1. */
+  --c-accent: #1c74dc;
+  --c-accent-hover: #1866bd;
+  --c-accent-soft: #e4f0fc;
+  --c-accent-fg: #ffffff;
+  --c-accent-text: #1866bd;
+  --c-focus: #1c74dc;
+  --c-selection: #cfe3fa;
+  --c-knob: #ffffff;
+
+  /* Brand cool-sky, kept for chart fills and highlights (not for text: 2.2:1 on white) */
+  --c-sky: #77b6ea;
+  --c-sky-soft: #e3f0fb;
+
+  /* Roof-tile secondary: hot leads, overdue, the main Call / Log action. White text on the fill is 4.6:1. */
+  --c-roof: #c2513a;
+  --c-roof-hover: #a8432c;
+  --c-roof-soft: #fbe8e2;
+  --c-roof-fg: #ffffff;
+  --c-roof-text: #a8432c;
+
+  /* Top bar: gunmetal */
+  --c-topbar: #37393a;
+  --c-topbar-fg: #f4f7f9;
+  --c-topbar-muted: #c7d3dd;
+  --c-topbar-hover: rgb(232 238 242 / 0.12);
+  --c-topbar-field: rgb(232 238 242 / 0.12);
+  --c-topbar-border: rgb(232 238 242 / 0.2);
+
+  --c-success: #227a46;
+  --c-success-soft: #e2f4e9;
+  --c-success-fill: #2f9e5b;
+  --c-warning: #8f5a00;
+  --c-warning-soft: #fcf0d9;
+  --c-warning-fill: #d9961a;
+  --c-danger: #b93434;
+  --c-danger-soft: #fbe6e6;
+  --c-danger-fill: #d24040;
+  --c-danger-fg: #ffffff;
+  --c-info: #0f7480;
+  --c-info-soft: #dcf2f4;
+  --c-info-fill: #1a9aa8;
+
+  /* Sales stages, each its own hue: new blue, contacted amber, interested (qualified) violet,
+     quoting (proposal) terracotta, won green, not a fit slate. */
+  --c-stage-new: #1866bd;
+  --c-stage-new-soft: #e4f0fc;
+  --c-stage-new-fill: #1c74dc;
+  --c-stage-contacted: #8f5a00;
+  --c-stage-contacted-soft: #fcf0d9;
+  --c-stage-contacted-fill: #d9961a;
+  --c-stage-interested: #6545c4;
+  --c-stage-interested-soft: #eee9fb;
+  --c-stage-interested-fill: #7c5cd6;
+  --c-stage-quoting: #a8432c;
+  --c-stage-quoting-soft: #fbe8e2;
+  --c-stage-quoting-fill: #c2513a;
+  --c-stage-won: #227a46;
+  --c-stage-won-soft: #e2f4e9;
+  --c-stage-won-fill: #2f9e5b;
+  --c-stage-lost: #525f6c;
+  --c-stage-lost-soft: #e9eef3;
+  --c-stage-lost-fill: #8a96a3;
+
+  /* Priority segments, hot to cool: strategic roof-tile, growth amber, emerging cool-sky, long tail slate */
+  --c-seg-strategic: #a8432c;
+  --c-seg-strategic-soft: #fbe8e2;
+  --c-seg-strategic-fill: #c2513a;
+  --c-seg-growth: #8f5a00;
+  --c-seg-growth-soft: #fcf0d9;
+  --c-seg-growth-fill: #d9961a;
+  --c-seg-emerging: #1866bd;
+  --c-seg-emerging-soft: #e3f0fb;
+  --c-seg-emerging-fill: #77b6ea;
+  --c-seg-long-tail: #525f6c;
+  --c-seg-long-tail-soft: #e9eef3;
+  --c-seg-long-tail-fill: #9aa6b2;
+
+  /* Timing badge severities (TimingBadge.severity) */
+  --c-timing-high: #b93434;
+  --c-timing-high-soft: #fbe6e6;
+  --c-timing-medium: #a14d0a;
+  --c-timing-medium-soft: #fdebdc;
+  --c-timing-low: #1866bd;
+  --c-timing-low-soft: #e4f0fc;
+  --c-timing-info: #525f6c;
+  --c-timing-info-soft: #e9eef3;
+
+  /* Categorical chart series (bars, lines, map markers); each is at least 3:1 on the surface */
+  --c-chart-1: #1c74dc;
+  --c-chart-2: #c2513a;
+  --c-chart-3: #2b8f52;
+  --c-chart-4: #7c5cd6;
+  --c-chart-5: #b87a0c;
+  --c-chart-6: #138592;
+  --c-chart-7: #c4407e;
+  --c-chart-8: #5c6b7a;
+  --c-chart-track: #e8eef2;
+  /* Map owner slots (one per rep): the chart series, so they follow dark mode with them */
+  --c-owner-1: var(--c-chart-1);
+  --c-owner-2: var(--c-chart-2);
+  --c-owner-3: var(--c-chart-3);
+  --c-owner-4: var(--c-chart-4);
+  --c-owner-5: var(--c-chart-5);
+  --c-owner-6: var(--c-chart-6);
+  --c-owner-7: var(--c-chart-7);
+  --c-owner-8: var(--c-chart-8);
+
+  /* Cards lift off the page: a soft two-layer shadow you can actually see */
+  --c-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06), 0 2px 8px rgb(15 23 42 / 0.06);
+  --c-shadow-md: 0 6px 18px rgb(15 23 42 / 0.1), 0 2px 4px rgb(15 23 42 / 0.06);
+  --c-shadow-lg: 0 20px 48px rgb(15 23 42 / 0.2), 0 4px 10px rgb(15 23 42 / 0.08);
+  --c-overlay: rgb(30 34 38 / 0.45);
+
+  /* Tooltips: gunmetal */
+  --c-tooltip: #37393a;
+  --c-tooltip-fg: #f4f7f9;
+  --c-tooltip-border: #37393a;
+
+  /* Avatars: initials on a coloured disc, picked per name */
+  --c-avatar-1: #1866bd;
+  --c-avatar-2: #227a46;
+  --c-avatar-3: #6545c4;
+  --c-avatar-4: #a8432c;
+  --c-avatar-5: #8f5a00;
+  --c-avatar-6: #0f7480;
+  --c-avatar-fg: #ffffff;
+}
+
+/* Dark: only with an explicit data-theme="dark" (never from the OS setting). A near-black page under gunmetal-toned
+   cards, so the layers separate, with the same hues as light at pastel strength. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --c-bg: #1f2123;
+  --c-surface: #2c2f31;
+  --c-surface-2: #353a3d;
+  --c-surface-3: #3f4448;
+  --c-hover: #343b42;
+  --c-table-head: #33383b;
+  --c-border: #43494e;
+  --c-border-strong: #5d656c;
+  --c-divider: #3a3f43;
+  --c-text: #eef2f5;
+  --c-muted: #b8c2cb;
+  --c-subtle: #a3aeb8;
+
+  --c-accent: #4d9ef0;
+  --c-accent-hover: #6aaff3;
+  --c-accent-soft: #1f3550;
+  --c-accent-fg: #0d1a29;
+  --c-accent-text: #8cc4f6;
+  --c-focus: #77b6ea;
+  --c-selection: #2c4a6e;
+  --c-knob: #eef2f5;
+
+  --c-sky: #77b6ea;
+  --c-sky-soft: #1f3550;
+
+  --c-roof: #e07a5c;
+  --c-roof-hover: #ea8f74;
+  --c-roof-soft: #4a2c24;
+  --c-roof-fg: #1f0f0a;
+  --c-roof-text: #f2a58e;
+
+  --c-topbar: #37393a;
+  --c-topbar-fg: #eef2f5;
+  --c-topbar-muted: #c7d3dd;
+  --c-topbar-hover: rgb(232 238 242 / 0.1);
+  --c-topbar-field: rgb(232 238 242 / 0.1);
+  --c-topbar-border: rgb(232 238 242 / 0.16);
+
+  --c-success: #6fd39a;
+  --c-success-soft: #1f3a2b;
+  --c-success-fill: #3fae6b;
+  --c-warning: #f0c065;
+  --c-warning-soft: #3d3020;
+  --c-warning-fill: #d9961a;
+  --c-danger: #ff9c94;
+  --c-danger-soft: #45262a;
+  --c-danger-fill: #d24040;
+  --c-danger-fg: #ffffff;
+  --c-info: #6fd0dc;
+  --c-info-soft: #1c3a3f;
+  --c-info-fill: #1fa9b8;
+
+  --c-stage-new: #8cc4f6;
+  --c-stage-new-soft: #1f3550;
+  --c-stage-new-fill: #4d9ef0;
+  --c-stage-contacted: #f0c065;
+  --c-stage-contacted-soft: #3d3020;
+  --c-stage-contacted-fill: #d9961a;
+  --c-stage-interested: #b9a4f5;
+  --c-stage-interested-soft: #33294f;
+  --c-stage-interested-fill: #8e72e6;
+  --c-stage-quoting: #f2a58e;
+  --c-stage-quoting-soft: #4a2c24;
+  --c-stage-quoting-fill: #e07a5c;
+  --c-stage-won: #6fd39a;
+  --c-stage-won-soft: #1f3a2b;
+  --c-stage-won-fill: #3fae6b;
+  --c-stage-lost: #b8c2cb;
+  --c-stage-lost-soft: #3a3f45;
+  --c-stage-lost-fill: #7d8994;
+
+  --c-seg-strategic: #f2a58e;
+  --c-seg-strategic-soft: #4a2c24;
+  --c-seg-strategic-fill: #e07a5c;
+  --c-seg-growth: #f0c065;
+  --c-seg-growth-soft: #3d3020;
+  --c-seg-growth-fill: #d9961a;
+  --c-seg-emerging: #8cc4f6;
+  --c-seg-emerging-soft: #1f3550;
+  --c-seg-emerging-fill: #77b6ea;
+  --c-seg-long-tail: #b8c2cb;
+  --c-seg-long-tail-soft: #3a3f45;
+  --c-seg-long-tail-fill: #7d8994;
+
+  --c-timing-high: #ff9c94;
+  --c-timing-high-soft: #45262a;
+  --c-timing-medium: #f5ae7a;
+  --c-timing-medium-soft: #45301f;
+  --c-timing-low: #8cc4f6;
+  --c-timing-low-soft: #1f3550;
+  --c-timing-info: #b8c2cb;
+  --c-timing-info-soft: #3a3f45;
+
+  --c-chart-1: #5aa6f2;
+  --c-chart-2: #e8846a;
+  --c-chart-3: #5cc489;
+  --c-chart-4: #a48cf0;
+  --c-chart-5: #e3ad48;
+  --c-chart-6: #4cc3cf;
+  --c-chart-7: #e37aab;
+  --c-chart-8: #a7b2bc;
+  --c-chart-track: #3f4448;
+
+  --c-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4), 0 2px 8px rgb(0 0 0 / 0.25);
+  --c-shadow-md: 0 6px 18px rgb(0 0 0 / 0.45);
+  --c-shadow-lg: 0 20px 48px rgb(0 0 0 / 0.6);
+  --c-overlay: rgb(10 11 12 / 0.6);
+
+  --c-tooltip: #eef2f5;
+  --c-tooltip-fg: #1f2123;
+  --c-tooltip-border: #eef2f5;
+
+  --c-avatar-1: #8cc4f6;
+  --c-avatar-2: #6fd39a;
+  --c-avatar-3: #b9a4f5;
+  --c-avatar-4: #f2a58e;
+  --c-avatar-5: #f0c065;
+  --c-avatar-6: #6fd0dc;
+  --c-avatar-fg: #1f2123;
+}

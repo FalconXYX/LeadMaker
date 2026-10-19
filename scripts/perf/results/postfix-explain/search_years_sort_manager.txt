@@ -1,0 +1,121 @@
+-- search:years_sort:manager
+-- filter: {"minYearsInBusiness":20,"sort":{"by":"years_in_business","dir":"desc"}}
+-- params: [20,51,20,1001,"e4774cdd-a079-4f86-814e-8b9140bb6db4"]
+
+    WITH page AS (
+      SELECT c.id, c.founded_year AS sort_val, NULL::float8 AS distance_m
+      FROM companies c 
+      WHERE (TRUE AND c.founded_year <= EXTRACT(YEAR FROM now())::int - $1::int) AND TRUE
+      ORDER BY c.founded_year asc NULLS LAST, c.id asc LIMIT $2::int
+    )
+    SELECT (SELECT count(*)::int FROM (
+        SELECT 1 FROM companies c  WHERE (TRUE AND c.founded_year <= EXTRACT(YEAR FROM now())::int - $3::int) LIMIT $4::int) capped) AS total,
+      COALESCE((SELECT json_agg(r ORDER BY r.ord) FROM (
+        SELECT row_number() OVER (ORDER BY p.sort_val asc NULLS LAST, p.id asc) AS ord,
+          p.sort_val::text AS sort_key, p.distance_m,
+          c.id, c.business_name, c.city, c.state, c.postal_code, c.phone, c.website_url, c.latitude, c.longitude,
+          c.county_fips, c.rating, c.review_count, c.tier, c.founded_year AS founded_year, c.segment,
+          c.priority_score::float8 AS priority_score, c.account_status, c.assigned_rep_id, u.name AS assigned_rep_name,
+          (SELECT COALESCE(jsonb_agg(jsonb_build_object('key', t->'key', 'value', t->'value', 'label', t->'label',
+                                                        'category', t->'category')), '[]'::jsonb)
+             FROM jsonb_array_elements(c.system_tags) t) AS tags,
+          ov.overrides, ct.custom_tags, c.updated_in_last_poll, COALESCE(c.last_material_change_at, c.first_seen_at) AS last_change_at,
+          ms.checked_at AS my_checked_at, ms.serviced_at AS my_serviced_at,
+          (ms.checked_at IS NOT NULL
+            AND (c.last_material_change_at IS NULL OR ms.checked_at >= c.last_material_change_at)) AS my_checked,
+          c.team_last_checked_at, c.team_last_serviced_at,
+          (c.team_last_checked_at IS NOT NULL
+            AND (c.last_material_change_at IS NULL OR c.team_last_checked_at >= c.last_material_change_at)) AS team_checked,
+          c.version
+        FROM page p
+        JOIN companies c ON c.id = p.id
+        LEFT JOIN users u ON u.id = c.assigned_rep_id
+        LEFT JOIN lead_rep_state ms ON ms.company_id = c.id AND ms.user_id = $5::uuid
+        LEFT JOIN LATERAL (
+          SELECT jsonb_object_agg(o.field, o.value) AS overrides FROM field_overrides o
+          WHERE o.company_id = c.id AND o.contact_id IS NULL AND o.superseded_at IS NULL) ov ON TRUE
+        LEFT JOIN LATERAL (
+          SELECT jsonb_agg(jsonb_build_object('id', t.id, 'name', t.name) ORDER BY lower(t.name), t.id) AS custom_tags
+          FROM company_custom_tags x JOIN custom_tags t ON t.id = x.tag_id WHERE x.company_id = c.id) ct ON TRUE
+      ) r), '[]'::json) AS items
+
+Result  (cost=1697.91..1697.92 rows=1 width=36) (actual time=3.507..3.509 rows=1 loops=1)
+  Buffers: shared hit=874
+  InitPlan 1 (returns $0)
+    ->  Aggregate  (cost=54.76..54.78 rows=1 width=4) (actual time=0.149..0.149 rows=1 loops=1)
+          Buffers: shared hit=10
+          ->  Limit  (cost=0.43..42.25 rows=1001 width=4) (actual time=0.003..0.106 rows=1001 loops=1)
+                Buffers: shared hit=10
+                ->  Index Only Scan using companies_founded_year_desc_idx on companies c  (cost=0.43..2058.36 rows=49253 width=4) (actual time=0.003..0.060 rows=1001 loops=1)
+                      Index Cond: (founded_year <= ((EXTRACT(year FROM now()))::integer - 20))
+                      Heap Fetches: 0
+                      Buffers: shared hit=10
+  InitPlan 3 (returns $7)
+    ->  Aggregate  (cost=1643.12..1643.13 rows=1 width=32) (actual time=3.353..3.355 rows=1 loops=1)
+          Buffers: shared hit=864
+          ->  Sort  (cost=1642.87..1642.99 rows=51 width=354) (actual time=2.779..2.782 rows=51 loops=1)
+                Sort Key: r.ord
+                Sort Method: quicksort  Memory: 147kB
+                Buffers: shared hit=864
+                ->  Subquery Scan on r  (cost=22.02..1641.42 rows=51 width=354) (actual time=0.066..2.769 rows=51 loops=1)
+                      Buffers: shared hit=864
+                      ->  WindowAgg  (cost=22.02..1640.91 rows=51 width=424) (actual time=0.064..2.741 rows=51 loops=1)
+                            Buffers: shared hit=864
+                            ->  Nested Loop Left Join  (cost=22.02..1511.12 rows=51 width=374) (actual time=0.013..0.558 rows=51 loops=1)
+                                  Buffers: shared hit=711
+                                  ->  Nested Loop Left Join  (cost=9.84..888.99 rows=51 width=342) (actual time=0.010..0.240 rows=51 loops=1)
+                                        Buffers: shared hit=583
+                                        ->  Nested Loop Left Join  (cost=1.54..464.54 rows=51 width=310) (actual time=0.008..0.187 rows=51 loops=1)
+                                              Buffers: shared hit=481
+                                              ->  Nested Loop Left Join  (cost=1.12..440.56 rows=51 width=294) (actual time=0.006..0.139 rows=51 loops=1)
+                                                    Buffers: shared hit=328
+                                                    ->  Nested Loop  (cost=0.84..425.31 rows=51 width=278) (actual time=0.005..0.081 rows=51 loops=1)
+                                                          Buffers: shared hit=208
+                                                          ->  Limit  (cost=0.43..2.62 rows=51 width=28) (actual time=0.003..0.010 rows=51 loops=1)
+                                                                Buffers: shared hit=4
+                                                                ->  Index Only Scan using companies_founded_year_idx on companies c_2  (cost=0.43..2114.36 rows=49253 width=28) (actual time=0.003..0.007 rows=51 loops=1)
+                                                                      Index Cond: (founded_year <= ((EXTRACT(year FROM now()))::integer - 20))
+                                                                      Heap Fetches: 0
+                                                                      Buffers: shared hit=4
+                                                          ->  Index Scan using companies_pkey on companies c_1  (cost=0.42..8.28 rows=1 width=250) (actual time=0.001..0.001 rows=1 loops=51)
+                                                                Index Cond: (id = c_2.id)
+                                                                Buffers: shared hit=204
+                                                    ->  Index Scan using users_pkey on users u  (cost=0.28..0.30 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=51)
+                                                          Index Cond: (id = c_1.assigned_rep_id)
+                                                          Buffers: shared hit=120
+                                              ->  Index Scan using lead_rep_state_pkey on lead_rep_state ms  (cost=0.41..0.47 rows=1 width=32) (actual time=0.001..0.001 rows=0 loops=51)
+                                                    Index Cond: ((company_id = c_1.id) AND (user_id = 'e4774cdd-a079-4f86-814e-8b9140bb6db4'::uuid))
+                                                    Buffers: shared hit=153
+                                        ->  Aggregate  (cost=8.30..8.31 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=51)
+                                              Buffers: shared hit=102
+                                              ->  Index Scan using field_overrides_history_idx on field_overrides o  (cost=0.28..8.30 rows=1 width=29) (actual time=0.001..0.001 rows=0 loops=51)
+                                                    Index Cond: (company_id = c_1.id)
+                                                    Filter: ((contact_id IS NULL) AND (superseded_at IS NULL))
+                                                    Buffers: shared hit=102
+                                  ->  Aggregate  (cost=12.18..12.19 rows=1 width=32) (actual time=0.006..0.006 rows=1 loops=51)
+                                        Buffers: shared hit=128
+                                        ->  Sort  (cost=12.16..12.16 rows=2 width=31) (actual time=0.005..0.005 rows=0 loops=51)
+                                              Sort Key: (lower((t_1.name)::text)), t_1.id
+                                              Sort Method: quicksort  Memory: 25kB
+                                              Buffers: shared hit=128
+                                              ->  Hash Join  (cost=4.35..12.15 rows=2 width=31) (actual time=0.003..0.005 rows=0 loops=51)
+                                                    Hash Cond: (t_1.id = x.tag_id)
+                                                    Buffers: shared hit=128
+                                                    ->  Seq Scan on custom_tags t_1  (cost=0.00..7.00 rows=300 width=31) (actual time=0.000..0.011 rows=257 loops=7)
+                                                          Buffers: shared hit=25
+                                                    ->  Hash  (cost=4.32..4.32 rows=2 width=16) (actual time=0.001..0.001 rows=0 loops=51)
+                                                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                          Buffers: shared hit=103
+                                                          ->  Index Only Scan using company_custom_tags_pkey on company_custom_tags x  (cost=0.29..4.32 rows=2 width=16) (actual time=0.001..0.001 rows=0 loops=51)
+                                                                Index Cond: (company_id = c_1.id)
+                                                                Heap Fetches: 0
+                                                                Buffers: shared hit=103
+                            SubPlan 2
+                              ->  Aggregate  (cost=2.51..2.52 rows=1 width=32) (actual time=0.042..0.042 rows=1 loops=51)
+                                    Buffers: shared hit=153
+                                    ->  Function Scan on jsonb_array_elements t  (cost=0.00..1.00 rows=100 width=32) (actual time=0.006..0.007 rows=20 loops=51)
+                                          Buffers: shared hit=153
+Planning:
+  Buffers: shared hit=50
+Planning Time: 0.355 ms
+Execution Time: 3.549 ms

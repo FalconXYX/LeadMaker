@@ -1,0 +1,62 @@
+{
+  "company_id": "22222222-2222-4222-8222-000000000002",
+  "business_name": "Shore Line Roofing & Restoration",
+  "facts": [
+    {
+      "id": "F1",
+      "key": "business_name",
+      "text": "business_name: Shore Line Roofing & Restoration"
+    },
+    {
+      "id": "F2",
+      "key": "location",
+      "text": "location: Hackensack, NJ 07601 (Bergen County)"
+    },
+    {
+      "id": "F3",
+      "key": "gaf_tier",
+      "text": "gaf_tier: GAF Certified"
+    },
+    {
+      "id": "F4",
+      "key": "certification",
+      "text": "certification: GAF Certified™ - Certification"
+    },
+    {
+      "id": "F5",
+      "key": "rating",
+      "text": "rating: 4.6 stars from 88 reviews"
+    },
+    {
+      "id": "F6",
+      "key": "employees",
+      "text": "employees: 20-49"
+    },
+    {
+      "id": "F7",
+      "key": "size",
+      "text": "size: medium"
+    },
+    {
+      "id": "F8",
+      "key": "services",
+      "text": "services: Storm damage, Insurance claims, Emergency service, Roof repair"
+    },
+    {
+      "id": "F9",
+      "key": "work_types",
+      "text": "work_types: Storm / emergency repair"
+    },
+    {
+      "id": "F10",
+      "key": "target_contact",
+      "text": "target_contact: Operations manager — Kevin Brandt"
+    },
+    {
+      "id": "F11",
+      "key": "note",
+      "text": "note (Jordan L., 2026-10-02): Kevin buys tarps by the pallet before storm season; currently using a big-box store."
+    }
+  ],
+  "website_excerpt": "Storm damage? We respond 24/7 with emergency tarping, leak repair and full insurance restoration. We work with every major carrier."
+}

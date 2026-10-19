@@ -1,0 +1,41 @@
+{
+  "id": "11111111-1111-4111-8111-000000000009",
+  "businessName": "Ridgeway Home Exteriors",
+  "city": "Ridgewood", "state": "NJ", "postalCode": "07450",
+  "countyFips": "34003", "countyName": "Bergen County, NJ",
+  "websiteUrl": "https://ridgewayexteriors.example/",
+  "gaf": {
+    "tier": "certified",
+    "certifications": ["GAF Certified™ - Certification"],
+    "rating": 4.7, "reviewCount": 58, "yearsInBusiness": 15, "employeesRange": "10-19",
+    "specialties": ["Residential roofing"],
+    "distinctions": [],
+    "presidentsClubStars": 0,
+    "description": "Roofing, gutters and skylights in northern Bergen County."
+  },
+  "size": "medium", "segment": "growth", "priorityScore": 40,
+  "priorityDrivers": [],
+  "accountStatus": "prospect", "salesStage": "new",
+  "stageChangedAt": null, "lastContactedAt": null,
+  "assignedRep": { "id": "ab3ee7d1-f903-4b52-a89d-20d26eac84d6", "name": "Jordan Lee" },
+  "canWrite": true,
+  "tags": [
+    { "key": "gaf_tier", "label": "GAF Certified", "category": "certification" },
+    { "key": "service:skylights", "label": "Skylights", "category": "services" },
+    { "key": "service:gutters", "label": "Gutters", "category": "services" }
+  ],
+  "customTags": [],
+  "customFields": {},
+  "targetContact": null,
+  "contacts": [],
+  "insights": null,
+  "timing": [],
+  "notes": [],
+  "activity": [],
+  "openTasks": [],
+  "website": [
+    { "url": "https://ridgewayexteriors.example/", "title": "Ridgeway Home Exteriors", "text": "Roof replacement, gutters and skylight installation in Ridgewood and nearby towns." }
+  ],
+  "websiteSummary": "Roofing, gutter and skylight contractor in northern Bergen County.",
+  "generatedAt": "2026-10-19T19:00:00.000Z"
+}

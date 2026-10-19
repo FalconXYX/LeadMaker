@@ -63,7 +63,7 @@ class Contractor(BaseModel):
 class SearchHit(BaseModel):
     """Query-relative facts: distance only makes sense relative to a search origin."""
 
-    gaf_id: str
+    company_id: str
     distance_miles: float | None
     rank: int  # 1-based position in distance-sorted results
     gaf_recommended: bool = False  # present in GAF's own "Most Relevant" pipeline result

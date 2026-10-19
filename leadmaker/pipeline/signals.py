@@ -58,10 +58,10 @@ async def run_signals(
     try:
         async with HttpClient(settings) as http:
             index = await county_mod.load_county_index(http)
-            assigned = county_mod.assign_county_fips(repo, index)
+            assigned = county_mod.assign_county_fips(repo, index, run_id=run_id)
             if refine_points:
                 assigned["point_check"] = await county_mod.refine_by_point(
-                    http, repo, assigned["unmapped"] + assigned["split"])
+                    http, repo, assigned["unmapped"] + assigned["split"], run_id=run_id)
             assigned["unmapped"] = len(assigned["unmapped"])
             assigned["split"] = len(assigned["split"])
             stats["counties"] = assigned
@@ -86,12 +86,34 @@ async def run_signals(
     return stats
 
 
+async def run_counties(settings: Settings, repo: Repository, company_ids: list[str] | None = None) -> dict[str, Any]:
+    """ZIP -> county for leads still missing one (among company_ids when given), as its own run.
+
+    Runs after every refresh, so it makes no per-lead calls: the Census ZCTA file is downloaded once and
+    then read from the cache, and split-ZCTA point checks are left to the signals run.
+    """
+    run_id = repo.start_run("counties", {"companies": None if company_ids is None else len(company_ids)})
+    try:
+        try:
+            index = county_mod.load_cached_county_index()
+        except FileNotFoundError:
+            async with HttpClient(settings) as http:
+                index = await county_mod.load_county_index(http)
+        out = county_mod.assign_county_fips(repo, index, run_id=run_id, company_ids=company_ids)
+    except Exception as e:
+        repo.finish_run(run_id, "failed", {"run_id": run_id}, error=f"{type(e).__name__}: {e}"[:500])
+        raise
+    stats = {"run_id": run_id, **out, "unmapped": len(out["unmapped"]), "split": len(out["split"])}
+    repo.finish_run(run_id, "succeeded", stats)
+    return stats
+
+
 def lead_timing_badges(
     repo: Repository, leads: list[dict[str, Any]], now: datetime | None = None
 ) -> dict[str, list[dict[str, Any]]]:
-    """{gaf_id: badges} for lead records, with one signals query for all their counties."""
+    """{company_id: badges} for lead records, with one signals query for all their counties."""
     now = now or datetime.now(timezone.utc)
     fips = sorted({l["county_fips"] for l in leads if l.get("county_fips")})
     # No date filter: ended alerts are purged after weather.RETENTION_DAYS and timing applies its own windows.
     by_county = store.signals_for_counties(repo, fips, kinds=[weather.KIND, storms.KIND])
-    return {l["gaf_id"]: timing_badges(l, by_county.get(l.get("county_fips") or "", []), now) for l in leads}
+    return {l["company_id"]: timing_badges(l, by_county.get(l.get("county_fips") or "", []), now) for l in leads}

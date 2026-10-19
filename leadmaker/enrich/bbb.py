@@ -27,8 +27,11 @@ How it finds profiles -- no BBB search pages (robots disallows every `/*?` URL):
      same state, ranked by name similarity + same city + trade category. At most
      MAX_FETCHES profiles per contractor are fetched (>= 1.5 s between bbb.org requests),
      parsed from `window.__PRELOADED_STATE__` + JSON-LD, and verified.
-  4. Accepted only with confidence >= 0.9 *and* phone or address agreement; a ZIP / distance
-     agreement without a phone also needs the strict name (trade words kept) to agree.
+  4. Accepted only with confidence >= 0.9 *and* phone, licence or address agreement; a ZIP /
+     distance agreement without a phone or licence also needs the strict name (trade words kept)
+     to agree. The GAF profile's "State License Number" equal to a BBB licence counts like a
+     phone match; a different licence is only recorded (`license_differs`): businesses re-register
+     (Quality Roofing, Penn Roofing, Roof4Roof and Zooguy carry another HIC number on BBB).
 
 Not used: the profile's e-mail address is deliberately obfuscated by BBB and is not decoded.
 """
@@ -84,6 +87,10 @@ TRADE_CATEGORY = re.compile(
     r"roof|siding|gutter|home-improvement|general-contractor|construction|contractor|remodel|window|chimney|"
     r"carpent|masonry|handyman|builder|restoration|waterproof|exterior|skylight|insulation|solar|renovat|"
     r"deck|door|stucco|brick|concrete|basement")  # not "repair"/"paint": they admit auto-body shops
+# NJ home-improvement contractor registrations read "13VH01234567"; GAF profiles sometimes drop or
+# prefix the board code ("VH13917400", "NJ13VH06259200").
+NJ_HIC_RE = re.compile(r"(?:NJ)?(?:13)?VH(\d{8})")
+GAF_LICENSE_KEY = "State License Number"
 PERSON_BAD = re.compile(r"customer service|office|manager on duty|department|reception|billing|support|^none$", re.I)
 
 
@@ -340,6 +347,28 @@ def _float(v: Any) -> float | None:
         return None
 
 
+def license_key(number: Any) -> str | None:
+    """Comparable licence number: upper-case alphanumerics, NJ HIC board code normalised; None for
+    placeholders ("WAIVER", "NOT REQUIRED", "Active") and short municipal numbers ("49353") that
+    can repeat across towns."""
+    k = re.sub(r"[^A-Z0-9]", "", str(number or "").upper())
+    if (m := NJ_HIC_RE.fullmatch(k)):
+        return f"13VH{m.group(1)}"
+    return k if len(k) >= 7 and sum(ch.isdigit() for ch in k) >= 5 else None
+
+
+def license_evidence(contractor: dict[str, Any], p: dict[str, Any]) -> tuple[bool, bool]:
+    """(match, differs): GAF "State License Number" vs the profile's licences."""
+    details = contractor.get("profile_details")
+    gaf = license_key(details.get(GAF_LICENSE_KEY) if isinstance(details, dict) else None)
+    bbb_keys = {k for d in p.get("licenses") or [] if (k := license_key(d.get("number")))}
+    if not gaf:
+        return False, False
+    text = re.sub(r"[^A-Z0-9]", "", (p.get("licensing_text") or "").upper())
+    match = gaf in bbb_keys or (len(gaf) >= 8 and gaf in text)
+    return match, not match and bool(bbb_keys)
+
+
 def score_profile(ctx: LeadContext, p: dict[str, Any], *, phone_shared: bool = False) -> dict[str, Any]:
     """Evidence + same-business confidence for parsed profile `p`."""
     c = ctx.contractor
@@ -354,6 +383,10 @@ def score_profile(ctx: LeadContext, p: dict[str, Any], *, phone_shared: bool = F
         # Same phone listed for several GAF contractors: alone it doesn't say which one this is.
         phone_match = False
         reasons.append("phone_shared_by_multiple_gaf_contractors")
+    license_match, license_differs = license_evidence(c, p)
+    if license_differs:
+        reasons.append("license_differs")  # evidence only: businesses re-register under new numbers
+    strong = phone_match or license_match  # a state licence number identifies the business like its phone
     dist = None
     lat, lon = _float(p.get("latitude")), _float(p.get("longitude"))
     if lat is not None and lon is not None and c.get("latitude") is not None and c.get("longitude") is not None:
@@ -363,24 +396,26 @@ def score_profile(ctx: LeadContext, p: dict[str, Any], *, phone_shared: bool = F
     sk = _street_key(c.get("street") or c.get("address"))
     same_street = sk is not None and sk == _street_key(p.get("street")) and (same_zip or same_city)
     address_match = same_zip or same_street or (dist is not None and dist <= ADDRESS_MILES)
-    conf = match_confidence(name_sim=nsim, phone_match=phone_match, same_zip=same_zip or same_street,
+    conf = match_confidence(name_sim=nsim, phone_match=strong, same_zip=same_zip or same_street,
                             same_city=same_city, distance_miles=dist)
     core = normalize_name(c.get("legal_name") or c.get("name"))
     # "ABC" collides too easily without a phone match -- unless the street, or full name + address, agree.
-    if not phone_match and len(core) <= 3 and not (same_street or (ssim >= 0.97 and address_match)):
+    if not strong and len(core) <= 3 and not (same_street or (ssim >= 0.97 and address_match)):
         conf = min(conf, 0.5)
         reasons.append("short_name")
     # Loose names drop trade words ("Brooklyn Roofing" == "Brooklyn Construction"), and a ZIP or
     # a mile holds many namesakes, so that evidence alone also needs the strict name to agree.
-    if not phone_match and not same_street and ssim < STRICT_NAME:
+    if not strong and not same_street and ssim < STRICT_NAME:
         conf = min(conf, 0.75)
         reasons.append("strict_name_differs")
-    reasons += [f"name={nsim:.2f}"] + (["phone"] if phone_match else []) + (["address"] if address_match else [])
+    reasons += ([f"name={nsim:.2f}"] + (["phone"] if phone_match else []) + (["license"] if license_match else [])
+                + (["address"] if address_match else []))
     conf = round(conf, 3)  # 0.7 + 0.2 is 0.8999... in floating point
     return {
         "confidence": conf,
-        "accept": conf >= ACCEPT and (phone_match or address_match),
+        "accept": conf >= ACCEPT and (strong or address_match),
         "phone_match": phone_match,
+        "license_match": license_match,
         "address_match": address_match,
         "name_similarity": round(nsim, 3),
         "strict_name_similarity": round(ssim, 3),
@@ -557,7 +592,7 @@ class BbbEnricher(Enricher):
                           "accept": ev["accept"], "reasons": ev["reasons"]})
             if ev["accept"] and (best is None or ev["confidence"] > best[1]["confidence"]):
                 best = (p, ev, ref)
-            if ev["accept"] and ev["phone_match"]:
+            if ev["accept"] and (ev["phone_match"] or ev["license_match"]):
                 break
         urls = [t["url"] for t in tried]
         if best is None:
@@ -601,8 +636,10 @@ class BbbEnricher(Enricher):
             "match_evidence": ev,
             "fetched": tried,
         }
+        # BBB's own words only: an untitled person flagged isPrincipal is a "Principal"; one listed only
+        # under Business Management keeps title=None (the flags stay in data["people"][i]).
         contacts = [
-            Contact(name=x["name"], title=x["title"] or ("Principal" if x["principal"] else "Business management"),
+            Contact(name=x["name"], title=x["title"] or ("Principal" if x["principal"] else None),
                     source=self.name, source_url=ref.url, confidence=round(conf * 0.9, 3))
             for x in p["people"]
         ]
